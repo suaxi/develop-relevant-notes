@@ -2524,3 +2524,836 @@
 
 ```
 
+
+
+## 七、面向对象
+
+### 1. 面向对象
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>面向对象</title>
+  </head>
+  <body>
+    <script>
+        /*
+        面向对象编程（OOP）
+            1. 程序是对现实世界的抽象
+            2. 一个事物抽象到程序中就变成了对象（万物皆对象）
+            3. 程序中的操作都是通过对象来完成
+
+        一个事物通常由数据和功能组成
+        一个对象由属性和方法组成
+        事物的数据在程序中体现为对象的属性，功能体现为方法
+        */
+    </script>
+  </body>
+</html>
+
+```
+
+
+
+### 2. 类
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>类</title>
+  </head>
+  <body>
+    <script>
+        /*
+        使用Obejct创建对象的问题：
+            1. 无法区分不同类型的对象
+            2. 批量创建对象时不方便
+        
+        在js中可以通过类 Class 来解决这个问题
+            - 类是对象模板，可以将对象的属性和方法直接定义在类中，以此来创建对象
+            - 语法：
+                class 类名 {}
+                const 类名 = class {}
+            - 通过类创建对象
+                new 类名()
+            - 通过同一个类创建的对象，称为同类对象
+                - 可以使用instanceof来检查指定对象是否是由某个类创建的
+                - 由类创建的对象，称之为该类的实例
+        */
+
+        class Person {
+
+        }
+
+        //const Person1 = class {}
+
+        class Animal {
+
+        }
+
+        const p1 = new Person()
+        const p2 = new Person()
+
+        const a1 = new Animal()
+        console.log('p1 instanceof Person', p1 instanceof Person) //true
+        console.log('a1 instanceof Person', a1 instanceof Person) //false
+        
+    </script>
+  </body>
+</html>
+
+```
+
+
+
+### 3. 属性
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>属性</title>
+  </head>
+  <body>
+    <script>
+        class People {
+            /*
+            类的代码块默认就是严格模式：
+                类的代码块用于设置对象的属性（不是任意代码都能写在里面）
+                实例的属性只能通过实例来访问
+            */
+
+           //实例属性，只能通过实例去访问，如 const p = new People() p.name
+           name
+           age = 33
+
+           //静态属性（类属性），只能通过类去访问，如：People.classNo
+           static classNo
+           static hobby = '直播'
+        }
+
+        const p = new People()
+        console.log('people', p)
+        console.log('people.age:', p.age)
+        console.log('People.classNo:', People.classNo)
+        console.log('People.hobby:', People.hobby)
+        
+    </script>
+  </body>
+</html>
+
+```
+
+
+
+### 4. 方法
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>方法</title>
+  </head>
+  <body>
+    <script>
+        class People {
+            name = '孙笑川'
+
+            //添加方法，方式一
+            sayHello = function() {
+
+            }
+
+            //添加方法，方式二（实例方法）
+            sayHello1() {
+                //实例方法中的this就是当前的实例
+                console.log('大家好，我是：', this.name)
+            }
+
+            //添加方法，方式三（静态方法）
+            static sayHello2() {
+                //静态方法中的this就是当前的类
+                console.log('这是一个静态方法')
+                console.log('这是静态方法中的this:', this)
+            }
+        }
+
+        const p = new People()
+        //console.log('people:', p)
+        //console.log('people name:', p.name)
+        //p.sayHello1()
+        People.sayHello2()
+    </script>
+  </body>
+</html>
+
+```
+
+
+
+### 5. 构造函数
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>构造函数</title>
+  </head>
+  <body>
+    <script>
+        //直接指定属性值时，创建出来的对象的属性值都是一样的
+        class People {
+            name = '孙笑川'
+            age = 33
+            job = '直播'
+            sayHello() {
+                console.log('大家好，我是', this.name)
+            }
+        }
+
+        class People1 {
+            name
+            age
+            job
+
+            //构造函数
+            constructor(name, age, job) {
+                //可以在构造函数中为实例属性赋值
+                this.name = name
+                this.age = age
+                this.job = job
+            }
+        }
+
+        const p1 = new People1('孙笑川', 33, '主播')
+        const p2 = new People1('药水哥', 30, '主播')
+        console.log('people1', p1)
+        console.log('people2', p2)
+        
+    </script>
+  </body>
+</html>
+
+```
+
+
+
+### 6. 封装
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>封装</title>
+  </head>
+  <body>
+    <script>
+        /*
+        面向对象的三大特征：
+            封装
+            继承
+            多态
+        */
+
+        /*
+        封装：
+            - 对象可以看作是一个用来存储不同属性的容器
+            - 对象不仅负责属性，还要负责数据的安全
+            - 直接添加到对象中的属性并不安全，因为它们可以被随意的修改
+            - 如何确保数据的安全：
+                1. 属性私有化，属性名前加#
+                2. 提供getter、setter方法来进行对数据的操作（控制属性的读写权限）
+                    - 语法：
+                        - getter
+                            get 属性名() {
+                                return this.#属性
+                            }
+                        - setter
+                            set 属性名(参数) {
+                                this.#属性名 = 参数
+                            }
+        */
+
+        //优化前
+        class People {
+            name
+            #age
+            job
+            #address //使用#开头，该属性就变成了私有化属性（只能在类的内部访问）
+
+            constructor(name, age, job, address) {
+                this.name = name
+                this.#age = age
+                this.job = job
+                this.#address = address
+            }
+
+            setAge(age) {
+                //控制年龄不能为负数
+                if (age >= 0) {
+                    this.#age = age
+                }
+            }
+
+            //getter用于读取属性
+            getAddress() {
+                return this.#address
+            }
+
+            //setter用于设置属性
+            setAddress(address) {
+                this.#address = address
+            }
+        }
+
+        const p = new People('孙笑川', 33, '主播', '四川成都')
+
+        //p1.#address = '北京' //直接修改私有化属性时，编译器报错Property '#address' is not accessible outside class 'People' because it has a private identifier.
+        
+        console.log('address', p.getAddress())
+
+        p.setAddress('北京')
+        console.log('people', p)
+
+        console.log('-----------------------------------------')
+        
+        //优化后
+        class People1 {
+            #name
+            #age
+            #job
+            #address
+
+            constructor(name, age, job, address) {
+                this.#name = name
+                this.#age = age
+                this.#job = job
+                this.#address = address
+            }
+
+            get name() {
+                return this.#name
+            }
+
+            set name(name) {
+                this.#name = name
+            }
+        }
+
+        const p1 = new People1('孙笑川', 33, '主播', '四川成都')
+        console.log('people1', p1)
+        
+        p1.name = '药水哥'
+
+        console.log('people1(优化后的setter方法)', p1)
+    </script>
+  </body>
+</html>
+
+```
+
+
+
+### 7. 多态
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>多态</title>
+  </head>
+  <body>
+    <script>
+        /*
+        多态：
+            - 在js中不会检查参数的类型，任何数据都可以作为参数来传递
+            - 同一个方法的不同执行结果
+        */
+
+        class People {
+            constructor(name) {
+                this.name = name
+            }
+        }
+
+        class Animal {
+            constructor(name) {
+                this.name = name
+            }
+        }
+
+        const p = new People('孙笑川')
+        const a = new Animal('旺财')
+        console.log(p)
+        console.log(a)
+        
+        function test(obj) {
+            //if (obj instanceof People) {
+                console.log('我的名字是：', obj.name)
+            //}
+        }
+        test(p)
+    </script>
+  </body>
+</html>
+
+```
+
+
+
+### 8. 继承
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>继承</title>
+  </head>
+  <body>
+    <script>
+        /*
+        继承:
+            - 使用extends关键字来完成继承
+            - 父类：被继承的类；子类：继承的类
+            - 通过继承可以减少重复的代码，并且可以在不修改一个类的前提下对其进行扩展
+            - 可以使用super关键字来引用父类的属性和方法
+            - OCP 开闭原则
+        */
+
+        class Animal {
+            constructor(name) {
+                this.name = name
+            }
+
+            say() {
+                console.log('动物在叫~')
+            }
+        }
+
+        class Dog extends Animal {
+            constructor(name, age) {
+                //重写父类的构造函数时，构造函数的第一行代码必须为super()
+                super(name)
+                this.age = age
+            }
+
+            //重写父类的方法
+            say() {
+                console.log('汪汪汪~')
+            }
+        }
+
+        class Cat extends Animal {
+            say() {
+                console.log('喵喵喵~')
+            }
+        }
+
+        const d = new Dog('旺财', 1)
+        console.log(d)
+        d.say()
+
+        const c = new Cat('卡星五')
+        console.log(c)
+        c.say()
+    </script>
+  </body>
+</html>
+
+```
+
+
+
+### 9. 对象的结构
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>对象的结构</title>
+  </head>
+  <body>
+    <script>
+        /*
+        对象中存储属性的区域有两个：
+            1. 对象自身
+                - 直接通过对象添加的属性
+                - 在对象中通过键值对形式添加的属性
+            2. 原型对象（prototype）
+                - 对象中还有一些内容，会存储到原型对象中
+                - 对象中有一个属性用于存储原型对象 __proto__
+                - 原型对象也能为对象存储属性
+                    - 当访问对象中的属性和方法时，会优先访问对象自身中查找，如果没有，才会去原型对象中找
+                - 会添加到原型对象中的情况：
+                    - 在类中通过 xxx() {} 方式添加的方法
+                    - 主动向原型中添加的属性/方法
+        */
+
+        class People {
+            constructor(name, age) {
+                this.name = name
+                this.age = age
+            }
+        }
+
+        const p = new People('孙笑川', 33)
+        console.log(p)
+        
+    </script>
+  </body>
+</html>
+
+```
+
+
+
+### 10. 原型对象
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>原型对象</title>
+  </head>
+  <body>
+    <script>
+        class People {
+            constructor(name, age) {
+                this.name = name
+                this.age = age
+            }
+
+            sayHello() {
+                console.log('Hello')
+            }
+        }
+
+        const p = new People('孙笑川', 33)
+        console.log(p)
+
+        // 通过 __proto__ 访问原型对象（不建议使用此方式）
+        console.log(p.__proto__)
+
+        // 通过 Object.getPrototypeOf() 访问原型对象
+        console.log(Object.getPrototypeOf(p))
+        
+        /*
+        原型对象中的数据：
+            1. 对象中的数据（属性和方法等）
+            2. constructor（对象的构造函数）
+            注：原型对象也有原型，这样就构成了一条原型链（原型链的长度随对象的复杂程度不同而不同）
+            People -> People.prototype -> Object.prototype -> null
+
+        原型链：
+            - 读取对象的属性时，会优先在对象自身的属性中查找
+              如果对象中有，则使用，没有则向上往对象的原型中去找
+              如果原型中有，则使用，没有则继续向上往原型的原型中去找
+              直到找到Object对象的原型（Object对象的原型为null）
+              此时如果依然没有找到，则返回undefined
+            - 作用域链，是找变量的链，找不到会报错
+            - 原型链，是找属性的链，找不到，会返回undefined
+        */
+    </script>
+  </body>
+</html>
+
+```
+
+
+
+### 11. 原型的作用
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>原型的作用</title>
+  </head>
+  <body>
+    <script>
+        class People {
+            constructor(name, age) {
+                this.name = name
+                this.age = age
+            }
+
+            sayHello() {
+                console.log('Hello')
+            }
+        }
+
+        /*
+        所有的同类型对象，它们的原型对象都是同一个（同类型对象的原型链是一样的）
+        作用：
+            原型相当于一个公共的区域，可以被所有该类的实例访问
+            一个类中所有公共的属性/方法可以统一存储到原型中
+        
+        注：js中的继承通过原型来实现
+        */
+       const p = new People()
+       const p1 = new People()
+       console.log(p.__proto__ === p1.__proto__) // true
+       
+    </script>
+  </body>
+</html>
+
+```
+
+
+
+### 12. 修改原型
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>修改原型</title>
+  </head>
+  <body>
+    <script>
+        /*
+        注：一般情况下，不会进行修改原型的操作
+            实在要改的情况下，通过 类.prototype 的形式去修改（一修改就是修改所有实例的原型）
+        */
+        class People {
+            constructor(name, age) {
+                this.name = name
+                this.age = age
+            }
+
+            sayHello() {
+                console.log('Hello')
+            }
+        }
+
+        const p = new People()
+        const p1 = new People()
+
+        //通过 对象.__proto__的形式 修改对象原型中的属性，对该类下的其他实例也会造成影响
+        p.__proto__.fly = () => {
+            console.log('fly......')
+        }
+
+        p1.fly() // p1有了飞的功能
+    </script>
+  </body>
+</html>
+
+```
+
+
+
+### 13. instanceof和hasOwn
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>instanceof和hasOwn</title>
+  </head>
+  <body>
+    <script>
+        class People {
+
+        }
+
+        class Student extends People {
+
+        }
+
+        /*
+        instanceof：检查一个对象是否是一个类的实例
+            - instanceof检查的是对象的原型链上是否有该类的实例（只要有，则返回true）
+        */
+        const s = new Student()
+        // student ---> People的实例 ---> Object实例 ---> Object原型
+        // 注：Object是所有对象的原型
+        //s.__proto__ 等价于 Student.prototype
+        console.log('s instanceof People:', s instanceof People)
+        console.log('s instanceof Student:', s instanceof Student)
+        
+        console.log('----------------分割线------------------')
+        
+
+        class Person {
+            constructor(name, age) {
+                this.name = name
+                this.age = age
+            }
+
+            sayHello() {
+                console.log('Hello')
+            }
+        }
+
+        /*
+        in:
+            - 使用in运算符检查属性时，无论属性在对象自身还是在原型中，存在则会返回true
+        对象.hasOwnProperty(属性名)：
+            - 不推荐使用
+            - 用于检查一个对象的自身是否含有某个属性/方法
+        Object.hasOwn(对象, 属性名)：
+            - 推荐使用
+            - 同理hasOwnProperty方法
+        */
+        const p = new Person()
+        console.log('\'name\' in p:', 'name' in p)
+        console.log('\'sayHello()\' in p:', 'sayHello' in p)
+        
+        console.log('p.hasOwnProperty(\'name\'):', p.hasOwnProperty('name'))
+        console.log('p.hasOwnProperty(\'sayHello()\'):', p.hasOwnProperty('sayHello'))
+        
+        console.log('Object.hasOwn(p, \'name\'):', Object.hasOwn(p, 'name'))
+        
+    </script>
+  </body>
+</html>
+
+```
+
+
+
+### 14. 旧类
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>旧类</title>
+</head>
+<body>
+    <script>
+        /*
+        早期js中，直接通过函数来定义类
+            - 通过 xxx() 的形式直接调用，那么这个函数为普通函数
+            - 通过 new xxx() 的形式调用，那么这个函数为构造函数
+        */
+
+        // 等价于 class People {}
+        //function People() {
+        //
+        //}
+
+        //const p = new People()
+        //console.log(p)
+
+        var People = (function() {
+            function People(name, age) {
+                this.name = name
+                this.age = age
+            }
+
+            // 向原型中添加属性/方法
+            People.prototype.sayHello = function() {
+                console.log('hello......')
+            }
+
+            // 添加静态属性/方法
+            People.staticProperty = 'address'
+            People.staticMethod = function() {}
+
+            return People
+        })()
+
+        var p = new People('孙笑川', 33)
+        console.log(p)
+        
+        console.log('-------------------分割线---------------------')
+        
+        
+        var Animal = (function() {
+            function Animal() {
+
+            }
+
+            return Animal
+        })()
+
+        var Cat = (function() {
+            function Cat() {
+
+            }
+
+            // 继承Animal
+            Cat.prototype = new Animal()
+
+            return Cat
+        })()
+
+        var cat = new Cat()
+        console.log(cat) //cat对象的原型为Animal
+        
+    </script>
+</body>
+</html>
+```
+
+
+
+### 15. new运算符
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>new运算符</title>
+  </head>
+  <body>
+    <script>
+        /*
+        使用 new 运算符之后，发生了那些事情？
+        mdn文档：https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/new#description
+
+        1. Creates a blank, plain JavaScript object. For convenience, let's call it newInstance.
+        2. Points newInstance's [[Prototype]] to the constructor function's prototype property, 
+            if the prototype is an Object. Otherwise, newInstance stays as a plain object with Object.prototype as its [[Prototype]].
+        3. Executes the constructor function with the given arguments, 
+            binding newInstance as the this context (i.e. all references to this in the constructor function now refer to newInstance).
+        4. If the constructor function returns a non-primitive, this return value becomes the result of the whole new expression. 
+            Otherwise, if the constructor function doesn't return anything or returns a primitive, newInstance is returned instead. 
+            (Normally constructors don't return a value, but they can choose to do so to override the normal object creation process.)
+        
+        1. 创建一个普通的js对象（Object对象 {}），并称其为新对象
+        2. 将构造函数的 prototype 属性设置为新对象的原型
+        3. 根据传入的实参执行构造函数，并将新对象设置为函数中的 this
+        4. 如果构造函数返回的是一个非原始值，则该值会作为最终的返回值返回
+            如果构造函数返回的是一个原始值或没有指定返回值，则以上步骤创建的新对象会作为最终的返回值返回
+        */
+    </script>
+  </body>
+</html>
+
+```
