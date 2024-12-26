@@ -1,5 +1,6 @@
 # 开发相关的笔记
 + [后台](https://github.com/suaxi/develop-relevant-notes/backend-end)
+    + [Spring Cloud OAuth2.0](https://github.com/suaxi/develop-relevant-notes/tree/main/back-end/Spring-Cloud-OAuth2.0)
 + [前端](https://github.com/suaxi/develop-relevant-notes/front-end)
   + [CSS](https://github.com/suaxi/develop-relevant-notes/tree/main/front-end/CSS)
   + [CSS3](https://github.com/suaxi/develop-relevant-notes/tree/main/front-end/CSS3)
