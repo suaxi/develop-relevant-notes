@@ -321,7 +321,7 @@ docker inspect 容器id
 
 ```
 
-![](static\3.基本命令\1.查看镜像的元数据.png)
+![](static/3.基本命令/1.查看镜像的元数据.png)
 
 
 
@@ -489,7 +489,7 @@ docker run -d --name elasticsearch01 -p 9200:9200 -p 9300:9300 -e "discovery.typ
 docker run -d --name elasticsearch02 -p 9200:9200 -p 9300:9300 -e "discovery.type=single-node" -e ES_JAVA_OPTS="-Xms64m -Xmx256m" elasticsearch:7.6.2
 ```
 
-![1.ElasticSearch添加内存限制](static\4.docker练习\1.ElasticSearch添加内存限制.png)
+![1.ElasticSearch添加内存限制](static/4.docker练习/1.ElasticSearch添加内存限制.png)
 
 ```bash
 # 测试
@@ -514,7 +514,7 @@ docker run -d --name elasticsearch02 -p 9200:9200 -p 9300:9300 -e "discovery.typ
 
 ```
 
-![2.Kibana连接ES](static\4.docker练习\2.Kibana连接ES.png)
+![2.Kibana连接ES](static/4.docker练习/2.Kibana连接ES.png)
 
 图片来源：狂神说Java
 
@@ -538,7 +538,7 @@ bootfs（boot file system）主要包含bootloader和kernel，bootloader主要�
 
 rootfs（root file system）在bootfs之上，包含的就是Linux系统中的/dev，/proc，/bin，/etc等标准目录和文件。rootfs就是各种不同的Linux发行版（Centos、Ubuntu、RealHat...）
 
-![](static\5.联合文件系统\1.UnionFS联合文件系统.png)
+![](static/5.联合文件系统/1.UnionFS联合文件系统.png)
 
 图片来源：狂神说Java
 
@@ -554,7 +554,7 @@ Docker镜像为什么这么小？
 
 **redis镜像拉取举例：**
 
-![](static\5.联合文件系统\2.redis拉取举例.png)
+![](static/5.联合文件系统/2.redis拉取举例.png)
 
 ```bash
 # 查看镜像分层
@@ -578,15 +578,15 @@ docker image inspect 镜像名
 
 所有的docker镜像都起始于一个基础镜像层，当进行修改或增加新的内容时，就会在当前镜像层之上，创建新的镜像层。例：基于Ubuntu16.04创建一个新的镜像，这就是新镜像的第一层，如果在该镜像中添加Python包，就会在基础镜像层之上创建第二个镜像层；继续添加新的软件同理，
 
-![](static\5.联合文件系统\3.1分层理解.png)
+![](static/5.联合文件系统/3.1分层理解.png)
 
 在添加额外镜像层的同时，镜像始终保持当前所有的镜像组合，例：每个镜像层包含3个文件，而总镜像包含来自两个镜像层的6个文件，
 
-![](static\5.联合文件系统\3.2分层理解.png)
+![](static/5.联合文件系统/3.2分层理解.png)
 
 下图中的例子在外部看来整个镜像只包含6个文件，这是因为最上层的文件7是文件5的迭代更新版本
 
-![](static\5.联合文件系统\3.3分层理解.png)
+![](static/5.联合文件系统/3.3分层理解.png)
 
 在这个过程中，上层镜像层中的文件覆盖了底层镜像层中的文件，这使得文件的更新版本作为一个新的镜像层添加到镜像中。
 
@@ -596,7 +596,7 @@ Linux上可用的存储引擎有AUFS、Overlay2、Device Mapper、Btrfs及ZFS。
 
 在Windows上仅支持windowsfilter一种存储引擎，该引擎基于NTFS文件系统实现分层和CoW。
 
-![](static\5.联合文件系统\3.4分层理解.png)
+![](static/5.联合文件系统/3.4分层理解.png)
 
 所有镜像层堆叠并合并，对外展示为统一的文件系统。
 
@@ -606,7 +606,7 @@ Linux上可用的存储引擎有AUFS、Overlay2、Device Mapper、Btrfs及ZFS。
 
 docker镜像都是只读的，当容器启动时，一个新的可写层被加载到镜像的顶部，也就是通常所说的容器，容器之下的都叫镜像层。
 
-![](static\5.联合文件系统\6.容器层.png)
+![](static/5.联合文件系统/6.容器层.png)
 
 图片来源：狂神说Java
 
@@ -621,7 +621,7 @@ docker commit -m="注释信息" -a="作者" 容器id 目标镜像名:[TAG]
 
 例：给精简版的tomcat添加一点东西
 
-![7.commit镜像](static\5.联合文件系统\7.commit镜像.png)
+![7.commit镜像](static/5.联合文件系统/7.commit镜像.png)
 
 
 
@@ -643,15 +643,15 @@ docker run -it -v 主机目录:容器内目录
 
 ```
 
-![1.-v直接挂载](static\6.容器数据卷\1.1-v直接挂载.png)
+![1.-v直接挂载](static/6.容器数据卷/1.1-v直接挂载.png)
 
 从容器同步到主机：
 
-![1.2同步过程（双向绑定）](static\6.容器数据卷\1.2同步过程（双向绑定）.png)
+![1.2同步过程（双向绑定）](static/6.容器数据卷/1.2同步过程（双向绑定）.png)
 
 从主机同步到容器：（在容器停止后，主机修改了绑定路径下的文件，容器再次启动后，双向绑定依然生效）
 
-![](static\6.容器数据卷\1.3同步过程（双向绑定）.png)
+![](static/6.容器数据卷/1.3同步过程（双向绑定）.png)
 
 
 
@@ -676,7 +676,7 @@ docker run --name some-mysql -e MYSQL_ROOT_PASSWORD=my-secret-pw -d mysql:tag
 # 后续再使用navicat等工具连接docker中的mysql实际测试一下配置是否生效
 ```
 
-![2.安装mysql测试](static\6.容器数据卷\2.安装mysql测试.png)
+![2.安装mysql测试](static/6.容器数据卷/2.安装mysql测试.png)
 
 <font color='red'>删除容器之后，同步到本地的数据依然存在，即实现数据的持久化。</font>
 
@@ -692,7 +692,7 @@ docker run --name some-mysql -e MYSQL_ROOT_PASSWORD=my-secret-pw -d mysql:tag
 
 ```
 
-![](static\6.容器数据卷\3.匿名挂载.png)
+![](static/6.容器数据卷/3.匿名挂载.png)
 
 
 
@@ -706,7 +706,7 @@ docker run --name some-mysql -e MYSQL_ROOT_PASSWORD=my-secret-pw -d mysql:tag
 
 ```
 
-![](static\6.容器数据卷\4.具名挂载.png)
+![](static/6.容器数据卷/4.具名挂载.png)
 
 所有docker容器内的卷，在没有指定目录的情况下都在 `/var/lib/docker/volumes/xxx/`
 
@@ -751,23 +751,23 @@ CMD echo "----create complete----"
 CMD /bin/bash
 ```
 
-![5.dockerfile脚本](static\6.容器数据卷\5.1.dockerfile脚本.png)
+![5.dockerfile脚本](static/6.容器数据卷/5.1.dockerfile脚本.png)
 
 启动并进入容器：
 
-![5.2.dockerfile启动容器](static\6.容器数据卷\5.2.dockerfile启动容器.png)
+![5.2.dockerfile启动容器](static/6.容器数据卷/5.2.dockerfile启动容器.png)
 
 
 
 脚本命令中挂载的目录是匿名挂载：
 
-![5.3.dockerfile匿名挂载](static\6.容器数据卷\5.3.dockerfile匿名挂载.png)
+![5.3.dockerfile匿名挂载](static/6.容器数据卷/5.3.dockerfile匿名挂载.png)
 
 
 
 测试挂载目录下的双向绑定是否成功:
 
-![5.4.dockerfile双向绑定](static\6.容器数据卷\5.4.dockerfile双向绑定.png)
+![5.4.dockerfile双向绑定](static/6.容器数据卷/5.4.dockerfile双向绑定.png)
 
 
 
@@ -775,7 +775,7 @@ CMD /bin/bash
 
 多个mysql同步数据
 
-![6.数据卷容器](static\6.容器数据卷\6.数据卷容器.png)
+![6.数据卷容器](static/6.容器数据卷/6.数据卷容器.png)
 
 图片来源：狂神说Java
 
@@ -791,13 +791,13 @@ CMD /bin/bash
 
 ```
 
-![7.数据卷容器文件同步](static\6.容器数据卷\7.1.数据卷容器文件同步.png)
+![7.数据卷容器文件同步](static/6.容器数据卷/7.1.数据卷容器文件同步.png)
 
 
 
 通过volumes实现容器间的数据共享
 
-![7.2.volumes容器间数据共享](static\6.容器数据卷\7.2.volumes容器间数据共享.png)
+![7.2.volumes容器间数据共享](static/6.容器数据卷/7.2.volumes容器间数据共享.png)
 
 <font color='red'>注：即使删除父容器docker01，其他容器中的数据依然存在</font>
 
@@ -818,7 +818,7 @@ CMD /bin/bash
 
 dockerfile用于构建docker镜像（命令参数脚本）
 
-![1.github dockerfile](static\7.DockerFile\1.github dockerfile.png)
+![1.github dockerfile](static/7.DockerFile/1.github dockerfile.png)
 
 
 
@@ -831,7 +831,7 @@ dockerfile用于构建docker镜像（命令参数脚本）
 # 4.每一个指令都会创建一个新的镜像层，并提交
 ```
 
-![分层镜像](static\7.DockerFile\分层镜像.png)
+![分层镜像](static/7.DockerFile/分层镜像.png)
 
 DockerFile：构建文件，定义执行的内容
 
@@ -888,11 +888,11 @@ docker build -f dockerfile文件路径 -t 镜像名:[TAG] .
 # 3.测试运行
 ```
 
-![2.测试运行](static\7.DockerFile\2.测试运行.png)
+![2.测试运行](static/7.DockerFile/2.测试运行.png)
 
 镜像构建历史：`docker history 容器id`
 
-![4.镜像构建历史](static\7.DockerFile\4.镜像构建历史.png)
+![4.镜像构建历史](static/7.DockerFile/4.镜像构建历史.png)
 
 
 
@@ -1019,7 +1019,7 @@ drwxr-xr-x  20 root root 4096 Dec  4 17:37 var
 
 **1.准备文件：**
 
-![](static\7.DockerFile\5.1准备文件.png)
+![](static/7.DockerFile/5.1准备文件.png)
 
 
 
@@ -1110,7 +1110,7 @@ CMD /usr/local/apache-tomcat-9.0.27/bin/startup.sh && tail -f /usr/local/apache-
 
 外网访问测试成功
 
-![](static\7.DockerFile\5.2访问测试.png)
+![](static/7.DockerFile/5.2访问测试.png)
 
 
 
