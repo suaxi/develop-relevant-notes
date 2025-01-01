@@ -3357,3 +3357,859 @@
 </html>
 
 ```
+
+
+
+## 八、数组
+
+### 1. 简介
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>简介</title>
+  </head>
+  <body>
+    <script>
+        /*
+        数组（Array）：
+            - 数组也是一种复合数据类型，可以存储多个不同类型的数据
+            - 存储的元素是有序的，每个元素都有自己的唯一索引
+            - 创建数组：
+                - const arr = new Array()
+                - const arr = []
+            - 向数组中添加元素：
+                - 数组[索引] = 元素
+            - 读取数组中的元素：
+                - 数组[索引]
+                - 使用下标索引读取一个不存在的元素时，会返回undefined
+            - length方法：
+                - 获取数组的长度
+                - 返回结果是当前数组的最大索引 + 1
+        */
+
+        const arr = new Array()
+        const arr1 = [] // 数组字面量
+
+        arr[0] = 1
+        arr1[2] = 3 //数组中间有空元素：非连续数组（实际开发过程中尽量避免）
+
+        console.log('arr', arr)
+        console.log('arr1', arr1)
+
+        console.log('typeof arr', typeof arr) //object
+        
+        console.log('arr1.length', arr1.length)
+        
+    </script>
+  </body>
+</html>
+
+```
+
+
+
+### 2. 数组的遍历
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>数组的遍历</title>
+  </head>
+  <body>
+    <script>
+        //const arr = [1, 2, 'a', 3, {name: '孙笑川'}, () => {}]
+        //console.log(arr)
+        
+        //创建数组时，尽量确保元素是相同的数据类型
+        const arr = [1, 2, 3]
+
+        for (let i = 0; i < arr.length; i++) {
+            console.log(arr[i])
+        }
+
+        for (let i = arr.length - 1; i >= 0; i--) {
+            console.log(arr[i])
+        }
+    </script>
+  </body>
+</html>
+
+```
+
+
+
+### 3. for-of语句
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>for-of语句</title>
+  </head>
+  <body>
+    <script>
+        /*
+        for-of语句：
+            - 可用于遍历可迭代的对象
+            - 语法：
+                for (变量 of 可迭代的对象) {
+                    ......
+                }
+            - 执行流程：
+                - for-of根据可迭代对象中的元素个数来执行循环体
+                - 每次执行时都会将当前遍历到的元素赋值给变量
+        */
+
+        const arr = [1, 2, 3]
+        for (let i of arr) {
+            console.log(i)
+        }
+
+        for (let i of 'sunxiaochuan') {
+            console.log(i)
+        }
+    </script>
+  </body>
+</html>
+
+```
+
+
+
+### 4. 数组的方法（非破坏性）
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数组的方法（非破坏性）</title>
+</head>
+<body>
+    <script>
+        /*
+        mdn文档：https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array
+        例：
+            - indexOf() 获取指定元素在数组中第一次出现的位置（返回值为该位置的下标索引）
+            - lastIndexOf() 获取指定元素在数组中最后一次出现的位置
+            - join() 将数组中的元素连接为一个字符串，可以指定使用什么连接符（默认为英文逗号 ','）
+            - slice() 从指定索引位置截取数组（非破坏性方法，截取之后生成新的返回值，不影响原数组）
+                - arr.slice(1) 传一个参数时，从指定索引位置开始截取s
+                - arr.slice(1, 3) 传两个参数时为“左闭右开”区间
+                - arr.slice(1, -1) 参数为负时，表示从后往前取，其他同理传两个参数时的“左闭右开”区间
+                - arr.slice() 参数为空时，可以对数组进行浅拷贝
+        */
+
+        const arr = [1, 2, 3]
+        console.log(arr.slice(1))
+        
+    </script>
+</body>
+</html>
+```
+
+
+
+### 5. 对象的复制
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>对象的复制</title>
+  </head>
+  <body>
+    <script>
+        /**/
+
+        const arr = [1, 2, 3]
+
+        // 调用slice()时，会产生一个新的数组，从而完成对数组的复制
+        const arr1 = arr.slice()
+
+        console.log(arr)
+        console.log(arr1)
+
+        console.log('arr === arr1:', arr === arr1)
+        
+    </script>
+  </body>
+</html>
+
+```
+
+
+
+### 6. 深拷贝和浅拷贝
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>浅拷贝和深拷贝</title>
+  </head>
+  <body>
+    <script>
+        /*
+        浅拷贝（shallow copy）：
+            - 一般情况下，对对象的拷贝都是浅拷贝
+            - 只进行浅层拷贝（只拷贝一层）
+            - 如果对象中存储的数据是原始值（基本类型），此时是否是深拷贝，浅拷贝不重要
+            - 浅拷贝只会对对象本身进行复制，不会复制对象中的属性/元素
+        深拷贝（deep copy）
+            - 深拷贝不仅复制对象本身，还复制对象中的属性/元素
+            - 通常情况下不经常使用深拷贝
+        */
+
+        const arr = [
+            {
+                name: '孙笑川',
+                age: 33,
+                info: {
+                    address: '成都',
+                    classNo: 1
+                }
+            },
+            {
+                name: '药水哥',
+                age: 30,
+                info: {
+                    address: '湖北',
+                    classNo: 2
+                }
+            }
+        ]
+        console.log('arr', arr)
+        
+
+        // 浅拷贝
+        const arr1 = arr.slice()
+        console.log('arr1', arr1)
+        
+
+        // 深拷贝
+        const arr2 = structuredClone(arr)
+        console.log('arr2', arr2)
+    </script>
+  </body>
+</html>
+
+```
+
+
+
+### 7. 对象的复制
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>对象的复制</title>
+  </head>
+  <body>
+    <script>
+        const arr = [
+            {
+                name: '孙笑川',
+                age: 33,
+                info: {
+                    address: '成都',
+                    classNo: 1
+                }
+            },
+            {
+                name: '药水哥',
+                age: 30,
+                info: {
+                    address: '湖北',
+                    classNo: 2
+                }
+            }
+        ]
+
+        // slice() 方法
+        const arr1 = arr.slice()
+        console.log(arr === arr1)
+
+        // [...xxx] 数组解构，也可以对数组进行复制
+        const arr2 = [...arr]
+        console.log(arr === arr2)
+        
+        // Object.assign(目标对象， 被复制的对象)
+        const arr3 = Object.assign({}, arr)
+        console.log('arr3', arr3)
+        
+        // 也可以用 ... 展开运算符对对象进行复制
+        const arr4 = {...arr}
+        console.log('arr4', arr4)
+
+        //注：在进行复制时，如果有同名的属性或方法，前面的值会被后来的值覆盖
+    </script>
+  </body>
+</html>
+
+```
+
+
+
+### 8. 数组的方法（破坏性）
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>数组的方法（破坏性）</title>
+  </head>
+  <body>
+    <script>
+        /*
+        push()
+            - 向数组的末尾添加一个或多个元素，并返回新数组的长度
+        pop()
+            - 删除数组的最后一个元素，并返被删除的元素
+        unshit()
+            - 向数组的开头添加一个或多个元素，并返回新数组的长度
+        shit()
+            - 删除数组的第一个元素，并返被删除的元素
+        splice()
+            - 可以删除、添加、插入、替换元素
+            - 参数：
+                1. 删除的起始位置
+                2. 删除的数量
+            - 返回值：
+                被删除的元素
+        reverse()
+            - 反转数组
+        */
+
+        let result
+        const arr = [1, 2, 3, 4]
+        
+        //result = arr.push(1)
+        //console.log('push()', arr)
+        //console.log('result', result)
+        
+        //result = arr.pop(1)
+        //console.log('pop()', arr)
+        //console.log('result', result)
+
+        //result = arr.unshift(1)
+        //console.log('unshift()', arr)
+        //console.log('result', result)
+
+        //result = arr.shift()
+        //console.log('shift()', arr)
+        //console.log('result', result)
+
+        // 从下标索引为1的位置开始删除
+        //result = arr.splice(1)
+        //console.log('splice()', arr)
+        //console.log('result', result)
+
+        // 删除下标索引为1，2的元素，并从下标索引为1的位置开始插入元素
+        //arr.splice(1, 2, 'abc', {name: '孙笑川'})
+        //console.log('splice()', arr)
+
+        // 从下标索引为2的位置开始插入元素
+        //arr.splice(2, 0, 'abc', {name: '孙笑川'})
+        //console.log('splice()', arr)
+
+        arr.reverse()
+        console.log('reverse()', arr)
+        
+    </script>
+  </body>
+</html>
+
+```
+
+
+
+### 9. 排序
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>排序</title>
+  </head>
+  <body>
+    <script>
+        const arr = [22, 2 , 5, 10, 3, 6, 9, 7, 13, 8]
+
+        // 冒泡排序
+        for (let i = 0; i < arr.length - 1; i++) {
+            for (let j = 0; j < arr.length - i - 1; j++) {
+                if (arr[j + 1] < arr[j]) {
+                    let temp = arr[j]
+                    arr[j] = arr[j + 1]
+                    arr[j + 1] = temp
+                }
+            }
+        }
+        console.log('冒泡排序', arr)
+        
+        const arr1 = [22, 2 , 5, 10, 3, 6, 9, 7, 13, 8]
+        // 选择排序
+        for (let i = 0; i < arr1.length - 1; i++) {
+            for (let j = i + 1; j < arr1.length - 1; j++) {
+                if (arr[i] > arr[j]) {
+                    let temp = arr[i]
+                    arr[i] = arr[j]
+                    arr[j] = temp
+                }
+            }
+        }
+        console.log('选择排序', arr1)
+    </script>
+  </body>
+</html>
+
+```
+
+
+
+### 10. 闭包
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>闭包</title>
+  </head>
+  <body>
+    <script>
+        /*
+        闭包：
+            - 能访问到外部函数作用域中变量的函数
+            - 什么时候使用：
+                - 当需要隐藏一些不想被外部访问的内容时
+            - 构成闭包的条件：
+                1. 函数的嵌套
+                2. 内部函数要引用外部函数的变量
+                3. 内部函数要作为返回值返回
+        */
+
+        function test() {
+            let num = 0
+            return () => {
+                num++
+                console.log('第', num, '次调用函数...')
+            }
+        }
+
+        const testFn = test()
+        testFn()
+    </script>
+  </body>
+</html>
+
+```
+
+
+
+### 11. 闭包的原理
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>闭包的原理</title>
+  </head>
+  <body>
+    <script>
+        let a = '全局变量a'
+
+        /*
+        函数作用域，在函数创建时就已经确定（词法作用域）
+            - 和函数的调用位置无关
+        闭包利用的就是词法作用域
+        */
+        function test() {
+            console.log(a)
+        }
+
+        function test1() {
+            let a = 'test1中的局部变量a'
+
+            test()
+        }
+        //test1() // 打印结果：全局变量a
+
+        function test2() {
+            let a = 'test2中的局部变量a'
+
+            function test3() {
+                console.log(a)
+            }
+
+            return test3
+        }
+        let result = test2()
+        result() // 打印结果：test2中的局部变量a
+    </script>
+  </body>
+</html>
+
+```
+
+
+
+### 12. 闭包的注意事项
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>闭包的注意事项</title>
+  </head>
+  <body>
+    <script>
+        /*
+        闭包的生命周期：
+            1. 在外部函数调用时产生，调用一次产生一个新的闭包
+            2. 在内部函数丢失时，闭包会消失（即内部函数被垃圾回收了）
+        注意事项：
+            - 用于隐藏一些不想被外部访问的内容
+            - 闭包需要占用一定的内存空间
+            - 类可以使用原型，而闭包不行
+                - 执行次数较少时，使用闭包
+                - 需要大量创建实例时，使用类
+        */
+
+        function test() {
+            let num = 1
+            return () => {
+                num++
+                console.log(num)
+            }
+        }
+
+        let testFn = test() // 独立闭包
+        let testFn1 = test() // 独立闭包
+
+        testFn()
+        testFn1()
+
+        testFn = null
+        testFn1 = null
+    </script>
+  </body>
+</html>
+
+```
+
+
+
+### 13. 递归
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>递归</title>
+  </head>
+  <body>
+    <script>
+        /*
+        递归：
+            - 调用自身的函数称为递归（自己调用自己）
+            - 构成条件：
+                1. 基线条件（递归的终止条件）
+                2. 递归条件（如何对问题进行拆分）
+        */
+
+        function recursion(num) {
+            // 基线条件
+            if (num === 1) {
+                return 1
+            }
+
+            // 递归条件
+            return recursion(num - 1) * num
+        }
+
+        let num = 5
+        let result = recursion(num)
+        console.log('recursion(', num, ')', result)
+        
+    </script>
+  </body>
+</html>
+
+```
+
+
+
+### 14. 数组的方法
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>数组的方法</title>
+  </head>
+  <body>
+    <script>
+        let arr = ['h', 'a', 'd', 'b', 'f', 'j', 'c']
+        console.log('arr', arr)
+        
+        /*
+        sort()
+            - 对数组进行排序，会改变原数组（破坏性的）
+            - 默认进行升序排列，且按照Unicode编码进行排序
+            - 参数：
+                - 可以传递一个回调函数，用于指定排序规则
+                    - (a, b) => a - b) 升序
+                    - (a, b) => b - a) 降序
+        */
+        arr = [1, 3, 9, 2, 5, 8, 22, 13] //阿拉伯数字排序时需指定排序规则
+        console.log('arr.sort()', arr.sort((a, b) => a - b))
+
+        /*
+        foreach() 
+            - 遍历数组
+            - 需要一个回调函数作为参数，数组中有几个元素，回调函数就执行几次
+                - 回调函数中有三个参数:
+                    1. element 当前元素
+                    2. index 当前元素的下标索引
+                    3. array 被遍历的数组
+        */
+       arr = ['孙笑川', '药水哥', 'Giao哥']
+       arr.forEach((element, index, array) => {
+        console.log('index:', index, ',element:', element, ',array:', array)
+       })
+
+       /*
+       filter()
+           - 将数组中符合条件的元素保存到一个新数组中（过滤）
+           - 需要一个回调函数作为参数，根据回调函数的条件判断当前元素是否符合条件
+       */
+       // 筛选出数组中的偶数
+       arr = [1, 3, 9, 2, 5, 8, 22, 13]
+       console.log('arr.filter()', arr.filter(item => item % 2 === 0))
+       
+       /*
+       map()
+            - 根据当前数组，生成一个新的数组（非破坏性的）
+            - 需要一个回调函数作为参数，回调函数的返回值，会成为新数组中的元素
+       */
+       // 所有元素扩大两倍
+       console.log('arr.map()', arr.map(item => item * 2))
+
+       /*
+       reduce()
+            - 可以将数组中的所有元素整合为一个值（归约）
+            - 参数：
+                1. 回调函数，指定元素的合并规则
+                2. 初始值（可选）
+       */
+       console.log('arr.reduce()', arr.reduce((a, b) => a + b)) // 63
+       console.log('arr.reduce()', arr.reduce((a, b) => a + b, 1)) //64
+    </script>
+  </body>
+</html>
+
+```
+
+
+
+### 15. 可变参数
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>可变参数</title>
+  </head>
+  <body>
+    <script>
+        /*
+        arguments：
+            - 是函数中的有一个隐含参数
+            - 是一个类数组对象（伪数组）
+            - 用来存储函数的实参
+                - 无论当前函数是否定义形参，传入的实参都会存储到arguments对象中
+        */
+
+        function test() {
+            //for (let i = 0; i < arguments.length; i++) {
+            //    console.log(arguments[i])
+            //}
+            
+            //for (const element of arguments) {
+            //    console.log(element)
+            //}
+
+            // 报错，arguments是类数组对象，并不是一个数组对象
+            //arguments.forEach(element => console.log(element))
+        }
+        test(1, '孙笑川', 'abc', () => {})
+
+        function sum() {
+            let result = 0
+            for (let i = 0; i < arguments.length; i++) {
+                result += arguments[i]
+            }
+            return result
+        }
+
+        let result = sum(1, 2, 3)
+        console.log('sum(1, 2, 3)=', sum(1, 2, 3))
+        
+        /*
+        可变参数：
+            - 可以接收任意数量的实参，并将它们存储到一个数组中
+            - 可变参数和普通参数一起使用时，可变参数需写到最后的位置
+        */
+       function test1(...args) {
+            console.log('args', args)
+       }
+       test1()
+
+       function test2(a, b, ...args) {
+            console.log('args', args)
+       }
+       test2(1, 'a', () => {}, 'test2', 123)
+
+       function sum1(...args) {
+            return args.reduce((a, b) => a + b)
+       }
+       console.log('sum1(1, 2, 3)=', sum(1, 2, 3))
+    </script>
+  </body>
+</html>
+
+```
+
+
+
+### 16. call和apply
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>call和apply</title>
+  </head>
+  <body>
+    <script>
+        /*
+        根据函数的调用方式不同，this也不同：
+            1. 以函数形式调用，this是window
+            2. 以方法的形式调用，this是调用方法的对象
+            3. 在构造函数中，this是新建的对象
+            4. 箭头函数没有自己的this，由外层作用域决定
+            5. 通过call()/apply()调用的函数，传入的第一个参数就是函数的this
+        */
+
+        function test() {
+            console.log('函数执行了...')
+            console.log(this)
+            
+        }
+
+        /*
+        call()/apply:
+            - 调用函数
+            - 指定函数中的this（第一个参数）
+        */
+        test.call({name: '孙笑川'})
+        test.apply(123)
+        console.log('-----------------分割线-------------------')
+        
+        function test1(a, b) {
+            console.log('a:', a, 'b:', b, 'this:', this)
+        }
+        test1(123, 456)
+
+        // 通过call()方法调用时，函数的实参需跟在第一个参数之后
+        test1.call({name: '孙笑川'}, 123, 456)
+
+        // 通过apply()方法调用时，函数的实参需要通过一个数组传递
+        test1.apply({name: '孙笑川'}, [123, 456])
+    </script>
+  </body>
+</html>
+
+```
+
+
+
+### 17. bind
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>bind</title>
+  </head>
+  <body>
+    <script>
+        /*
+        根据函数的调用方式不同，this也不同：
+            1. 以函数形式调用，this是window
+            2. 以方法的形式调用，this是调用方法的对象
+            3. 在构造函数中，this是新建的对象
+            4. 箭头函数没有自己的this，由外层作用域决定
+            5. 通过call()/apply()调用的函数，传入的第一个参数就是函数的this
+            6. 通过bind返回的函数，this由bind的第一个参数指定（且指定之后无法修改，不会因为调用方式的不同而不同）
+        */
+        /*
+        bind():
+            - 用于创建一个新的函数
+            - 可以为新函数绑定this
+        */
+
+        function test(a, b, c) {
+            console.log('函数执行了...', this)
+            console.log('a:', a, 'b:', b, 'c:', c)
+        }
+
+        //由bind绑定的this，实参绑定之后无法修改（仅针对返回的新函数）
+        const newFn = test.bind({name: '孙笑川'}, 1, 2, 3)
+        newFn()
+
+        // 注：箭头函数的this也无法通过call(),apply(),bind()方法指定，只能通过外层作用域决定
+    </script>
+  </body>
+</html>
+
+```
+
