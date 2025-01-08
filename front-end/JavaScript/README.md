@@ -4213,3 +4213,765 @@
 
 ```
 
+
+
+## 九、内建对象
+
+### 1. 数组的解构
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>数组的解构</title>
+  </head>
+  <body>
+    <script>
+        /*
+        数组的解构
+        */
+        const arr = [1, 2, 3, 'abc']
+
+        let [a, b, c, d, e] = arr // 声明变量的同时解构赋值
+        console.log(a, b, c, d, e)
+        console.log('------------------------------')
+        
+        const arr1 = [1, 2, 3, 4, 5, 6]
+        let [f, g, ...h] = arr1
+        console.log(f, g, h) // 1, 2, [3, 4, 5, 6]
+        console.log('------------------------------')
+
+        function test() {
+            return [1, 2]
+        }
+        let [i, j] = test()
+        console.log(i, j)
+        console.log('------------------------------')
+        
+        // 可以通过解构赋值来快速交换两个变量的值
+        let a1 = 1
+        let a2 = 2
+        ;[a1, a2] = [a2, a1] // 此处相当于新建了一个数组[2, 1]
+        console.log('a1:', a1, 'a2:', a2)
+        
+        const arr3 = [['孙笑川', 33, '成都'], ['药水哥', 30, '武汉']]
+        let [[name, age, address], people] = arr3
+        console.log(name, age, address)
+        console.log(people)
+        
+    </script>
+  </body>
+</html>
+
+```
+
+
+
+### 2. 对象的解构
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>对象的解构</title>
+  </head>
+  <body>
+    <script>
+        /*
+        对象的解构:
+            - 变量名需和对象的属性名一一对应
+            - 如果不想一一对应，可以通过取别名的形式来进行解构
+        */
+       const people = {
+            name: '孙笑川',
+            age: 33,
+            address: '成都'
+       }
+       let { name, age, address } = people // 声明变量的同时解构对象
+       console.log(name, age, address)
+
+
+       // 先声明变量，再解构
+       let name1, age1, address1, gender1
+       ({ name: name1, age: age1, address: address1, gender: gender1 = '男' } = people) // 变量名取别名进行解构
+       console.log(name1, age1, address1, gender1)
+    </script>
+  </body>
+</html>
+
+```
+
+
+
+### 3. 对象的序列化
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>对象的序列化</title>
+  </head>
+  <body>
+    <script>
+        /*
+        js中对象的使用都是存放于计算机内存中的
+
+        对象的序列化：
+            - 指将对象转换为一个可以存储的格式
+            - js中对对象的序列化通常是转换为字符串
+            - 用途：
+                - 作为数据交换的格式（不同语言之间）
+                - 编写配置文件
+            - 怎么序列化：
+                - 通过JSON（JavaScript Object Notation）工具类
+            - 编写JSON的注意事项：
+                1. JSON字符串有两种形式：
+                    - JSON对象 {}
+                    - JSON 数组 []
+                2. JSON字符串中的属性名必须用双引号引起来
+                3. JSON中可以使用的属性值：
+                    - 数字（Number）
+                    - 字符串（String）
+                    - 布尔值（Boolean）
+                    - 空值（Null）
+                    - 对象（Object {}）
+                    - 数组（Array []）
+                4. JSON字符串的最后一个属性的后面不能再加 , 逗号
+        */
+
+        const people = {
+            name: '孙笑川',
+            age: 33,
+            address: '成都'
+        }
+        console.log(people)
+
+        // 对象转JSON字符串
+        const peopleStr = JSON.stringify(people)
+        console.log(peopleStr)
+
+        // JSON字符串转对象
+        const peopleObj = JSON.parse(peopleStr)
+        console.log(peopleObj)
+        
+        const str = '{"name": "药水哥", "age": 30, "address": "湖北"}'
+        console.log(JSON.parse(str))
+        
+    </script>
+  </body>
+</html>
+
+```
+
+
+
+### 4. 使用JSON深拷贝
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>使用JSON深拷贝</title>
+  </head>
+  <body>
+    <script>
+        const people = {
+            name: '孙笑川',
+            age: 33,
+            address: '成都',
+            hobby: ['直播', '抽象'],
+            friend: {
+                name: '药水哥',
+                age: 30
+            }
+        }
+
+        // 浅拷贝
+        const people1 = Object.assign({}, people)
+        console.log('people1.friend === people.friend', people1.friend === people.friend)
+
+        // structuredClone深拷贝
+        const people2 = structuredClone(people)
+        console.log('people2.friend === people.friend', people2.friend === people.friend)
+        
+        // JSON 深拷贝
+        const people3 = JSON.parse(JSON.stringify(people))
+        console.log('people3.friend === people.friend', people3.friend === people.friend)
+
+    </script>
+  </body>
+</html>
+
+```
+
+
+
+### 5. Map
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Map</title>
+  </head>
+  <body>
+    <script>
+        /*
+        Map:
+            - 存储键值对
+            - 创建：
+                new Map()
+            - 属性和方法：
+                - map.size() 获取键值对的数量
+                - map.set(key, value) 添加键值对
+                - map.get(key) 根据key获取值
+                - map.delete(key) 根据key删除指定数据
+                - map.has(key) 判断map中是否包含指定key
+                - map.clear() 清空map
+        */
+
+        const map = new Map()
+        map.set(1, '孙笑川')
+        map.set('2', '药水哥')
+        map.set({name: 'key'}, 'Giao哥')
+        console.log(map)
+        
+        console.log(map.get(1))
+        
+        map.delete(1)
+        console.log(map)
+
+        console.log(map.has('abc'))
+        
+    </script>
+  </body>
+</html>
+
+```
+
+
+
+### 6. Map补充
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Map补充</title>
+  </head>
+  <body>
+    <script>
+        const map = new Map()
+        map.set('name', '孙笑川')
+        map.set('age', 33)
+
+        // map转数组
+        const arr = Array.from(map)
+        const arr1 = [...map] // 推荐使用
+        console.log(arr)
+        console.log(arr1)
+        
+        // 数组转map
+        const arr3 = [['name', '药水哥'], ['age', 30]]
+        const map1 = new Map(arr3)
+        console.log(map1)
+        
+        // 遍历map
+        for (const entry of map) {
+            console.log(entry)
+        }
+
+        map.forEach((key, value) => {
+            console.log('key:', key, 'value:', value)
+        })
+
+        // map.keys() 获取map的所有key
+        // map.values() 获取map的所有value
+    </script>
+  </body>
+</html>
+
+```
+
+
+
+### 7. Set
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Set</title>
+  </head>
+  <body>
+    <script>
+        /*
+        Set:
+            - 用来创建一个集合
+            - 功能和数组类似（但不能存储重复的数据）
+            - 创建方式：
+              - new Set()
+              - new Set([])
+            - 常用方法：
+              - size() 集合大小
+              - add() 添加元素
+              - has() 判断是否有指定元素
+              - delete() 删除元素
+        */
+
+        const set = new Set()
+        set.add(1)
+        set.add('abc')
+        set.add(1)
+        console.log(set)
+        
+        console.log(set.has(1))
+
+        for (const item of set) {
+            console.log(item)
+        }
+
+        const arr = [...set]
+        console.log(arr)
+        
+        // 数组去重
+        const arr1 = [1, 2, 3, 3, 5, 2, 1, 6, 7, 2, 3, 8, 10, 2]
+        const set1 = new Set(arr1)
+        console.log([...set1])
+        
+    </script>
+  </body>
+</html>
+
+```
+
+
+
+### 8. Math
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Math</title>
+  </head>
+  <body>
+    <script>
+        /*
+        Math:
+            - MDN文档：https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math
+            - 常量：
+                - Math.PI 圆周率
+            - 常用方法：
+                - Math.abs() 求绝对值
+                - Math.min() 求最小值
+                - Math.max() 求最大值
+                - Math.pow(x, y) 求x的y次幂 等价于 x ** y
+                - Math.sqrt() 开平方 等价于 x ** .5
+                - Math.floor() 向下取整
+                - Math.ceil() 向上取整
+                - Math.round() 四舍五入
+                - Math.trunc() 直接舍弃小数位取整
+                - Math.random() 返回一个0-1之间的随机数（不包含1）
+        */
+    </script>
+  </body>
+</html>
+
+```
+
+
+
+### 9. Date
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Date</title>
+  </head>
+  <body>
+    <script>
+        /*
+        Date:
+            - js中所有和时间相关的数据都由Date对象来表示
+        */
+
+        let d = new Date()
+        console.log(d)
+        
+        // 获取年份
+        console.log(d.getFullYear())
+
+        // 获取月份（月份索引 0 - 11）
+        console.log(d.getMonth())
+
+        // 获取日
+        console.log(d.getDate())
+
+        // 返回当前日期是周几（0 - 6，0表示周日）
+        console.log(d.getDay())
+
+        // 参数：年，月，日，时，分，秒，毫秒
+        let newDate = new Date(2024, 11, 1, 10, 0 ,0)
+        console.log(newDate)
+        
+        // 获取当前时间的时间戳（从1970年1月1日0时0分0秒开始）
+        console.log(d.getTime())
+
+        // 获取当前的时间戳
+        console.log(Date.now())
+        
+    </script>
+  </body>
+</html>
+
+```
+
+
+
+### 10. 日期的格式化
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>日期的格式化</title>
+  </head>
+  <body>
+    <script>
+        /*
+        toLocaleString():
+            - 将日期转换为本地时间格式的字符串
+            - 参数：
+                1. 国家地区字符串，如zh-CN en-US
+                2. 一个对象，通过这个对象设置日期的格式：
+                    - dateStyle 日期格式 / timeStyle 时间格式：
+                        - full
+                        - long
+                        - medium
+                        -short
+                    - hour12 12小时制显示：
+                        - true
+                        - false
+                    - weekday 星期的显示方式：
+                        - long
+                        - short
+                        - narrow
+                    ......
+        */
+        let d = new Date()
+
+        // 将日期转换为本地字符串
+        console.log(d.toLocaleDateString())
+
+        // 将时间转换为本地字符串
+        console.log(d.toLocaleTimeString())
+
+        // 将日期转换为本地字符串
+        console.log(d.toLocaleString('zh-CN', {dateStyle: 'full', timeStyle: 'full'}))
+    </script>
+  </body>
+</html>
+
+```
+
+
+
+### 11. 包装类
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>包装类</title>
+  </head>
+  <body>
+    <script>
+        /*
+        在js中，除了直接创建原始值外，还可以创建原始值的对象：
+            - new String()
+            - new Number()
+            ......
+        
+        在js中有5个包装类：
+            - String
+            - Number
+            - Boolean
+            - BigInt
+            - Symbol
+        
+        通过包装类可以将一个原始值包装为一个对象
+        当我们对一个原始值调用方法或属性时，js解释器会临时将原始值包装为对应的对象，然后调用其对应的属性或方法
+
+        包装类一般情况下是js解释器使用的，不建议开发人员直接通过 new xxx()的形式调用包装类
+        */
+
+        let str = 'test'
+        console.log(str)
+        
+        let str1 = new String('test')
+        console.log(str1)
+    </script>
+  </body>
+</html>
+
+```
+
+
+
+### 12. 正则表达式
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>正则表达式</title>
+  </head>
+  <body>
+    <script>
+        /*
+        正则表达式：
+            - 用于定义一个规则，并通过它检查指定字符串是否符合规则，或将符合规则的内容提取出来
+        使用：
+            1. 在正则表达式中，大部分字符可以直接写
+            2. | 表示或
+            3. [] 表示字符集
+                - [a-z] 任意小写字母
+                - [A-Z] 任意大写字母
+                - [A-Za-z] 任意字母（不区分大小写）
+                - [0-9] 任意数字
+            4. [^] 表示不包含
+                - [^a] 不包含a
+            5. .表示除了换行符之外的任意字符
+            6. 在正则中使用 \ 作为转义字符
+            7. 其他字符集
+                - \w 任意单词字符 等价于 [A-Za-z0-9_]
+                - \W 除了任意单词字符 等价于 [^A-Za-z0-9_]
+                - \d 任意数字 [0-9]
+                - \D 除了数字 [^0-9]
+                - \s 空格
+                - \S 除了空格
+                - \b 单词边界
+                - \B 除了单词边界
+            8. 开头和结尾
+                - ^ 表示字符串的开头
+                    - /^a/ 表示以a开头
+                - $ 表示字符串的结尾
+                    - /a$/ 表示以a结尾
+        */
+
+        // 通过构造函数创建，参数：1.正则表达式，2.匹配模式
+        let reg = new RegExp('a', 'i')
+
+        // 使用字面量创建 /正则/匹配模式
+        reg = /a/i // 判断指定字符串中是否包含a，且忽略大小写判断
+
+        console.log(reg)
+        
+        let str = 'a'
+        console.log(reg.test(str)) //true
+
+        // 匹配换行符外的任意字符
+        reg = /./
+        console.log(reg.test(str)) //true
+
+        // 只匹配 .
+        reg = /\./
+        console.log(reg.test(str)) //false
+
+        // 只匹配字符串abc，要求指定字符串必须和正则一致
+        reg = /^abc$/
+        str = 'abc'
+        console.log(reg.test(str)) //true
+
+        str = 'abcabc'
+        console.log(reg.test(str)) //false
+    </script>
+  </body>
+</html>
+
+```
+
+
+
+### 13. 正则表达式-量词
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>正则表达式-量词</title>
+  </head>
+  <body>
+    <script>
+        /*
+        量词：
+            - {m} 指定字符串是否包含m个需要匹配的字符串
+            - {m,} 至少m个
+            - {m, n} m-n个
+            - + 至少一个（一个以上），等价于 {1,}
+            - * 任意数量个指定字符（包含0个）
+            - ? 0 - 1 个指定字符，等价于 {0, 1}
+        */
+
+        // 包含5个a
+        let reg = /a{5}/
+
+        let str = 'aaaaaaaa'
+        console.log(reg.test(str)) //true
+
+        // 以a开头和结尾，且只能包含5个a
+        reg = /^a{5}$/
+        console.log(reg.test(str)) //false
+        
+        // 量词只对前一个字符起作用，如果要包含指定字符串，需要使用括号
+        reg = /^ab{3}$/
+        str = 'abababc'
+        console.log(reg.test(str)) //false
+
+        // 使用括号
+        reg = /^(ab){3}$/
+        str = 'ababab'
+        console.log(reg.test(str)) //true
+
+        // 至少一个小写字母
+        reg = /^[a-z]{1,}$/
+        str = 'abcddff'
+        console.log(reg.test(str)) //true
+
+        // 1 - 3 个小写字母字符
+        reg = /^[a-z]{1, 3}$/
+        str = 'abcddff'
+        console.log(reg.test(str)) //false
+
+        // a之后至少一个b
+        reg = /^ab+$/
+        str = 'abb'
+        console.log(reg.test(str)) //true
+
+        // 任意个数个b，没有也行
+        reg = /^ab*$/
+        str = 'a'
+        console.log(reg.test(str)) //true
+
+        // 0 - 1个b
+        reg = /^ab?$/
+        str = 'abbb'
+        console.log(reg.test(str)) //false
+    </script>
+  </body>
+</html>
+
+```
+
+
+
+### 14. 正则表达式-exec方法
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>正则表达式-exec方法</title>
+  </head>
+  <body>
+    <script>
+        /*
+        reg.exec()：提取字符串中符合正则表达式的内容
+        */
+
+        let str = 'aycaicaoiuatc'
+        
+        // 提取指定字符串中符合 a[x]c 格式的字符串
+        // g 全局匹配
+        let reg = /a[a-z]c/ig
+        console.log(reg.exec(str))
+
+        // 分组
+        reg = /a([a-z])c/ig
+        let result = reg.exec(str)
+        console.log(result)
+        console.log(result[0])
+        console.log(result[1])
+        
+    </script>
+  </body>
+</html>
+
+```
+
+
+
+### 15. 正则表达式-字符串
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>正则表达式-字符串</title>
+  </head>
+  <body>
+    <script>
+        /*
+        split():
+            - 可以根据正则表达式来对一个字符串进行分割
+        search():
+            - 可以搜索符合正则表达式的内容第一次在指定字符串中出现的位置
+        replace():
+            - 根据正则表达式替换字符串中的内容
+        match():
+          - 根据正则表达式匹配字符串中符合要求的内容
+        matchAll():
+          - 根据正则表达式匹配字符串中符合要求的内容（必须设置 g 全局匹配，不然会报错）
+          - 返回值为迭代器
+        */
+
+        let str = 'akljlkj23io11eeol110009ojkpklsd9'
+        console.log(str.split(/[0-9]/))
+
+        console.log(str.search(/\d/))
+        
+        console.log(str.replace(/\d/g, '测试'))
+        
+        console.log(str.match(/\d/g))
+        
+        let result = str.matchAll(/\d/g)
+        for (let item of result) {
+          console.log(item)
+        }
+    </script>
+  </body>
+</html>
+
+```
