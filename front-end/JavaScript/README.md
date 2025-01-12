@@ -4975,3 +4975,1007 @@
 </html>
 
 ```
+
+
+
+## 十、DOM
+
+### 1. document对象
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>document对象</title>
+  </head>
+  <body>
+    <script>
+        /*
+        document对象:
+            - 表示的是整个网页
+            - 原型链：
+                HTMLDocument -> Document -> Node -> EventTarget -> Object.prototype -> null
+            - 部分属性：
+                - document.documentElement  html根元素
+                - document.head  head元素
+                - document.title  title元素
+                - document.body  body元素
+                - document.links  页面中的所有超链接
+                ......
+            - mdn文档：https://developer.mozilla.org/en-US/docs/Web/API/Document
+        */
+    </script>
+  </body>
+</html>
+
+```
+
+
+
+### 2. 元素节点
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>元素节点</title>
+  </head>
+  <body>
+    <script>
+        /*
+        元素节点：
+            - 在网页中，每一个标签都是一个元素节点
+            - 如何获取元素节点对象？
+                1. 通过document对象获取
+                2. 通过document对象创建
+            - 通过document来获取已有的元素节点：
+                - document.getElementById():
+                    - 根据id获取一个
+                - document.getElementsByClassName():
+                    - 根据元素的class属性值获取一组元素节点对象
+                    - 返回的是一个类数组对象，不是数组
+                    - 返回结果是实时更新的（即当网页中添加了新的元素，返回结果也会同步实时更新）
+                - document.getElementsByTagName():
+                    - 根据标签名获取一组元素节点对象
+                    - 同理getElementsByClassName()方法
+                    - document.getElementsByTagName("*") 获取网页中的所有元素节点对象
+                - document.getElementsByName():
+                    - 根据name属性获取一组元素节点对象
+                    - 同理getElementsByClassName()方法
+                    - 常用于获取 form 表单中的元素节点对象
+                - document.querySelectorAll():
+                    - 根据选择器获取元素节点对象
+                    - 返回结果是一个类数组对象（不会实时更新）
+                - document.querySelector():
+                    - 根据选择器获取网页中第一个符合条件的元素节点对象
+            - 创建元素节点对象：
+                - document.createElement():
+                    - 根据标签名创建元素节点对象
+                    - const div = document.createElement('div')
+        */
+    </script>
+  </body>
+</html>
+
+```
+
+
+
+### 3. 元素的属性和方法
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>元素的属性和方法</title>
+  </head>
+  <body>
+    <script>
+        /*
+        通过元素节点对象获取其他节点的方法：
+            - element.childNodes  获取当前元素的子节点（包含空白的子节点，文本，换行符等等）
+            - element.children  获取当前元素的子元素
+            - element.firstElementChild  获取当前元素的第一个子元素
+            - element.lastElementChild  获取当前元素的最后一个子元素
+            - element.nextElementSibling  获取当前元素的下一个兄弟元素
+            - element.previousElementSibling  获取当前元素的前一个兄弟元素
+            - element.parentNode  获取当前元素的父节点
+            - element.tagName  获取当前元素的标签名
+        */
+    </script>
+  </body>
+</html>
+
+```
+
+
+
+### 4. 文本节点
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>文本节点</title>
+  </head>
+  <body>
+    <script>
+        /*
+        网页中的所有文本内容都是文本节点对象
+            - element.textContent 获取或修改元素的文本内容
+                - 获取的是标签中的原始内容，不考虑css样式
+            - element.innerText 获取或修改元素的文本内容
+                - 当修改的内容中包含html元素时，会自动进行转义
+                - 获取内容时，会考虑css的样式（展示什么获取的就是什么）
+                - 读取css样式时，会触发网页的重排（计算css样式）
+            - element.innerHtml 获取或修改元素中的html代码
+                - 插入内容时，有xss注入风险
+        */
+    </script>
+  </body>
+</html>
+
+```
+
+
+
+### 5. 属性节点
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>属性节点</title>
+  </head>
+  <body>
+    <input id="aaaa" class="aaa" type="text" name="username" value="admin"/>
+
+    <script>
+        /*
+        属性节点（Attr）:
+            - 如何操作属性节点：
+                方式一：
+                    - 读取：元素.属性名（注：class属性需要使用calssName来读取）
+                    - 修改：元素.属性名 = 属性值
+                方式二：
+                    - 读取：元素.getAttribute(属性名)
+                    - 修改：元素.setAttribute(属性名, 属性值)
+                    - 删除：元素.removeAttribute(属性名)
+        */
+
+        const input = document.querySelector("[name=username]")
+        console.log('input.type:', input.type)
+        console.log('input.id:', input.id)
+        console.log('input.class:', input.className)
+        console.log('input.name:', input.name)
+        console.log('input.value:', input.value)
+        
+        //input.value = '孙笑川'
+
+        console.log('---------------------------------------');
+        
+        console.log('input.getAttribute(\'type\'):', input.getAttribute('type'))
+        console.log('input.getAttribute(\'id\'):', input.getAttribute('id'))
+        console.log('input.getAttribute(\'class\'):', input.getAttribute('class'))
+        console.log('input.getAttribute(\'name\'):', input.getAttribute('name'))
+        console.log('input.getAttribute(\'value\'):', input.getAttribute('value'))
+
+        input.setAttribute('value', '药水哥')
+        input.setAttribute('disabled', true)
+        input.removeAttribute('disabled')
+    </script>
+  </body>
+</html>
+
+```
+
+
+
+### 6. 事件
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>事件</title>
+  </head>
+  <body>
+    <!-- <button id="btn" onclick="alert('直接在元素的属性中设置')">点一下</button> -->
+    
+    <button id="btn">点一下</button>
+    <script>
+        /*
+        事件（Event）：
+            - 用户与网页之间发生的交互行为
+            - 可以通过为事件绑定响应函数，来完成与用户之间的交互
+            - 绑定方式：
+                1. 直接在元素的属性中设置
+                2. 为元素的指定属性设置回调函数来绑定（一个事件只能绑定一个响应函数，后来者居上）
+                3. 通过元素的 addEventListener() 方法来绑定（可以重复绑定，先绑定的谁，谁先执行）
+        */
+
+        const btn = document.getElementById('btn')
+        //btn.onclick = function() {
+        //    alert('为元素的指定属性设置回调函数来绑定')
+        //}
+
+        btn.addEventListener("click", function() {
+            alert('通过元素的 addEventListener() 方法来绑定')
+        })
+    </script>
+  </body>
+</html>
+
+```
+
+
+
+### 7. 文档的加载
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>文档的加载</title>
+    <script>
+        // 方式二
+        //window.onload = function() {
+        //    const btn = document.getElementById('btn')
+        //    console.log(btn)
+        //}
+
+        //window.addEventListener('load', function() {
+        //   const btn = document.getElementById('btn')
+        //   console.log(btn)
+        //})
+
+        // 方式三
+        //document.addEventListener('DOMContentLoaded', function() {
+        //    const btn = document.getElementById('btn')
+        //    console.log(btn)
+        //})
+    </script>
+    <script defer src="./script/index.js"></script>
+  </head>
+  <body>
+    <button id="btn">点一下</button>
+    <script>
+        /*
+        网页是自上而下加载的，如果将js代码编写到网页的上边（之前），js代码在执行时，网页还没有加载完毕，这时会出现无法获取DOM的情况
+
+        解决方案：
+            1. 将 script 标签放到 body 之后
+                - 所有方式中优先级最高
+            2. 将js代码写到 window.onload 的回调函数中
+                - 网页中所有的文档加载完后才执行
+            3. 将js代码写到 document 对象的 DOMContentLoaded 的回调函数中
+                - 当前文档加载完毕之后触发（相比方式二执行时机更早）
+            4. 将代码编写到外部的js文件中，然后以defer的形式引入
+                - 相比方式三执行时机更早
+        */
+
+        // 方式一
+        //const btn = document.getElementById('btn')
+        //console.log(btn)
+        
+    </script>
+  </body>
+</html>
+
+```
+
+
+
+index.js
+
+```js
+const btn = document.getElementById('btn')
+console.log(btn)
+```
+
+
+
+### 8. DOM的修改
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DOM的修改</title>
+  </head>
+  <body>
+    <button id="btn1">添加元素</button>
+    <button id="btn2">删除元素</button>
+    <button id="btn3">替换元素</button>
+    <ul id="list">
+        <li id="sxc">孙笑川</li>
+        <li id="ysg">药水哥</li>
+    </ul>
+    <script>
+        const list = document.getElementById('list')
+
+        const btn1 = document.getElementById('btn1')
+        btn1.onclick = function() {
+            // 创建新的li
+            const li = document.createElement('li')
+            li.innerText = 'Giao哥'
+            li.id = 'gg'
+
+            // appendChild() 给节点添加子节点
+            //list.appendChild(li)
+
+            /*
+            insertAdjacentElement()：
+                - 像元素的指定位置添加元素
+                - 参数：
+                    1. 要添加的位置：
+                        - beforeend 标签的最后
+                        - afterbegin 标签的开始
+                        - beforebegin 在当前元素的前边插入（即插入兄弟元素）
+                        - afterend 在当前元素的后边插入（即插入兄弟元素）
+                    2. 要添加的元素
+            */
+            //list.insertAdjacentElement('beforeend', li)
+
+            // 同理 insertAdjacentElement() 方法
+            list.insertAdjacentHTML('beforeend', '<li id="gg">Giao哥</>')
+        }
+
+        const btn2 = document.getElementById('btn2')
+        btn2.onclick = function() {
+            const sxc = document.getElementById('sxc')
+            sxc.remove()
+        }
+
+        const btn3 = document.getElementById('btn3')
+        btn3.onclick = function() {
+            const sxc = document.getElementById('sxc')
+            
+            const li = document.createElement('li')
+            li.innerText = 'Giao哥'
+            li.id = 'gg'
+            sxc.replaceWith(li)
+        }
+    </script>
+  </body>
+</html>
+
+```
+
+
+
+### 9. XSS注入问题
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>XSS注入问题</title>
+  </head>
+  <body>
+    <script>
+        /*
+        在涉及到需要将用户输入的内容插入到网页中时，
+        尽量使用 元素.innerText 或 元素.textContent 方法代替 元素.innerHTML 方法
+        前两种方法在赋值时会进行转义
+        */
+    </script>
+  </body>
+</html>
+
+```
+
+
+
+### 10. 节点的复制
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>节点的复制</title>
+</head>
+<body>
+    <button id="btn">复制节点</button>
+    <ul id="list1">
+        <li id="l1">孙笑川</li>
+        <li id="l2">药水哥</li>
+        <li id="l3">Giao哥</li>
+    </ul>
+
+    <ul id="list2">
+        <li>刘波</li>
+    </ul>
+
+    <script>
+        // 点击按钮后，复制list1的节点到list2
+        const list1 = document.getElementById('list1')
+        const list2 = document.getElementById('list2')
+
+        const l1 = document.getElementById('l1')
+
+        const btn = document.getElementById('btn')
+        btn.onclick = function() {
+            /*
+            cloneNode() 方法：
+                - 参数：
+                    - false（默认值） 复制节点的所有属性，但不包括子节点
+                    - true 复制所有信息，包括子节点
+            */
+           const newL1 = l1.cloneNode(true)
+           newL1.id = 'newL1'
+           list2.appendChild(newL1)
+        }
+    </script>
+</body>
+</html>
+```
+
+
+
+### 11. 修改css样式
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>修改css样式</title>
+    <style>
+        .box1 {
+            width: 200px;
+            height: 200px;
+            background-color: lightblue;
+        }
+
+        .box2 {
+            width: 300px;
+            height: 300px;
+            border: 1px black solid;
+            background-color: lightgreen;
+        }
+    </style>
+</head>
+<body>
+    <button id="btn">修改样式</button>
+    <hr/>
+
+    <div class="box1"></div>
+
+    <script>
+        // 点击按钮后修改box1的样式
+        const box1 = document.getElementsByClassName('box1')[0]
+
+        const btn = document.getElementById('btn')
+
+        // 直接修改样式（不建议直接使用）
+        // btn.onclick = function() {
+        //     // 修改宽度
+        //     // 元素.style.样式名（小驼峰） = 样式值
+        //     box1.style.width = '300px'
+        //     box1.style.backgroundColor = 'lightgreen'    
+        // }
+
+        // 通过class属性间接修改样式
+        btn.onclick = function() {
+            // 不建议这么操作
+            // box1.className += ' box2'
+
+            /*
+            元素.classList:
+                - 是一个对象，提供了对当前元素的 class 的各种操作方法
+                - 常用方法：
+                    - add(): 向元素中添加一个或多个 class
+                    - remove(): 移除指定 class
+                    - toggle(): 切换元素的class（一次只能操作一个）
+                    - replace(): 替换 class
+                    - contains(): 检查是否包含指定 class
+            */
+            // box1.classList.add('box2', 'box3')
+            // box1.classList.remove('box2')
+            // box1.classList.toggle('box2')
+            // box1.classList.replace('box1', 'box2')
+            console.log(box1.classList.contains('box1'))
+
+        }
+    </script>
+</body>
+</html>
+```
+
+
+
+### 12. 读取css样式
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>读取css样式</title>
+    <style>
+        .box1 {
+            width: 200px;
+            height: 200px;
+            background-color: lightblue;
+        }
+
+        .box1::before {
+            color: blueviolet;
+            content: '测试';
+        }
+    </style>
+</head>
+<body>
+    <button id="btn">读取样式</button>
+    <hr/>
+
+    <div class="box1"></div>
+
+    <script>
+        // 点击按钮后读取css样式
+        const box1 = document.getElementsByClassName('box1')[0]
+
+        const btn = document.getElementById('btn')
+        btn.onclick = function() {
+            /*
+            getComputedStyle():
+                - 读取指定元素所有生效的样式，以对象的形式返回
+                - 参数：
+                    1. 要获取样式的对象
+                    2. 要获取的伪元素
+                - 注：样式对象中返回的值不一定能直接拿来计算，
+                        有可能是 auto 等等
+            */
+            const styleObj = getComputedStyle(box1)
+            console.log(styleObj)
+
+            const box1Before = getComputedStyle(box1, '::before')
+            console.log(box1Before.content)
+        }
+    </script>
+</body>
+</html>
+```
+
+
+
+### 13. 通过属性读取样式
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>通过属性读取样式</title>
+    <style>
+        .box1 {
+            width: 200px;
+            height: 200px;
+            background-color: lightblue;
+            margin: 50px;
+            padding: 50px;
+            border: 2px black solid;
+            overflow: auto;
+        }
+
+        .box2 {
+            width: 100px;
+            height: 500px;
+            background-color: lightcoral;
+        }
+    </style>
+</head>
+<body>
+    <button id="btn">读取样式</button>
+    <hr/>
+    <div id="box1" class="box1">
+        <div id="box2" class="box2"></div>
+    </div>
+
+    <script>
+        const btn = document.getElementById('btn')
+        const box1 = document.getElementById('box1')
+
+        btn.onclick = function() {
+            /*
+            获取元素内部的高度和宽度（包括内容区和内边距）：
+                元素.clientWidth
+                元素.clientHeight
+
+            获取元素的可见框的大小（包括内容区，内/外边距）：
+                元素.offsetHeight
+                元素.offsetWidthyuan
+            
+            获取元素滚动区域的大小：
+                元素.scrollHeight
+                元素.scrollWidth
+            
+            获取元素的定位父元素：
+                元素.offsetParent
+                注：定位父元素：离当前元素最近的开启了定位的祖先元素，如果都没有开启，则返回body
+            
+            获取元素相对于其定位父元素的偏移量：
+                元素.offsetTop
+                元素.offsetLeft
+            
+            获取元素滚动条的偏移量：
+                元素.scrollTop
+                元素.scrollLeft
+            */
+            console.log(box1.scrollTop)
+            console.log(box1.scrollLeft)
+
+        }
+    </script>
+</body>
+</html>
+```
+
+
+
+### 14. 事件
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>事件</title>
+    <style>
+        .box1 {
+            width: 300px;
+            height: 300px;
+            background-color: lightblue;
+            border: 1px black solid;
+        }
+    </style>
+  </head>
+  <body>
+    <div id="box1" class="box1"></div>
+
+    <script>
+        /*
+        事件（Event）：
+            - 浏览器在事件触发时所创建的对象
+            - 如：鼠标的坐标、键盘的按键等等
+            - 浏览器在创建事件对象后，会将其作为响应函数的参数传递
+              可以在事件的回调函数中定义一个形参来接收事件对象
+        */
+
+        const box1 = document.getElementById('box1')
+
+        // box1.onmousemove = function(event) {
+        //     console.log(event)
+        // }
+
+        // box1.onmousemove = event => {
+        //     console.log(event)
+        // }
+
+        // box1.addEventListener('mousemove', function() {
+        //     console.log(event)
+        // })
+
+        box1.addEventListener('mousemove', event => {
+            console.log(event)
+        })
+        
+    </script>
+  </body>
+</html>
+
+```
+
+
+
+### 15.事件对象
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>事件对象</title>
+    <style>
+        .box1 {
+            width: 300px;
+            height: 300px;
+            background-color: lightblue;
+            border: 1px black solid;
+        }
+
+        .box2 {
+            width: 150px;
+            height: 150px;
+            background-color: lightcoral;
+            border: 1px black solid;
+        }
+
+        .box3 {
+            width: 75px;
+            height: 75px;
+            background-color: lightseagreen;
+            border: 1px black solid;
+        }
+    </style>
+  </head>
+  <body>
+    <div id="box1" class="box1">
+        <div id="box2" class="box2">
+            <div id="box3" class="box3"></div>
+        </div>
+    </div>
+
+    <a id="test" href="https://www.bing.com" target="_blank">点击跳转</a>
+    <script>
+        /*
+        DOM中有多种不同类型的事件对象：
+            - 共同祖先 Event：
+                - event.target 表示触发事件的对象
+                - event.currentTarget 绑定事件的对象（与this同理）
+                - event.stopPropagation() 停止事件的传递
+                - event.preventDefault() 取消事件的默认行为（推荐使用）
+            - 事件的冒泡（bubble）：
+                - 指事件的向上传递
+                - 当元素上的某个事件被触发后，其祖先元素上的相同的事件也被同时触发
+        */
+        const box1 = document.getElementById('box1')
+        box1.onclick = event => {
+            console.log('box1', event.target)
+            alert('box1')
+        }
+
+        const box2 = document.getElementById('box2')
+        box2.onclick = event => {
+            console.log('box2', event.target)
+            alert('box2')
+        }
+
+        const box3 = document.getElementById('box3')
+        box3.onclick = event => {
+            console.log('box3', event.target)
+
+            // 停止冒泡事件
+            event.stopPropagation()
+            alert('box2')
+        }
+
+        const test = document.getElementById('test')
+        test.addEventListener('click', event => {
+            // 取消事件的默认行为
+            event.preventDefault()
+            
+            alert('点击后不进行超链接跳转')
+        })
+    </script>
+  </body>
+</html>
+
+```
+
+
+
+### 16. 事件的冒泡
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>事件的冒泡</title>
+    <style>
+      .box1 {
+        width: 75px;
+        height: 75px;
+        background-color: lightblue;
+        border-radius: 50%;
+        position: absolute;
+      }
+
+      .box2 {
+        width: 300px;
+        height: 300px;
+        background-color: lightcoral;
+      }
+
+      .box3 {
+        width: 200px;
+        height: 200px;
+        background-color: lightgreen;
+      }
+
+      .box4 {
+        width: 150px;
+        height: 150px;
+        background-color: lightgray;
+        position: absolute;
+        bottom: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="box1" class="box1"></div>
+
+    <div id="box2" class="box2"></div>
+
+    <div id="box3" class="box3" onclick="alert('box3')">
+      <div id="box4" class="box4" onclick="alert('box4')"></div>
+    </div>
+
+    <script>
+      // 使box1跟随鼠标移动
+      document.addEventListener("mousemove", (event) => {
+        box1.style.left = event.x + "px"
+        box1.style.top = event.y + "px"
+      })
+
+      const box2 = document.getElementById("box2")
+      box2.addEventListener("mousemove", (event) => {
+        event.stopPropagation()
+      })
+
+      // 点击box4依然会触发事件冒泡，弹出box3，即事件的冒泡与元素的样式无关，只与结构有关
+    </script>
+  </body>
+</html>
+
+```
+
+
+
+### 17. 事件委派
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>事件委派</title>
+  </head>
+  <body>
+    <button id="btn">添加</button>
+
+    <ul id="list">
+      <li><a href="javascript:;">链接一</a></li>
+      <li><a href="javascript:;">链接二</a></li>
+      <li><a href="javascript:;">链接三</a></li>
+      <li><a href="javascript:;">链接四</a></li>
+    </ul>
+
+    <script>
+      const links = document.getElementsByTagName("a")
+      // for (let i = 0; i < links.length; i++) {
+      //     links[i].addEventListener('click', event => {
+      //         alert(links[i].textContent)
+      //     })
+      // }
+
+      const list = document.getElementById("list")
+      const btn = document.getElementById("btn")
+      btn.addEventListener("click", () => {
+        list.insertAdjacentHTML("beforeend", `<li><a href="javascript:;">链接${Math.ceil(Math.random() * 10)}</a></li>`)
+      })
+
+      //需求：只进行一次事件绑定，即可让所有的超链接（不管是原有的还是新添加的）都具有指定的事件
+      document.addEventListener("click", (event) => {
+        if ([...links].includes(event.target)) {
+            alert(event.target.textContent)
+        }
+      })
+
+      /*
+      事件委派：
+        - 将原本绑定给多个元素的事件，统一绑定给document（此处以绑定给document为例，绑定的对象随业务场景的不同而不同）
+        - 降低代码的复杂度
+      */
+    </script>
+  </body>
+</html>
+
+```
+
+
+
+### 18. 事件的捕获
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>事件的捕获</title>
+    <style>
+      .box1 {
+        width: 300px;
+        height: 300px;
+        background-color: lightblue;
+      }
+
+      .box2 {
+        width: 200px;
+        height: 200px;
+        background-color: lightcoral;
+      }
+
+      .box3 {
+        width: 100px;
+        height: 100px;
+        background-color: lightgrey;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="box1" class="box1">
+      <div id="box2" class="box2">
+        <div id="box3" class="box3"></div>
+      </div>
+    </div>
+
+    <script>
+        /*
+        事件的传播机制：
+            - 在DOM中，分为三个阶段：
+                1. 捕获阶段（由祖先元素向目标元素进行事件的捕获）
+                2. 目标阶段（触发事件的对象）
+                3. 冒泡阶段（由目标元素向祖先元素进行事件的冒泡）
+                    - 默认情况下是在冒泡阶段触发事件
+            - 事件的捕获：
+                - 指事件从外向内的传导
+                - document -> html -> body -> 具体元素
+                - 默认情况下，事件不会再捕获阶段触发
+                - 可以通过设置 元素.addEventListener() 方法的第三个参数为true来在捕获阶段触发事件（一般不这么使用）
+        */
+       const box1 = document.getElementById('box1')
+       const box2 = document.getElementById('box2')
+       const box3 = document.getElementById('box3')
+
+       // 通过设置第三个参数为true，在捕获阶段触发点击事件
+       // 此时 alert 的顺序为：box1 -> box2 -> box3
+       // 一般情况下不会这么使用
+       box1.addEventListener('click', event => {
+        alert('box1 - ' + event.eventPhase)
+        // event.eventPhase 事件触发的阶段
+        // 1：捕获阶段 2：目标阶段 3：冒泡阶段
+       }, true)
+
+       box2.addEventListener('click', event => {
+        alert('box2 - ' + event.eventPhase)
+       }, true)
+
+       box3.addEventListener('click', event => {
+        alert('box3 - ' + event.eventPhase)
+       }, true)
+    </script>
+  </body>
+</html>
+
+```
