@@ -5322,7 +5322,7 @@ console.log(btn)
 
             /*
             insertAdjacentElement()：
-                - 像元素的指定位置添加元素
+                - 向元素的指定位置添加元素
                 - 参数：
                     1. 要添加的位置：
                         - beforeend 标签的最后
@@ -5979,3 +5979,317 @@ console.log(btn)
 </html>
 
 ```
+
+
+
+### 19. BOM对象
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BOM对象</title>
+  </head>
+  <body>
+    <script>
+        /*
+        BOM:
+            - 浏览器对象模型
+            - 通过BOM对象，可以完成对浏览器的各种操作
+            - 五个BOM对象：
+                - Window：浏览器窗口（全局对象）
+                - Navigator：浏览器的对象
+                - Location：浏览器的地址栏信息
+                - History：浏览器的历史记录（控制浏览器的前进后退）
+                - Screen：屏幕信息
+        */
+    </script>
+  </body>
+</html>
+
+```
+
+
+
+### 20. Navigator
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Navigator</title>
+  </head>
+  <body>
+    <script>
+        /*
+        Navigator（浏览器的对象）：
+            - mdn文档：https://developer.mozilla.org/en-US/docs/Web/API/Navigator
+        */
+
+        console.log(navigator.userAgent)
+        
+    </script>
+  </body>
+</html>
+
+```
+
+
+
+### 21. Location
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Location</title>
+  </head>
+  <body>
+    <button id="btn">点一下</button>
+    
+    <script>
+        /*
+        Location（浏览器的地址栏信息）：
+            - mdn文档：https://developer.mozilla.org/en-US/docs/Web/API/Location
+        */
+       const btn = document.getElementById('btn')
+       btn.addEventListener('click', () => {
+        // 可以直接给location赋值，表示跳转到指定地址
+        // location = 'https://www.bing.com'
+        
+        // 等价于直接赋值
+        //location.assign('https://www.bing.com')
+
+        // 执行替换之后不能通过历史记录回退
+        //location.replace('https://www.bing.com')
+
+        // 刷新页面
+        // location.reload()
+        // 强制清缓存刷新 Ctrl + F5
+        location.reload(true)
+       })
+    </script>
+  </body>
+</html>
+
+```
+
+
+
+### 22. History
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>History</title>
+  </head>
+  <body>
+    <button id="btn">点一下</button>
+
+    <script>
+        /*
+        History（浏览器的历史记录）：
+            - mdn文档：https://developer.mozilla.org/en-US/docs/Web/API/History
+        */
+
+        const btn = document.getElementById('btn')
+        btn.addEventListener('click', () => {
+            // 后退
+            // history.back()
+
+            // 前进
+            // history.forward()
+
+            // 1：前进1，-1：后退1
+            history.go(1)
+        })
+        console.log('历史记录的数量：', history.length)
+        
+    </script>
+  </body>
+</html>
+
+```
+
+
+
+### 23. 定时器
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>定时器</title>
+</head>
+<body>
+    <div id="num"></div>
+    <script>
+        /*
+        定时器：
+            - 让代码在指定时间后执行
+            - 设置方式：
+                1. setTimeout():
+                    - 参数：
+                        1. 回调函数
+                        2. 延迟的时间（单位毫秒）
+                    - 关闭定时器：
+                        - clearTimeout()
+                2. setInterval():
+                    - 每间隔一段时间，代码就执行一次
+                    - 参数：
+                        1. 回调函数
+                        2. 延迟的时间（单位毫秒）
+                    - 关闭定时器：
+                        - clearInterval()
+        */
+
+        const timer = setTimeout(() => {
+            alert('延迟1.5s再执行')
+        }, 1500)
+
+        // 关闭定时器
+        clearTimeout(timer)
+
+        const timer1 = setInterval(() => {
+            alert('延迟2s再执行')
+        }, 2000)
+
+        clearInterval(timer1)
+
+        // const num = document.getElementById('num')
+
+        // let index = 0
+        // setInterval(() => {
+        //     index ++
+        //     num.textContent = index
+        // }, 2000)
+
+        /*
+        定时器的本质，即在指定时间后将函数添加到消息队列中
+        注：函数实际的执行时间要看调用栈的情况
+        */
+        // console.time()
+        // setTimeout(() => {
+        //     console.timeEnd()
+        //     console.log('setTimeout()定时器执行了...')
+
+        //     // 打印结果为：
+        //     // default: 5003.26904296875 ms
+        //     // 定时器执行了...
+        // }, 3000)
+
+        // const begin = Date.now()
+        // while (Date.now() - begin < 5000) {}
+
+        /*
+        setInterval()方法每隔一段时间就将函数添加到消息队列中，
+        但函数执行的间隔时间受函数自身执行速度的影响，所以每次的间隔时间不一定是定时器中指定的间隔时间
+        */
+        // console.time()
+        // setInterval(() => {
+        //     console.timeEnd()
+        //     console.log('setInterval()定时器执行了...')
+        //     alert('setInterval()')
+        //     console.time()
+        // }, 3000)
+
+        // 需求：确保函数每一次执行的间隔时间都相同
+        // console.time()
+        // setTimeout(function test() {
+        //     console.timeEnd()
+        //     console.log('确保函数每一次执行的间隔时间都相同')
+        //     console.time()
+
+        //     setTimeout(test, 3000)
+        // }, 3000)
+
+        // 打印结果为 222 \n 111
+        // console.log(222)在主调用栈中，优先级最高
+        // console.log(111)是在定时器等待0ms后将函数投递到消息队列中
+        setTimeout(() => {
+            console.log(111)
+        }, 0)
+
+        console.log(222)
+        
+    </script>
+</body>
+</html>
+```
+
+
+
+### 24. 事件循环
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>事件循环</title>
+  </head>
+  <body>
+    <button id="btn">点一下</button>
+    <button id="btn1">消息队列测试</button>
+    <script>
+        /*
+        事件循环（Event Loop）：
+            - 函数在每次执行时，都会产生一个执行环境
+            - 执行环境负责存储函数执行时产生的一切数据
+        
+        调用栈（Call Stack）：
+            - 后进先出（后来者居上）
+            - 负责存储函数的执行环境
+            - 当一个函数被调用时，它的执行环境会作为一个栈帧，
+              插入到调用栈的栈顶，执行完之后改栈帧会自动弹出
+        
+        消息队列：
+            - 先进先出
+            - 负责存储将要执行的函数
+            - 当触发一个事件时，其执行函数并不是直接添加到调用栈中
+              即：事件触发后，js引擎将事件响应函数插入到消息队列中排队
+        */
+
+        function test() {
+            console.log('执行test函数')
+            
+            function test1() {
+                console.log('执行test1函数')
+                
+            }
+
+            console.log('test执行完毕')
+        }
+
+        // test()
+
+        const btn = document.getElementById('btn')
+        btn.addEventListener('click', () => {
+            alert('btn按钮')
+
+            const begin = Date.now()
+            while (Date.now() - begin < 3000) {}
+        })
+
+        const btn1 = document.getElementById('btn1')
+        btn1.addEventListener('click', () => {
+            alert('btn1按钮')
+        })
+    </script>
+  </body>
+</html>
+
+```
+
