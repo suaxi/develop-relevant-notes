@@ -135,3 +135,174 @@ print(bool(""))
 
 ```
 
+
+
+## 二、运算符与表达式
+
+### 1. 算术运算符
+
+```python
+# 算术运算符
+a = 1
+b = 2
+
+# 加
+print(a + b)
+
+# 减
+print(a - b)
+
+# 乘
+print(a * b)
+
+# 除
+print(a / b)
+
+# 整除（取整）
+print(a // b)
+
+# 求模
+print(a % b)
+
+# 幂运算
+print(a ** 2)
+
+```
+
+
+
+### 2. 赋值运算符
+
+```python
+# 赋值运算符
+a = 1
+
+# 自增
+a += 1
+print(a)
+
+# 自减
+a -= 1
+print(a)
+
+```
+
+
+
+### 3. 比较运算符
+
+```python
+# 比较运算符
+a = 1
+b = 2
+
+# 不等于 !=
+print(a != b)
+
+# 等于 ==
+print(a == b)
+
+# 字符串比较（比较的是每个字符的ascii码值）
+print("abc" < "efg")
+
+print("abc" == False)
+
+```
+
+
+
+### 4. 逻辑运算符
+
+```python
+# 逻辑运算符
+# 与 and
+print(1 and 2)
+print(False and True)
+print("abc" and "edg") # 短路运算，按字符顺序比较，当第一个字符 e > a 时，返回edg
+
+# 或 or
+print(1 or 2)
+print(0 or 1)
+print(False or True)
+
+# 非 not
+print(not 1)
+print(not False)
+print(not "")
+
+# 三者之间的优先级关系 not > and > or
+print(True or False and not False)
+
+```
+
+
+
+### 5. 位运算符
+
+```python
+# 位运算符
+# 按位与 &
+'''
+101
+111
+---
+101
+'''
+print(5 & 7)
+
+# 按位或 |
+'''
+101
+111
+---
+111
+'''
+print(5 | 7)
+
+# 按位异或
+'''
+101
+111
+---
+010
+'''
+print(5 ^ 7)
+
+# 按位取反 ~
+'''
+101
+---
+010
+'''
+print(~5)
+
+# 左移 右移
+'''
+101
+---
+10100
+'''
+print(5 << 2)
+
+```
+
+
+
+### 6. 成员运算符
+
+```python
+# 成员运算符
+str = "这是一个字符串"
+print("a" in str)
+
+a = 1
+b = 2
+print(a is b)
+print(a is not b)
+
+```
+
+
+
+
+
