@@ -304,5 +304,77 @@ print(a is not b)
 
 
 
+## 三、条件判断
 
+### 1. 单分支
+
+```python
+# 单分支
+flag = 1
+
+if flag == 1:
+    print("标志位为1")
+
+if True:
+    print("符合判断条件")
+```
+
+
+
+### 2. 双分支
+
+```python
+# 双分支
+flag = 1
+
+if flag == 1:
+    print("标志位为1")
+else:
+    print("标志位不为1")
+
+if True:
+    print("符合判断条件")
+else:
+    print("不符合判断条件")
+
+```
+
+
+
+### 3. 多分支
+
+```python
+# 多分支
+flag = 1
+
+if flag == 1:
+    print("标志位为1")
+elif flag == 2:
+    print("标志位为2")
+elif flag == 3:
+    print("标志位为3")
+else:
+    print("未匹配到对应的标志位")
+
+```
+
+
+
+### 4. match
+
+```python
+# match
+flag = 1
+
+match flag:
+    case 1:
+        print("标志位为1")
+    case 2:
+        print("标志位为2")
+    case 3:
+        print("标志位为3")
+    case _:
+        print("未匹配到对应的标志位")
+
+```
 
