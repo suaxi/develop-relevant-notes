@@ -378,3 +378,69 @@ match flag:
 
 ```
 
+
+
+## 四、循环
+
+### 1. while
+
+```python
+# while
+index = 0
+while index < 100:
+    print(index)
+    index += 1
+
+```
+
+
+
+### 2. for
+
+```python
+# for
+for i in range(100):
+    print(i)
+
+# 求n的阶乘
+result = 0
+index = 1
+while index <= 5:
+    current_result = 1
+    m = 1
+    while m <= index:
+        current_result = current_result * m
+        m += 1
+    result += current_result
+    index += 1
+print("5的阶乘为：%d" % result)
+
+```
+
+
+
+### 3. break
+
+```python
+# break
+for i in range(10):
+    print(i)
+    if i == 3:
+        print("结束循环")
+        break
+
+```
+
+
+
+### 4. continue
+
+```python
+# continue
+for i in range(10):
+    if i == 5:
+        continue
+    print(i)
+
+```
+
