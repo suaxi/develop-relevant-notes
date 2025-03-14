@@ -444,3 +444,278 @@ for i in range(10):
 
 ```
 
+
+
+## 五、组合数据类型
+
+### 1. 列表
+
+```python
+# 列表
+list = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+print(list)
+
+# 索引
+print(list[1])
+
+# 切片
+print(list[::-1])
+
+# 内置函数
+print(min(list))
+print(max(list))
+print(len(list))
+print('-------------------------')
+
+# 遍历
+for i in list:
+    print(i)
+
+for i, index in enumerate(list):
+    print(i, index)
+
+for i in range(len(list)):
+    print(i, list[i])
+
+# 常用方法
+# 添加元素
+list.append('a')
+list.extend('extend')
+print(list)
+print('-------------------------')
+
+# 插入元素
+list.insert(1, 'b')
+print(list)
+print('-------------------------')
+
+# 根据索引删除元素
+list.pop(1)
+print(list)
+print('-------------------------')
+
+# 删除指定元素
+list.remove(1)
+print(list)
+print('-------------------------')
+
+# 清空列表
+list.clear()
+print(list)
+
+```
+
+
+
+### 2. 元组
+
+```python
+# 元组
+tuple1 = (1, 2, 3, 4, 5, 6)
+print(type(tuple1))
+print(tuple1)
+
+temp_tuple = (1,)  # 元组中只有一个元素时，加一个逗号
+print(type(temp_tuple))
+print('-------------------------')
+
+# 类型转换
+# str ---> tuple
+print(tuple('abc'))
+
+# list ---> tuple
+print(tuple([1, 2, 3]))
+print('-------------------------')
+
+# 索引
+print(tuple1[1])
+
+# 切片
+print(tuple1[::-1])
+
+# 常用方法
+print(min(tuple1))
+print(max(tuple1))
+print(len(tuple1))
+print('-------------------------')
+
+# 遍历
+for i in tuple1:
+    print(i)
+
+for index, item in enumerate(tuple1):
+    print(index, item)
+
+for i in range(len(tuple1)):
+    print(tuple1[i])
+
+```
+
+
+
+### 3. 字符串
+
+```python
+# 字符串
+str = 'sunxiaochuan,liubo'
+
+print(min(str))
+print(max(str))
+print(len(str))
+print('-------------------------')
+
+# 遍历
+for i in str:
+    print(i)
+
+for index, item in enumerate(str):
+    print(index, item)
+
+for i in range(len(str)):
+    print(str[i])
+print('-------------------------')
+
+# 常用方法
+print(str.islower())
+print(str.isupper())
+print(str.count('c'))
+print(str.split(','))
+print(str.find('l'))
+
+```
+
+
+
+### 4. 字典
+
+```python
+# 字典
+d = {}
+print(type(d))  # <class 'dict'>
+
+# 新增值（键值对）
+d['name'] = 'sunxiaochuan'
+d['age'] = 33
+print(d)
+
+# 获取键值对
+print(d['name'])
+
+# 修改
+d['age'] = 30
+print(d)
+print('-------------------------')
+
+# 遍历
+for i in d:
+    print(i, d[i])
+
+for k, v in d.items():
+    print(f'{k} = {v}')
+
+for k in d.keys():
+    print(k)
+
+for value in d.values():
+    print(value)
+print('-------------------------')
+
+# 常用方法
+# d.pop('name')
+# print(d)
+
+new_dictionary = d.copy()
+print(new_dictionary)
+
+name = d.get('name')
+print(name)
+
+# d.popitem()
+# print(d)
+
+d.update({'age': 50})
+print(d)
+
+```
+
+
+
+### 5. 集合
+
+```python
+# 集合
+s = set()
+
+s = {1, 2, 3, 4, 5}
+# s1 = set([1, 2, 3, 4, 5])  # list ---> set
+# s2 = set((1, 2, 3, 4, 5))  # tuple ---> set
+# s3 = set('12345')  # str ---> list
+# s4 = set({'key1': 'value1', 'key2': 1})  # dict ---> list
+
+# 常用方法
+print(1 in s)
+print(len(s))
+print(min(s))
+print(max(s))
+# del s  # 删除集合
+
+s.add('a')
+print(s)
+s.remove(1)
+print(s)
+s.update({'a', 'b', 'c'})
+print(s)
+
+print('-------------------------')
+
+# 遍历
+for i in s:
+    print(i)
+
+print('-------------------------')
+
+s1 = {1, 2, 3, 'a', 88}
+s2 = {'c', 'b', 3, 1, 'f'}
+print(s1 & s2)  # 交集
+print(s1 | s2)  # 并集
+print('-------------------------')
+
+# 去重
+s3 = set([1, 1, 2, 3, 4, 5, 6, 6, 7])
+print(s3)
+
+```
+
+
+
+## 六、异常处理
+
+```python
+# 异常处理
+try:
+    n = int(input('请输入被除数：'))
+    i = 10 / n
+    print(i)
+except ZeroDivisionError as e:
+    print('除数不能为0')
+except:
+    print('请输入正确的数字！')
+else:
+    print('未被except捕获')
+finally:
+    print('执行完毕')
+
+print('----------------------')
+
+# 抛出异常
+try:
+    n = input('请输入一个任意数字：')
+    if not n.isdigit():
+        raise Exception('输入的内容有误，请检查！')
+    else:
+        print('您输入的数字是：%d' % n)
+except Exception as e:
+    print(e)
+
+```
+
