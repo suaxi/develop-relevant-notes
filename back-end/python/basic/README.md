@@ -804,3 +804,104 @@ print(list(filter(lambda x: x % 2 != 0, arr)))
 
 ```
 
+
+
+## 八、模块
+
+*此处以 random、正则、socket 为例*
+
+### 1. random
+
+```python
+# random
+import random
+
+# 随机小数
+print(random.random())
+
+# 1 - 10 之间的随机数
+print(random.randint(1, 10))
+
+```
+
+
+
+### 2. 正则
+
+```python
+# 正则
+import re
+
+# \d 数字
+result = re.match(r'\d+', '123abc')
+print(result)  # 123
+
+# \w 数字、字母、下划线
+result = re.match(r'\w+', '1a2b3c!')
+print(result)  # 1a2b3c
+
+# \s 空白字符串；\S 非空字符串
+result = re.match(r'^\s+$', '1 2 3')
+print(result)  # None
+
+result = re.match(r'^\S+$', '1 abc')
+print(result)  # None
+
+# . 任意字符
+result = re.match(r'.+$', 'abc 1q2')
+print(result)  # abc 1q2
+
+# [] 区间
+result = re.match(r'^a[1a]', 'a123456')
+print(result)  # a1
+
+# | 或
+result = re.match(r'^a|1|c$', 'a12345c')
+print(result)  # a
+
+```
+
+
+
+### 3. socket
+
+#### 3.1 server
+
+```python
+# socket
+import socket
+
+sk = socket.socket()
+sk.bind(('127.0.0.1', 8088))
+sk.listen(5)
+
+conn, addr = sk.accept()
+print(conn)
+print(addr)
+
+while True:
+    accept_data = conn.recv(1024)
+    print('收到客户端发送的消息：', accept_data.decode('utf-8'))
+    send_data = input('请输入要回复的消息：')
+    conn.send(send_data.encode('utf-8'))
+```
+
+
+
+#### 3.2 client
+
+```python
+# socket
+import socket
+
+sk = socket.socket()
+sk.connect(('127.0.0.1', 8088))
+
+while True:
+    sand_data = input('请输入要发送的消息：')
+    sk.send(sand_data.encode('utf-8'))
+    accept_data = sk.recv(1024)
+    print(accept_data.decode('utf-8'))
+
+```
+
