@@ -719,3 +719,88 @@ except Exception as e:
 
 ```
 
+
+
+## 七、函数
+
+### 1. 函数
+
+```python
+# 函数
+def say_hello(name):
+    print('大家好，我叫', name)
+
+
+say_hello('孙笑川')
+
+
+# 可变参数
+def test(*args):
+    print(args)
+
+
+test(1, 2, 3, 4)
+
+
+def test_1(**kwargs):
+    for key, value in kwargs.items():
+        print(key, value)
+
+
+test_1(**{'name': '孙笑川', 'age': 33, 'address': '成都'})
+
+```
+
+
+
+### 2. 变量的作用域
+
+```python
+# 变量的作用域
+
+# 不可变数据类型
+index = 1
+
+# 可变数据类型
+list = [1, 2, 3]
+
+
+def test():
+    global index  # 全局变量
+    index = 20
+    index1 = 30
+    list[1] = 300
+
+
+test()
+
+# print('函数执行完后打印index1的值', index1)  # 报错 Unresolved reference 'index1'
+print('函数执行完后打印index的值', index)  # 20
+print('函数执行完后打印list的值', list)  # [1, 300, 3]
+
+```
+
+
+
+### 3. 匿名函数
+
+```python
+# 匿名函数
+test = lambda x, y: x + y
+print(test(1, 2))
+
+arr = [1, 2, 3, 4]
+# 映射
+result = map(lambda x: x ** 2, arr)
+print(list(result))
+
+# 归约
+from functools import reduce
+
+print(reduce(lambda x, y: x * y, arr))
+
+# 过滤
+print(list(filter(lambda x: x % 2 != 0, arr)))
+
+```
+
