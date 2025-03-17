@@ -905,3 +905,77 @@ while True:
 
 ```
 
+
+
+## 九、文件及IO操作
+
+### 1. 读取文件
+
+```python
+# 读取文件
+import os
+
+# 绝对路径
+# absolute_path = os.getcwd()
+# file_name = absolute_path + '/test.txt'
+# f = open(file_name, mode='r', encoding='utf-8')
+
+# 相对路径
+f = open('test.txt', mode='r', encoding='utf-8')
+# content = f.read()  # 读取全部
+# content = f.readline()  # 读取一行
+content = f.readlines()  # 按行读取
+print(content)
+
+# 关闭
+f.close()
+
+```
+
+
+
+### 2. 写文件
+
+```python
+# 写文件
+f = open('test.txt', mode='w', encoding='utf-8')
+f.write('大家好\n')
+
+write_content = ['孙笑川\n', '刘波\n']
+f.writelines(write_content)
+f.close()
+
+f = open('test.txt', mode='r', encoding='utf-8')
+read_content = f.read()
+print(read_content)
+f.close()
+
+```
+
+
+
+### 3. 追加写
+
+```python
+# 追加写
+f = open('test.txt', mode='a', encoding='utf-8')
+f.write('你好\n')
+
+content = ['带带大师兄\n', '药水哥\n']
+f.writelines(content)
+f.close()
+
+```
+
+
+
+### 4. with
+
+```python
+# with open() as f 操作文件
+with open('test.txt', mode='r', encoding='utf-8') as f:
+    print(f.read())
+print('使用with语法糖读取文件内容完成')
+
+```
+
