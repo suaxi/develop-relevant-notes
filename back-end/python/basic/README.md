@@ -979,3 +979,355 @@ print('使用with语法糖读取文件内容完成')
 
 ```
 
+
+
+## 十、面向对象
+
+### 1. 类
+
+```python
+# 类
+class Person(object):  # object 基类
+    pass
+
+
+# 创建对象（类的实例化）
+student = Person()
+print(type(student))  # <class '__main__.Person'>
+print(isinstance(student, object))
+print(isinstance(student, Person))
+
+```
+
+
+
+### 2. 实例属性
+
+```python
+# 实例属性
+class Person(object):
+    def __init__(self, name, age, address):
+        self.name = name
+        self.age = age
+        self.address = address
+
+
+student = Person('孙笑川', 33, '成都')
+student.job = '主播'
+print(student.__dict__)  # 获取实例的所有属性
+
+```
+
+
+
+### 3. 类属性
+
+```python
+# 类属性
+class Person(object):
+    index = 0  # 类属性
+
+    def __init__(self, name, age, address):
+        self.name = name
+        self.age = age
+        self.address = address
+        Person.index += 1
+        if age < 0 or age > 100:
+            raise Exception('年龄有误，请检查！')
+
+
+try:
+    student = Person('孙笑川', 33, '成都')
+    print(student.__dict__)
+    print('第%d个用户' % Person.index)
+
+    student1 = Person('刘波', 30, '湖北')
+    print(student1.__dict__)
+    print('第%d个用户' % Person.index)
+except Exception as e:
+    print(e)
+
+```
+
+
+
+### 4. 实例方法
+
+```python
+# 实例方法
+class Person(object):
+    index = 0  # 类属性
+
+    def __init__(self, name, age, address):
+        self.name = name
+        self.age = age
+        self.address = address
+        Person.index += 1
+        # print('第%d个用户' % Person.index)
+
+    # 实例方法
+    def say_hello(self):
+        print('大家好，我是%s' % self.name)
+
+
+try:
+    student = Person('孙笑川', 33, '成都')
+    # print(student.__dict__)
+    student.say_hello()
+
+    student1 = Person('刘波', 30, '湖北')
+    # print(student1.__dict__)
+except Exception as e:
+    print(e)
+
+```
+
+
+
+### 5. 类方法
+
+```python
+# 类方法
+class Person(object):
+    index = 0  # 类属性
+
+    def __init__(self, name, age, address):
+        self.name = name
+        self.age = age
+        self.address = address
+        Person.index += 1
+        if age < 0 or age > 100:
+            raise Exception('年龄有误，请检查！')
+
+    # 实例方法
+    def say_hello(self):
+        print('大家好，我是%s' % self.name)
+
+    # 类方法
+    @classmethod
+    def get_user_no(cls):
+        print('第%d个用户' % cls.index)
+
+
+try:
+    student = Person('孙笑川', 33, '成都')
+    # print(student.__dict__)
+    student.say_hello()
+
+    student1 = Person('刘波', 30, '湖北')
+    # print(student1.__dict__)
+    Person.get_user_no()
+except Exception as e:
+    print(e)
+
+```
+
+
+
+### 6. 静态方法
+
+```python
+# 静态方法
+class Person(object):
+    index = 0  # 类属性
+
+    def __init__(self, name, age, address):
+        self.name = name
+        self.age = age
+        self.address = address
+        Person.index += 1
+        if age < 0 or age > 100:
+            raise Exception('年龄有误，请检查！')
+
+    # 实例方法
+    def say_hello(self):
+        print('大家好，我是%s' % self.name)
+
+    # 类方法
+    @classmethod
+    def get_user_no(cls):
+        print('第%d个用户' % cls.index)
+
+    # 静态方法
+    @staticmethod
+    def is_valid(**kwargs):
+        if kwargs['token'] == '123456':
+            return True
+        else:
+            print('前置校验失败')
+            return False
+
+
+try:
+    check_key = {'token': '123456'}
+    if Person.is_valid(**check_key):
+        student = Person('孙笑川', 33, '成都')
+        # print(student.__dict__)
+        student.say_hello()
+
+        student1 = Person('刘波', 30, '湖北')
+        # print(student1.__dict__)
+        Person.get_user_no()
+    else:
+        print('创建用户失败')
+except Exception as e:
+    print(e)
+
+```
+
+
+
+### 7. 继承
+
+```python
+# 继承
+class Person(object):
+    index = 0  # 类属性
+
+    def __init__(self, name, age, address):
+        self.name = name
+        self.age = age
+        self.address = address
+        Person.index += 1
+        if age < 0 or age > 100:
+            raise Exception('年龄有误，请检查！')
+
+    # 实例方法
+    def say_hello(self):
+        print('大家好，我是%s' % self.name)
+
+    # 类方法
+    @classmethod
+    def get_user_no(cls):
+        print('第%d个用户' % cls.index)
+
+    # 静态方法
+    @staticmethod
+    def is_valid(**kwargs):
+        if kwargs['token'] == '123456':
+            return True
+        else:
+            print('前置校验失败')
+            return False
+
+
+class People(Person):
+
+    # 重写父类的 say_hello 方法
+    def say_hello(self):
+        print('大家好，我是%s，我来自%s' % (self.name, self.address))
+
+
+try:
+    check_key = {'token': '123456'}
+    if Person.is_valid(**check_key):
+        student = Person('孙笑川', 33, '成都')
+        # print(student.__dict__)
+        student.say_hello()
+
+        student1 = People('刘波', 30, '湖北')
+        # print(student1.__dict__)
+        student1.say_hello()
+    else:
+        print('创建用户失败')
+except Exception as e:
+    print(e)
+
+```
+
+
+
+### 8. 多态
+
+```python
+# 多态
+class Animal(object):
+    def say(self):
+        print('Animal Say...')
+
+
+class Dog(Animal):
+    def say(self):
+        print('汪汪汪...')
+
+
+class Cat(Animal):
+    def say(self):
+        print('喵喵喵...')
+
+
+animal = Animal()
+animal.say()
+
+dog = Dog()
+dog.say()
+
+cat = Cat()
+cat.say()
+
+```
+
+
+
+### 9. 封装
+
+```python
+# 封装
+class Person(object):
+    def __init__(self, name, age, address):
+        # self._name = name  # 受保护的变量
+        self.__name = name  # 私有变量
+        self.__age = age
+        self.__address = address
+        if not isinstance(age, int) or age < 0 or age > 100:
+            raise Exception('年龄有误，请检查！')
+
+    """
+    把函数当作变量使用
+    @property
+    def 变量名(self):  # 获取变量 get
+
+    @变量名.setter
+    def 变量名(self, 变量名):  # 设置变量 set
+    """
+
+    @property
+    def name(self):
+        return self.__name
+
+    @name.setter
+    def name(self, name):
+        self.__name = name
+
+    @property
+    def age(self):
+        return self.__age
+
+    @age.setter
+    def age(self, age):
+        if not isinstance(age, int) or age < 0 or age > 100:
+            raise Exception('年龄有误，请检查！')
+        else:
+            self.__age = age
+
+    @property
+    def address(self):
+        return self.__address
+
+    @address.setter
+    def address(self, address):
+        self.__address = address
+
+
+try:
+    student = Person('孙笑川', 33, '成都')
+    print(student.name)
+
+    # 修改属性
+    student.name = '刘波'
+    print(student.__dict__)
+except Exception as e:
+    print(e)
+
+```
+
