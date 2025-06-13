@@ -5,6 +5,7 @@
     + [Spring Cloud OAuth2.0](https://github.com/suaxi/develop-relevant-notes/tree/main/back-end/Spring-Cloud-OAuth2.0)
     + [python](https://github.com/suaxi/develop-relevant-notes/tree/main/back-end/python)
         + [基础](https://github.com/suaxi/develop-relevant-notes/tree/main/back-end/python/basic)
+        + [FastApi](https://github.com/suaxi/develop-relevant-notes/tree/main/back-end/python/FastApi)
 + [前端](https://github.com/suaxi/develop-relevant-notes/front-end)
   + [CSS](https://github.com/suaxi/develop-relevant-notes/tree/main/front-end/CSS)
   + [CSS3](https://github.com/suaxi/develop-relevant-notes/tree/main/front-end/CSS3)
