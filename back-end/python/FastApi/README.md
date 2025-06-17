@@ -267,11 +267,11 @@ if __name__ == '__main__':
 
 **补充：**
 
-- 自 Python 3.5 开始，PEP484为 Python 引入了类型注解（type hints）
+- 自 Python 3.5 开始，PEP484 为 Python 引入了类型注解（type hints）
 - 类型检查，防止运行时出现参数、返回值类型不符
 - 作为开发文档附加说明，方便使用者调用时传入和返回参数类型
 - 模块加入不会影响程序的运行不会报正式的错误，pycharm 支持 typing 检查错误时会出现黄色警告
-- 当参数有多种类型时使用 Union，也可以使用 Optional，即 `Union[str, int] = None` 等价于 `Optional[str, int]`
+- Union 和 Optional，`Optional[str]` 是 `Union[str] = None` 的语法糖
 
 
 
@@ -390,3 +390,219 @@ if __name__ == '__main__':
 ```
 
 ![4.form表单数据测试](static/3.请求与响应/4.form表单数据测试.png)
+
+
+
+#### 5. 文件上传
+
+```python
+from typing import List
+
+from fastapi import FastAPI, File, UploadFile
+
+app = FastAPI()
+
+
+@app.post("/upload-file")
+async def upload_file(file: bytes = File()):
+    print(f'file_len={len(file)}')
+    return "上传成功"
+
+
+@app.post("/upload-files")
+async def upload_files(files: List[bytes] = File()):
+    print(f'files_len={len(files)}')
+    return "上传成功"
+
+
+# 适合大文件上传
+@app.post("/upload-multi-files")
+async def upload_multi_files(files: List[UploadFile] = File()):
+    print(f'files_len={len(files)}')
+    return "上传成功"
+
+
+if __name__ == '__main__':
+    import uvicorn
+
+    uvicorn.run("main:app", host="127.0.0.1", port=8088, reload=True)
+
+```
+
+
+
+#### 6. Request 对象
+
+在函数中声明 **Request** 类型的参数，FastAPI 会自动传递 **Request** 对象给这个参数，可以获取其中的 `header`, `url`, `cookie`, `session` 等信息
+
+```python
+from fastapi import FastAPI, Request
+
+app = FastAPI()
+
+
+@app.get("/request_info")
+async def request_info(request: Request):
+    request_info_dict = {
+        "method": request.method,
+        "url": request.url,
+        "params": request.query_params,
+        "headers": request.headers,
+        "cookies": request.cookies,
+        "ip": request.client.host,
+        "user-agent": request.headers.get("User-Agent")
+    }
+    print(f'request_info_dict={request_info_dict}')
+    return request_info_dict
+
+
+if __name__ == '__main__':
+    import uvicorn
+
+    uvicorn.run("main:app", host="127.0.0.1", port=8088, reload=True)
+
+```
+
+
+
+#### 7. 请求静态文件
+
+web开发中，常涉及静态文件等资源，如css、js、图片、icon等，可在项目中新建 `static` 文件夹，将静态资源放入该文件夹后做如下配置
+
+```python
+from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
+
+app = FastAPI()
+
+app.mount("/static", StaticFiles(directory="static"))
+
+if __name__ == '__main__':
+    import uvicorn
+
+    uvicorn.run("main:app", host="127.0.0.1", port=8088, reload=True)
+
+```
+
+
+
+#### 8. 响应参数
+
+##### （1）response_model
+
+FastAPI 提供了 response_model 参数，声明 return 响应体的模型
+
+- 将输出数据转换为 response_model 中声明的数据类型
+- 验证数据结构和类型
+- 将输出数据限制为该 model 定义的
+- 添加到 OpenAPI 中
+- 在自动文档系统中使用
+
+
+
+以新增用户为例
+
+```python
+from typing import Optional
+
+from fastapi import FastAPI
+from pydantic import BaseModel, Field, validator
+
+app = FastAPI()
+
+
+class User(BaseModel):
+    id: int
+    name: str
+    age: int = Field(default=0, gt=0, lt=100)
+    no: int
+    address: Optional[str]
+
+    @validator('name')
+    def name_validator(cls, val):
+        assert len(val) >= 2, '用户名不能少于2个字'
+        return val
+
+
+class UserVo(BaseModel):
+    id: int
+    name: str
+    age: int = Field(default=0, gt=0, lt=100)
+    no: int
+
+
+@app.post("/user", response_model=UserVo)
+async def add(user: User):
+    print(f'新增用户: {user}')
+    return user
+
+
+if __name__ == '__main__':
+    import uvicorn
+
+    uvicorn.run("main:app", host="127.0.0.1", port=8088, reload=True)
+
+```
+
+![1.response_model](static/8.响应参数/1.response_model.png)
+
+
+
+##### （2）response_model_exclude_unset
+
+```python
+from typing import Optional
+
+from fastapi import FastAPI
+from pydantic import BaseModel, Field, validator
+
+app = FastAPI()
+
+
+class User(BaseModel):
+    id: int
+    name: str
+    age: int = Field(default=0, gt=0, lt=100)
+    no: int
+    address: Optional[str] = None
+
+    @validator('name')
+    def name_validator(cls, val):
+        assert len(val) >= 2, '用户名不能少于2个字'
+        return val
+
+
+@app.post("/response_model_exclude_unset_user", response_model=User, response_model_exclude_unset=True)
+async def response_model_exclude_unset_add(user: User):
+    print(f'新增用户: {user}')
+    return user
+
+
+if __name__ == '__main__':
+    import uvicorn
+
+    uvicorn.run("main:app", host="127.0.0.1", port=8088, reload=True)
+
+```
+
+![2.response_model_exclude_unset](static/8.响应参数/2.response_model_exclude_unset.png)
+
+
+
+##### （3）response_model_exclude_defaults
+
+不返回为默认值的字段
+
+
+
+##### （4）response_model_exclude_none
+
+不返回为 None 的字段
+
+
+
+##### （5）INCLUDE和EXCLUDE
+
+**INCLUDE：**只返回 INCLUDE 声明了的字段
+
+**EXCLUDE：**返回 EXCLUDE 声明了的之外的字段（即排除指定字段）
