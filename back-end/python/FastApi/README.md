@@ -544,7 +544,7 @@ if __name__ == '__main__':
 
 ```
 
-![1.response_model](static/8.响应参数/1.response_model.png)
+![1.response_model](static/3.请求与响应/5.response_model.png)
 
 
 
@@ -585,7 +585,7 @@ if __name__ == '__main__':
 
 ```
 
-![2.response_model_exclude_unset](static/8.响应参数/2.response_model_exclude_unset.png)
+![2.response_model_exclude_unset](static/3.请求与响应/6.response_model_exclude_unset.png)
 
 
 
@@ -606,3 +606,107 @@ if __name__ == '__main__':
 **INCLUDE：**只返回 INCLUDE 声明了的字段
 
 **EXCLUDE：**返回 EXCLUDE 声明了的之外的字段（即排除指定字段）
+
+
+
+### 四、中间件
+
+##### 1. 概念
+
+"中间件"是一个函数，它在每个**请求**被特定的路径操作处理之前，以及在每个**响应**之后工作。
+
+![1.中间件](static/4.中间件/1.中间件.png)
+
+
+
+##### 2. 使用
+
+在函数的顶部使用装饰器 `@app.middleware("http")`
+
+中间件接收的参数：
+
+- `request`
+- `call_next` 函数
+  - 接收 `request`，作为参数
+  - 在处理完相应的逻辑后，将 `request` 传递给下一步操作
+  - 返回对应路径请求的 `response`
+
+
+
+##### 3. 示例
+
+```python
+from fastapi import FastAPI, Request, Response
+
+app = FastAPI()
+
+
+@app.middleware("http")
+async def middleware2(request: Request, call_next):
+    print("中间件2-请求")
+    response = await call_next(request)
+    print("中间件2-响应")
+    return response
+
+
+@app.middleware("http")
+async def middleware1(request: Request, call_next):
+    print("中间件1-请求")
+    response = await call_next(request)
+    print("中间件1-响应")
+    return response
+
+
+@app.get("/{user_id}")
+async def get_user(user_id: int):
+    print(f'查询用户id为: {user_id}的用户')
+    return {
+        "user": "孙笑川"
+    }
+
+
+if __name__ == '__main__':
+    import uvicorn
+
+    uvicorn.run("main:app", host="127.0.0.1", port=8088, reload=True)
+
+```
+
+当请求 `get_user` 时，控制台会打印如下信息**（中间件需按顺序写，从上至下倒序）**：
+
+![2.中间件请求示例](static/4.中间件/2.中间件请求示例.png)
+
+
+
+##### 4. CORS 中间件示例
+
+```python
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
+app = FastAPI()
+origins = [
+    "http://localhost:8089"
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,  # 值为*时代表所有客户端
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "PUT", "DELETE"],
+    allow_headers=["*"],
+)
+
+@app.get("/")
+def main():
+    return {
+        "message": "你好，孙笑川"
+    }
+
+
+if __name__ == '__main__':
+    import uvicorn
+
+    uvicorn.run("main:app", host="127.0.0.1", port=8088, reload=True
+```
+
