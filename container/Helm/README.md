@@ -14,7 +14,7 @@
    
    tar -zxvf helm-v3.18.3-linux-amd64.tar.gz.asc -C /usr/local/bin
    
-   ln -s /usr/local/bin/linuc-amd64/helm /usr/bin/helm
+   ln -s /usr/local/bin/linux-amd64/helm /usr/bin/helm
    
    # 查看版本信息
    helm version
