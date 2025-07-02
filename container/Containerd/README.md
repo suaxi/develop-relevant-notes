@@ -319,3 +319,141 @@ ctr tasks delete nginx-test
 ctr container delete nginx-test
 ```
 
+
+
+### 五、NameSpace 管理
+
+*containerd 使用 namespace 隔离容器运行时*
+
+#### 1. ctr namespace help
+
+```bash
+root@suaxi:~# ctr namespace -h
+NAME:
+   ctr namespaces - Manage namespaces
+
+USAGE:
+   ctr namespaces command [command options] [arguments...]
+
+COMMANDS:
+   create, c   Create a new namespace
+   list, ls    List namespaces
+   remove, rm  Remove one or more namespaces
+   label       Set and clear labels for a namespace
+
+OPTIONS:
+   --help, -h  show help
+```
+
+
+
+#### 2. 查看 namespace
+
+```bash
+ctr namespace ls 
+NAME LABELS 
+moby
+k8s.io
+```
+
+
+
+#### 3. 创建
+
+```bash
+ctr namespace create test
+
+# 再次查看
+ctr namespace ls 
+NAME LABELS 
+moby
+k8s.io
+test
+```
+
+
+
+#### 4. 删除
+
+```bash
+ctr namespace rm test
+
+# 再次查看
+ctr namespace ls 
+NAME LABELS 
+moby
+k8s.io
+```
+
+
+
+#### 5. 补充
+
+##### （1）查看指定 namespace 运行的用户进程
+
+```bash
+ctr -n test tasks ls
+```
+
+
+
+##### （2）在指定 namespace 中拉取镜像
+
+```bash
+ctr -n test images pull docker.io/library/nginx:latest
+```
+
+
+
+##### （3）在指定 namespace 中创建静态容器
+
+```bash
+ctr -n test container create docker.io/library/nginx:latest nginx-test
+```
+
+
+
+##### （4）查看在指定 namespace 中创建的容器
+
+```bash
+ctr -n test container ls
+CONTAINER    IMAGE                             RUNTIME
+nginx-test   docker.io/library/nginx:latest    io.containerd.runc.v2
+```
+
+
+
+### 六、数据持久化
+
+**为容器挂载主机目录**
+
+```bash
+# scr 主机目录
+# dst 容器中的目录
+ctr container create docker.io/library/busybox:latest busybox-test --mount type=bind,src=/home/workspace/busybox-mount-test,dst=/home,options=rbind:rw
+```
+
+
+
+**运行容器**
+
+```bash
+ctr tasks start -d busybox-test bash
+```
+
+
+
+**向挂载目录中添加文件**
+
+```bash
+touch /home/workspace/busybox-mount-test/test.txt
+```
+
+
+
+**进入容器查看**
+
+```bash
+ctr tasks exec --exec-id $RANDOM -t busybox-test bash
+```
+
