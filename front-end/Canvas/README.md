@@ -146,7 +146,9 @@
   </html>
   ```
 
-  
+  ![1.直线](static/2.线条绘制/1.直线.png)
+
+
 
 #### （2）折线
 
@@ -184,6 +186,8 @@
 </body>
 </html>
 ```
+
+![2.折线](static/2.线条绘制/2.折线.png)
 
 
 
@@ -226,6 +230,8 @@
 </body>
 </html>
 ```
+
+![3.lineWidth设置线条的宽度](static/2.线条绘制/3.lineWidth设置线条的宽度.png)
 
 
 
@@ -271,3 +277,303 @@
 </html>
 ```
 
+![4.strokeStyle修改线条的颜色](static/2.线条绘制/4.strokeStyle修改线条的颜色.png)
+
+
+
+#### （5）线性渐变
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>线性渐变</title>
+</head>
+<body>
+    <script>
+        // 1. 创建 canvas 画布
+        const canvas = document.createElement('canvas')
+        // 设置宽高
+        canvas.width = 500
+        canvas.height = 500
+        document.body.append(canvas)
+
+        // 2. 获取 context 对象（画笔）
+        const context = canvas.getContext('2d')
+
+        // 3. 线性渐变
+        // 创建
+        const gradient = context.createLinearGradient(0, 0, 500, 500)
+        // 从什么颜色开始渐变
+        gradient.addColorStop(0, 'pink')
+        // 中间
+        gradient.addColorStop(0.35, 'yellow')
+        // 到什么颜色结束
+        gradient.addColorStop(1, 'green')
+
+        // 画线
+        context.lineTo(0, 0)
+        context.lineTo(300, 300)
+        context.lineWidth = 3
+
+        // 将渐变作为线条的颜色
+        context.strokeStyle = gradient
+        context.stroke()
+    </script>
+</body>
+</html>
+```
+
+![5.线性渐变](static/2.线条绘制/5.线性渐变.png)
+
+
+
+#### （6）径向渐变
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>径向渐变</title>
+</head>
+<body>
+    <script>
+        // 1. 创建 canvas 画布
+        const canvas = document.createElement('canvas')
+        // 设置宽高
+        canvas.width = 500
+        canvas.height = 500
+        document.body.append(canvas)
+
+        // 2. 获取 context 对象（画笔）
+        const context = canvas.getContext('2d')
+
+        // 3. 生成渐变对象
+        const gradient = context.createRadialGradient(100, 100, 0, 100, 100, 100)
+        // 添加渐变的颜色
+        gradient.addColorStop(0, 'yellow')
+        gradient.addColorStop(1, 'green')
+        
+        // 把渐变赋给画笔
+        context.fillStyle = gradient
+        context.fillRect(0, 0, 200, 200)
+    </script>
+</body>
+</html>
+```
+
+![6.径向渐变](static/2.线条绘制/6.径向渐变.png)
+
+
+
+#### （7）锥形渐变
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>锥形渐变</title>
+</head>
+<body>
+    <script>
+        // 1. 创建 canvas 画布
+        const canvas = document.createElement('canvas')
+        // 设置宽高
+        canvas.width = 500
+        canvas.height = 500
+        document.body.append(canvas)
+
+        // 2. 获取 context 对象（画笔）
+        const context = canvas.getContext('2d')
+
+        // 3. 生成渐变对象
+        /*
+        参数一：弧度
+        参数二：渐变中心的 x 轴坐标
+        参数三：渐变中心的 y 轴坐标
+        */
+        const gradient = context.createConicGradient(45 * (Math.PI / 180), 100, 100)
+        // 添加渐变的颜色
+        gradient.addColorStop(0, 'pink')
+        gradient.addColorStop(1, 'lightgreen')
+        
+        // 把渐变赋给画笔
+        context.fillStyle = gradient
+        context.fillRect(0, 0, 200, 200)
+    </script>
+</body>
+</html>
+```
+
+![7.锥形渐变](static/2.线条绘制/7.锥形渐变.png)
+
+
+
+#### （8）重复元图像
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>重复元图像</title>
+</head>
+<body>
+    <script>
+        // 1. 创建 canvas 画布
+        const canvas = document.createElement('canvas')
+        // 设置宽高
+        canvas.width = 500
+        canvas.height = 500
+        document.body.append(canvas)
+
+        // 2. 获取 context 对象（画笔）
+        const context = canvas.getContext('2d')
+
+        // 3. 生成渐变对象
+        let img = new Image()
+        img.src = './images/test.jpg'
+
+        img.onload = function() {
+            // 创建重复元图像对象
+            let p = context.createPattern(img, 'repeat')
+
+            context.fillStyle = p
+            context.fillRect(0, 0, 200, 200)
+            
+        }
+    </script>
+</body>
+</html>
+```
+
+![8.重复元图像](static/2.线条绘制/8.重复元图像.png)
+
+
+
+#### （9）渐变的折线
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>渐变的折线</title>
+</head>
+<body>
+    <script>
+        // 1. 创建 canvas 画布
+        const canvas = document.createElement('canvas')
+        // 设置宽高
+        canvas.width = 500
+        canvas.height = 500
+        document.body.append(canvas)
+
+        // 2. 获取 context 对象（画笔）
+        const context = canvas.getContext('2d')
+
+        // 3. 绘制折线
+        context.lineWidth = 3
+
+        // 渐变
+        let gradient = context.createLinearGradient(100, 100, 500, 100)
+        gradient.addColorStop(0, 'lightblue')
+        gradient.addColorStop(0.25, 'lightgreen')
+        gradient.addColorStop(0.5, 'hotpink')
+        gradient.addColorStop(1, 'red')
+
+        // 将渐变赋值给 context
+        context.strokeStyle = gradient
+
+        // 3.1 起点
+        context.moveTo(100, 100)
+        // 3.2 使用 lineTo 依次经过转折点
+        context.lineTo(200, 220)
+        context.lineTo(300, 100)
+        context.lineTo(400, 210)
+        context.lineTo(500, 100)
+        // 3.3 调用画线的方法
+        context.stroke()
+    </script>
+</body>
+</html>
+```
+
+![9.渐变的折线](static/2.线条绘制/9.渐变的折线.png)
+
+
+
+#### （10）线段转折点的样式
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>线段转折点的样式</title>
+</head>
+<body>
+    <script>
+        // 1. 创建 canvas 画布
+        const canvas = document.createElement('canvas')
+        // 设置宽高
+        canvas.width = 500
+        canvas.height = 500
+        document.body.append(canvas)
+
+        // 2. 获取 context 对象（画笔）
+        const context = canvas.getContext('2d')
+
+        // 3. 绘制折线
+        context.lineWidth = 8
+
+        // 渐变
+        let gradient = context.createLinearGradient(100, 100, 500, 100)
+        gradient.addColorStop(0, 'lightblue')
+        gradient.addColorStop(0.25, 'lightgreen')
+        gradient.addColorStop(0.5, 'hotpink')
+        gradient.addColorStop(1, 'red')
+
+        // 将渐变赋值给 context
+        context.strokeStyle = gradient
+
+        // 修改线段起点、终点的样式
+        /*
+        butt 默认值，线条末端呈正方形
+        round 圆角
+        square 线条末端呈方形 
+        */
+        context.lineCap = 'round'
+
+        // 修改线段转折点的样式
+        /*
+        miter 默认值，通过延伸相连部分的外边缘，使其相交于一点，形成一个额外的菱形区域
+        round 圆角
+        bevel 在相连部分的末端填充一个额外的以三角形为底的区域，每个部分都有各自独立的矩形拐角
+        */
+        context.lineJoin = 'round'
+
+        // 3.1 起点
+        context.moveTo(100, 100)
+        // 3.2 使用 lineTo 依次经过转折点
+        context.lineTo(200, 220)
+        context.lineTo(300, 100)
+        context.lineTo(400, 210)
+        context.lineTo(500, 100)
+        // 3.3 调用画线的方法
+        context.stroke()
+    </script>
+</body>
+</html>
+```
+
+![10.线段转折点的样式](static/2.线条绘制/10.线段转折点的样式.png)
