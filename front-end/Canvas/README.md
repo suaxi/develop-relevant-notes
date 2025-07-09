@@ -577,3 +577,207 @@
 ```
 
 ![10.线段转折点的样式](static/2.线条绘制/10.线段转折点的样式.png)
+
+
+
+### 三、弧线
+
+Canvas中的曲线分为两种：**标准圆弧曲线**、**贝塞尔曲线**
+
+#### 1. 弧线
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>弧线</title>
+</head>
+<body>
+    <script>
+        // 1. 创建 canvas 画布
+        const canvas = document.createElement('canvas')
+        // 设置宽高
+        canvas.width = 500
+        canvas.height = 500
+        document.body.append(canvas)
+
+        // 2. 获取 context 对象（画笔）
+        const context = canvas.getContext('2d')
+
+        // 画圆弧
+        /*
+        参数：圆心x， 圆心y， 弧度，圆弧起点，圆弧终点，是否逆时针（默认为false）
+        */
+        context.arc(200, 200, 50, 90 * (Math.PI / 180), 180 * (Math.PI / 180), true)
+        context.stroke()
+    </script>
+</body>
+</html>
+```
+
+![1.1弧线-顺时针](static/3.弧线/1.1弧线-顺时针.png)
+
+![1.2弧线-逆时针](static/3.弧线/1.2弧线-逆时针.png)
+
+
+
+#### 2. 画一个笑脸
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>笑脸</title>
+</head>
+<body>
+    <script>
+        // 1. 创建 canvas 画布
+        const canvas = document.createElement('canvas')
+        // 设置宽高
+        canvas.width = 500
+        canvas.height = 500
+        document.body.append(canvas)
+
+        // 2. 获取 context 对象（画笔）
+        const context = canvas.getContext('2d')
+
+        // 3.画笑脸
+        // 3.1 外圈大圆
+        context.arc(200, 200, 100, 0, 360 * (Math.PI / 180))
+        context.stroke()
+
+        // 3.2 左眼
+        // 重新生成新的路径（即在两个不相关的图形之间要加上开始路径，闭合路径，取消两个图形之间的连线）
+        context.beginPath()
+        context.arc(150, 150, 20, 0, 360 * (Math.PI / 180))
+        context.stroke()
+        context.closePath()
+
+        // 3.3 右眼
+        context.beginPath()
+        context.arc(250, 150, 20, 0, 360 * (Math.PI / 180))
+        context.stroke()
+        context.closePath()
+
+        // 3.4 鼻子
+        context.beginPath()
+        context.arc(200, 195, 8, 0, 360 * (Math.PI / 180))
+        context.stroke()
+        context.closePath()
+
+        // 3.5 嘴巴
+        context.beginPath()
+        context.arc(200, 200, 80, 0, 180 * (Math.PI / 180))
+        context.stroke()
+        context.closePath()
+    </script>
+</body>
+</html>
+```
+
+![2.笑脸](static/3.弧线/2.笑脸.png)
+
+
+
+#### 3. 椭圆
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>椭圆</title>
+</head>
+<body>
+    <script>
+        // 1. 创建 canvas 画布
+        const canvas = document.createElement('canvas')
+        // 设置宽高
+        canvas.width = 500
+        canvas.height = 500
+        document.body.append(canvas)
+
+        // 2. 获取 context 对象（画笔）
+        const context = canvas.getContext('2d')
+
+        // 画椭圆
+        /*
+        参数：圆心x，圆心y，x半径，y半径，椭圆旋转的角度（弧度），圆弧起点，圆弧终点，是否逆时针（默认为false）
+        */
+        context.ellipse(300, 300, 200, 100, 0, 0, 360 * (Math.PI / 180))
+        context.stroke()
+    </script>
+</body>
+</html>
+```
+
+![3.椭圆](static/3.弧线/3.椭圆.png)
+
+
+
+#### 4. 使用fill填充图形
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>使用fill填充图形</title>
+</head>
+<body>
+    <script>
+        // 1. 创建 canvas 画布
+        const canvas = document.createElement('canvas')
+        // 设置宽高
+        canvas.width = 500
+        canvas.height = 500
+        document.body.append(canvas)
+
+        // 2. 获取 context 对象（画笔）
+        const context = canvas.getContext('2d')
+
+        // 3.填充
+        context.moveTo(100, 100)
+        context.lineTo(90, 220)
+        context.lineTo(220, 150)
+        // 调用fill方法时，路径会自动连接起始位置
+        // context.lineTo(100, 100)
+        
+        // context.fill()
+
+        // 填充指定颜色
+        // context.fillStyle = 'lightblue'
+        // context.fill()
+
+        // 使用线性渐变填充
+        // const gradient = context.createLinearGradient(0, 0, 500, 500)
+        // gradient.addColorStop(0, 'lightblue')
+        // gradient.addColorStop(1, 'red')
+        // context.fillStyle = gradient
+        // context.fill()
+
+        // 使用径向渐变填充
+        const gradient = context.createRadialGradient(150, 150, 0, 150, 150, 100)
+        gradient.addColorStop(0, 'lightblue')
+        gradient.addColorStop(1, 'orange')
+        context.fillStyle = gradient
+        context.fill()
+    </script>
+</body>
+</html>
+```
+
+![4.1fill填充](static/3.弧线/4.1fill填充.png)
+
+![4.2填充指定颜色](static/3.弧线/4.2填充指定颜色.png)
+
+![4.3使用线性渐变填充](static/3.弧线/4.3使用线性渐变填充.png)
+
+![4.4使用径向渐变填充](static/3.弧线/4.4使用径向渐变填充.png)
+
