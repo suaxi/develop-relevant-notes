@@ -781,3 +781,47 @@ Canvas中的曲线分为两种：**标准圆弧曲线**、**贝塞尔曲线**
 
 ![4.4使用径向渐变填充](static/3.弧线/4.4使用径向渐变填充.png)
 
+#### 5. 五子棋
+
+
+
+#### 6. 阴影
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>阴影</title>
+</head>
+<body>
+    <script>
+        // 1.创建 canvas 画布
+        const canvas = document.createElement('canvas')
+        // 设置宽高
+        canvas.width = 500
+        canvas.height = 500
+        document.body.append(canvas)
+
+        // 2.获取 context 对象（画笔）
+        const context = canvas.getContext('2d')
+
+        context.strokeStyle = 'green'
+        context.lineWidth = 6
+
+        // 设置图像的阴影
+        context.shadowColor = 'gray'
+        context.shadowOffsetX = 6
+        context.shadowOffsetY = 3
+        context.shadowBlur = 5
+
+        context.moveTo(100, 100)
+        context.lineTo(260, 260)
+        context.stroke()
+    </script>
+</body>
+</html>
+```
+
+![6.阴影](static/3.弧线/6.阴影.png)
