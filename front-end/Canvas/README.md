@@ -584,7 +584,9 @@
 
 Canvas中的曲线分为两种：**标准圆弧曲线**、**贝塞尔曲线**
 
-#### 1. 弧线
+#### 1. **标准圆弧曲线**
+
+##### （1）弧线
 
 ```html
 <!DOCTYPE html>
@@ -617,13 +619,13 @@ Canvas中的曲线分为两种：**标准圆弧曲线**、**贝塞尔曲线**
 </html>
 ```
 
-![1.1弧线-顺时针](static/3.弧线/1.1弧线-顺时针.png)
+![1.1弧线-顺时针](static/3.弧线/1.标准圆弧曲线/1.1弧线-顺时针.png)
 
-![1.2弧线-逆时针](static/3.弧线/1.2弧线-逆时针.png)
+![1.2弧线-逆时针](static/3.弧线/1.标准圆弧曲线/1.2弧线-逆时针.png)
 
 
 
-#### 2. 画一个笑脸
+##### （2）画一个笑脸
 
 ```html
 <!DOCTYPE html>
@@ -679,11 +681,11 @@ Canvas中的曲线分为两种：**标准圆弧曲线**、**贝塞尔曲线**
 </html>
 ```
 
-![2.笑脸](static/3.弧线/2.笑脸.png)
+![2.笑脸](static/3.弧线/1.标准圆弧曲线/2.笑脸.png)
 
 
 
-#### 3. 椭圆
+##### （3）椭圆
 
 ```html
 <!DOCTYPE html>
@@ -716,11 +718,11 @@ Canvas中的曲线分为两种：**标准圆弧曲线**、**贝塞尔曲线**
 </html>
 ```
 
-![3.椭圆](static/3.弧线/3.椭圆.png)
+![3.椭圆](static/3.弧线/1.标准圆弧曲线/3.椭圆.png)
 
 
 
-#### 4. 使用fill填充图形
+##### （4）使用fill填充图形
 
 ```html
 <!DOCTYPE html>
@@ -773,19 +775,630 @@ Canvas中的曲线分为两种：**标准圆弧曲线**、**贝塞尔曲线**
 </html>
 ```
 
-![4.1fill填充](static/3.弧线/4.1fill填充.png)
+![4.1fill填充](static/3.弧线/1.标准圆弧曲线/4.1fill填充.png)
 
-![4.2填充指定颜色](static/3.弧线/4.2填充指定颜色.png)
+![4.2填充指定颜色](static/3.弧线/1.标准圆弧曲线/4.2填充指定颜色.png)
 
-![4.3使用线性渐变填充](static/3.弧线/4.3使用线性渐变填充.png)
+![4.3使用线性渐变填充](static/3.弧线/1.标准圆弧曲线/4.3使用线性渐变填充.png)
 
-![4.4使用径向渐变填充](static/3.弧线/4.4使用径向渐变填充.png)
+![4.4使用径向渐变填充](static/3.弧线/1.标准圆弧曲线/4.4使用径向渐变填充.png)
 
-#### 5. 五子棋
+##### （5）五子棋
 
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>五子棋</title>
+    <style>
+        canvas {
+            background-color: green;
+            display: block;
+            margin: 0 auto;
+        }
 
+        #tip {
+            text-align: center;
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div id="tip">游戏开始</div>
+    <script>
+        // 1.创建 canvas 画布
+        const canvas = document.createElement('canvas')
+        // 设置宽高
+        canvas.width = 700
+        canvas.height = 700
+        document.body.append(canvas)
 
-#### 6. 阴影
+        // 2.获取 context 对象（画笔）
+        const context = canvas.getContext('2d')
+
+        const tip = document.getElementById('tip')
+
+        // 3.棋盘
+        for (i = 0; i < 14; i++) {
+            context.moveTo(50, 50 * i)
+            context.lineTo(650, 50 * i)
+            context.stroke()
+
+            context.moveTo(50 * i, 50)
+            context.lineTo(50 * i, 650)
+            context.stroke()
+        }
+
+        // 5.棋子颜色判断标志位
+        let isBlackChess = true
+
+        // 6.使用二维数组存储棋子
+        let circles = []
+        for(i = 0; i < 14; i ++) {
+            circles[i] = []
+        }
+
+        // 7.游戏结束判断标志位
+        let gameOver = false
+
+        // 4.落子
+        canvas.addEventListener('click', e => {
+            if (gameOver) {
+                return
+            }
+
+            let { offsetX, offsetY } = e
+
+            // 判断棋子不超出棋盘
+            if (offsetX < 25 || offsetY < 25 || offsetX > 675 || offsetY > 675) {
+                return
+            }
+
+            // 6.1 格子位置
+            let gridX = Math.floor((offsetX + 25) / 50)
+            let gridY = Math.floor((offsetY + 25) / 50)
+
+            // 6.3 判断是否重复落子
+            if (circles[gridX][gridY]) {
+                return
+            }
+
+            // 4.1 棋子位置
+            let x = gridX * 50
+            let y = gridY * 50
+            
+            context.beginPath()
+            context.arc(x, y, 20, 0, 2 * Math.PI)
+
+            // 6.2 存储棋子
+            circles[gridX][gridY] = isBlackChess ? 'black' : 'white'
+
+            // 5.1 设置棋子颜色
+            let chessGradientX = isBlackChess ? x - 10 : x + 10
+            let chessGradientY = isBlackChess ? y - 10 : y + 10
+            let gradient = context.createRadialGradient(chessGradientX, chessGradientY, 0, chessGradientX, chessGradientY, 30)
+            gradient.addColorStop(0, isBlackChess ? 'gray' : '#666')
+            gradient.addColorStop(1, isBlackChess ? 'black' : 'white')
+            context.fillStyle = gradient
+
+            // 5.2 设置棋子阴影
+            context.shadowColor = '#333'
+            context.shadowOffsetX = 2.5
+            context.shadowOffsetY = 2
+
+            context.fill()
+            context.closePath()
+
+            // 7.判断当前是否有人获胜
+            gameOver = checkVertical(circles[gridX][gridY], gridX, gridY) || checkHorizontal(circles[gridX][gridY], gridX, gridY) || checkWn2Es(circles[gridX][gridY], gridX, gridY) || checkEn2Ws(circles[gridX][gridY], gridX, gridY)
+
+            if (gameOver) {
+                tip.innerText = `${isBlackChess ? '黑' : '白'}棋获胜，游戏结束！`
+                //console.log(circles)
+                return
+            }
+
+            tip.innerText = isBlackChess ? '请白棋落子' : '请黑棋落子'
+            isBlackChess = !isBlackChess
+        })
+
+        // 纵向查找是否有五个连续相同的棋子
+        function checkVertical(currentChess, row, col) {
+            let count = 1
+            return checkUp(currentChess, row, col, count) + checkDown(currentChess, row, col, count) - 1 >= 5
+        }
+
+        function checkUp(currentChess, row, col, count) {
+            // 向上查找的次数
+            let up = 0
+
+            while (true) {
+                // 向上查找
+                up++
+
+                // 角
+                // 左上角
+                if (row === 1 && col === 1) {
+                    return count
+                }
+                // 右上角
+                if (row + up === circles.length && col === 1) {
+                    return count
+                }
+
+                // 边
+                // 上
+                if (col === 1) {
+                    return count
+                }
+                // 右 pass
+                // 下 pass
+                // 左 pass
+
+                // 超出边界
+                if (row - up < 0) {
+                    return count
+                }
+
+                if (circles[row][col - up] && circles[row][col - up] === currentChess) {
+                    count++
+                }
+
+                // 棋子不连续
+                if (col === 1) {
+                    if (count >= 5 || (circles[row][col + up] !== currentChess)) {
+                        break
+                    }
+                } else if (col + up >= circles.length) {
+                    if (count >= 5 || (circles[row][col - up] !== currentChess)) {
+                        break
+                    }
+                } else {
+                    if (count >= 5 || (circles[row][col - up] !== currentChess && circles[row][col + up] !== currentChess)) {
+                        break
+                    }
+                }
+            }
+            return count
+        }
+        function checkDown(currentChess, row, col, count) {
+            // 向下查找的次数
+            let down = 0
+
+            while (true) {
+                // 向下查找
+                down++
+
+                // 角
+                // 右下角
+                if (row + down === circles.length && col + down === circles.length) {
+                    return count
+                }
+                // 左下角
+                if (row === 1 && col + down === circles.length) {
+                    return count
+                }
+
+                // 边
+                // 上 pass
+                // 右 pass
+                // 下
+                if (col + down === circles.length) {
+                    return count
+                }
+                // 左 pass
+
+                // 超出边界
+                if (row + down > circles.length) {
+                    return count
+                }
+
+                if (circles[row][col + down] && circles[row][col + down] === currentChess) {
+                    count++
+                }
+
+                // 棋子不连续
+                if (col === 1) {
+                    if (count >= 5 || (circles[row][col - down] !== currentChess)) {
+                        break
+                    }
+                } else if (col + down >= circles.length) {
+                    if (count >= 5 || (circles[row][col - down] !== currentChess)) {
+                        break
+                    }
+                } else {
+                    if (count >= 5 || (circles[row][col - down] !== currentChess && circles[row][col + down] !== currentChess)) {
+                        break
+                    }
+                }
+            }
+            return count
+        }
+
+        // 横向查找是否有五个连续相同的棋子
+        function checkHorizontal(currentChess, row, col) {
+            let count = 1
+            return checkLeft(currentChess, row, col, count) + checkRight(currentChess, row, col, count) - 1 >= 5
+        }
+
+        function checkLeft(currentChess, row, col, count) {
+            // 向左查找的次数
+            let left = 0
+
+            while (true) {
+                // 向左查找
+                left++
+
+                // 角
+                // 左上角
+                if (row === 1 && col === 1) {
+                    return count
+                }
+                // 左下角
+                if (row === 1 && col + left === circles.length) {
+                    return count
+                }
+
+                // 边
+                // 上 pass
+                // 右 pass
+                // 下 pass
+                // 左
+                if (row === 1) {
+                    return count
+                }
+
+                // 超出边界
+                if (row - left < 0) {
+                    return count
+                }
+
+                if (circles[row - left][col] && circles[row - left][col] === currentChess) {
+                    count++
+                }
+
+                // 棋子不连续
+                if (col === 1 && row + left < circles.length) {
+                    if (count >= 5 || (circles[row + left][col] !== currentChess)) {
+                        break
+                    }
+                } else if (row + left >= circles.length) {
+                    if (count >= 5 || (circles[row - left][col] !== currentChess)) {
+                        break
+                    }
+                } else {
+                    if (count >= 5 || (circles[row - left][col] !== currentChess && circles[row + left][col] !== currentChess)) {
+                        break
+                    }
+                }
+            }
+            return count
+        }
+        function checkRight(currentChess, row, col, count) {
+            // 向右查找的次数
+            let right = 0
+
+            while (true) {
+                // 向右查找
+                right++
+
+                // 角
+                // 右上角
+                if (row + right === circles.length && col === 1) {
+                    return count
+                }
+                // 右下角
+                if (row + right === circles.length && col + right === circles.length) {
+                    return count
+                }
+
+                // 边
+                // 上 pass
+                // 右
+                if (row + right === circles.length) {
+                    return count
+                }
+                // 下 pass
+                // 左 pass
+
+                if (circles[row + right][col] && circles[row + right][col] === currentChess) {
+                    count++
+                }
+
+                // 超出边界
+                if (row + right > circles.length) {
+                    return count
+                }
+
+                // 同色棋子大于5 || 棋子不连续
+                if (col === 1 && row + right < circles.length) {
+                    if (count >= 5 || (circles[row + right][col] !== currentChess)) {
+                        break
+                    }
+                } else if (row + right >= circles.length) {
+                    if (count >= 5 || (circles[row - right][col] !== currentChess)) {
+                        break
+                    }
+                } else {
+                    if (count >= 5 || (circles[row - right][col] !== currentChess && circles[row + right][col] !== currentChess)) {
+                        break
+                    }
+                }
+            }
+            return count
+        }
+
+        // 左上到右下查找是否有五个连续相同的棋子
+        function checkWn2Es(currentChess, row, col) {
+            // 连续同色棋子的数量
+            let count = 1
+            return checkWn(currentChess, row, col, count) + checkEs(currentChess, row, col, count) - 1 >= 5
+        }
+
+        function checkWn(currentChess, row, col, count) {
+            // 左上查找的次数
+            let leftUp = 0
+
+            while (true) {
+                // 向左上查找
+                leftUp++
+
+                // 角
+                // 左上角
+                if (row === 1 && col === 1) {
+                    return count
+                }
+                // 右上角
+                if (row + leftUp === circles.length && col === 1) {
+                    return count
+                }
+                // 左下角
+                if (row === 1 && col + leftUp === circles.length) {
+                    return count
+                }
+
+                // 边
+                // 上
+                if (col === 1) {
+                    return count
+                }
+                // 右 pass
+                // 下 pass
+                // 左
+                if (row === 1) {
+                    return count
+                }
+
+                // 超出边界
+                if (row - leftUp < 0 || col - leftUp < 0) {
+                    return count
+                }
+
+                if (circles[row - leftUp][col - leftUp] && circles[row - leftUp][col - leftUp] === currentChess) {
+                    count++
+                }
+
+                // 同色棋子大于5 || 棋子不连续
+                if (row === 1 || col === 1) {
+                    if (count >= 5 || (circles[row + leftUp][col + leftUp] !== currentChess)) {
+                        break
+                    }
+                } else if (row + leftUp >= circles.length || col + leftUp >= circles.length) {
+                    if (count >= 5 || circles[row - leftUp][col - leftUp] !== currentChess) {
+                        break
+                    }
+                } else {
+                    if (count >= 5 || (circles[row - leftUp][col - leftUp] !== currentChess && circles[row + leftUp][col + leftUp] !== currentChess)) {
+                        break
+                    }
+                }
+            }
+            return count
+        }
+        function checkEs(currentChess, row, col, count) {
+            // 右下查找的次数
+            let rightDown = 0
+
+            while (true) {
+                // 向右下查找
+                rightDown++
+
+                // 角
+                // 右上角
+                if (row + rightDown === circles.length && col === 1) {
+                    return count
+                }
+                // 右下角
+                if (row + rightDown === circles.length && col + rightDown === circles.length) {
+                    return count
+                }
+                // 左下角
+                if (row === 1 && col + rightDown === circles.length) {
+                    return count
+                }
+
+                // 边
+                // 上 pass
+                // 右
+                if (row + rightDown === circles.length) {
+                    return count
+                }
+                // 下
+                if (col + rightDown === circles.length) {
+                    return count
+                }
+                // 左 pass
+
+                // 超出边界
+                if (row + rightDown > circles.length || col + rightDown > circles.length) {
+                    return count
+                }
+
+                if (circles[row + rightDown][col + rightDown] && circles[row + rightDown][col + rightDown] === currentChess) {
+                    count++
+                }
+
+                // 同色棋子大于5 || 棋子不连续
+                if (row === 1 || col === 1) {
+                    if (count >= 5 || (circles[row + rightDown][col + rightDown] !== currentChess)) {
+                        break
+                    }
+                } else if (row + rightDown >= circles.length || col + rightDown >= circles.length) {
+                    if (count >= 5 || circles[row - rightDown][col - rightDown] !== currentChess) {
+                        break
+                    }
+                } else {
+                    if (count >= 5 || row - rightDown < 0) {
+                        break
+                    }
+                    if (count >= 5 || (circles[row - rightDown][col - rightDown] !== currentChess && circles[row + rightDown][col + rightDown] !== currentChess)) {
+                        break
+                    }
+                }
+            }
+            return count
+        }
+
+        // 右上到左下查找是否有五个连续相同的棋子
+        function checkEn2Ws(currentChess, row, col) {
+            // 连续同色棋子的数量
+            let count = 1
+            return checkEn(currentChess, row, col, count) + checkWs(currentChess, row, col, count) - 1 >= 5
+        }
+
+        function checkEn(currentChess, row, col, count) {
+            // 右上查找的次数
+            let rightUp = 0
+
+            while (true) {
+                // 向右上查找
+                rightUp++
+
+                // 角
+                // 左上角
+                if (row === 1 && col === 1) {
+                    return count
+                }
+                // 右上角
+                if (row + rightUp === circles.length && col === 1) {
+                    return count
+                }
+                // 右下角
+                if (row + rightUp === circles.length && col + rightUp === circles.length) {
+                    return count
+                }
+
+                // 边
+                // 上
+                if (col === 1) {
+                    return count
+                }
+                // 右
+                if (row + rightUp >= circles.length) {
+                    return count
+                }
+                // 下 pass
+                // 左 pass
+
+                // 超出边界
+                if (row + rightUp > circles.length || col - rightUp < 0) {
+                    return count
+                }
+                
+                if (circles[row + rightUp][col - rightUp] && circles[row + rightUp][col - rightUp] === currentChess) {
+                    count++
+                }
+
+                // 同色棋子大于5 || 棋子不连续
+                if (row === 1 || col + rightUp >= circles.length) {
+                    if (count >= 5 || (circles[row + rightUp][col - rightUp] !== currentChess)) {
+                        break
+                    }
+                } else if (row + rightUp >= circles.length || col === 1) {
+                    if (count >= 5 || (circles[row - rightUp][col + rightUp] !== currentChess)) {
+                        break
+                    }
+                } else {
+                    if (count >= 5 || row - rightUp < 0) {
+                        break
+                    }
+                    if (count >= 5 || (circles[row + rightUp][col - rightUp] !== currentChess && circles[row - rightUp][col + rightUp] !== currentChess)) {
+                        break
+                    }
+                }
+            }
+            return count
+        }
+        function checkWs(currentChess, row, col, count) {
+            // 左下查找的次数
+            let leftDown = 0
+
+            while (true) {
+                // 向左下查找
+                leftDown++
+
+                // 角
+                // 左上角
+                if (row === 1 && col === 1) {
+                    return count
+                }
+                // 左下角
+                if (row === 1 && col + leftDown === circles.length) {
+                    return count
+                }
+                // 右下角
+                if (row + leftDown === circles.length && col + leftDown === circles.length) {
+                    return count
+                }
+
+                // 边
+                // 上 pass
+                // 右 pass
+                // 下
+                if (col === col + leftDown === circles.length) {
+                    return count
+                }
+                // 左
+                if (row === 1) {
+                    return count
+                }
+
+                // 超出边界
+                if (row - leftDown < 0 || col + leftDown > circles.length) {
+                    return count
+                }
+
+                if (circles[row - leftDown][col + leftDown] && circles[row - leftDown][col + leftDown] === currentChess) {
+                    count++
+                }
+
+                // 同色棋子大于5 || 棋子不连续
+                if (row + leftDown >= circles.length || col === 1) {
+                    if (count >= 5 || circles[row - leftDown][col + leftDown] !== currentChess) {
+                        break
+                    }
+                } else if (row === 1 || col + leftDown >= circles.length) {
+                    if (count >= 5 || (circles[row + leftDown][col - leftDown] !== currentChess)) {
+                        break
+                    }
+                } else {
+                    if (count >= 5 || (circles[row - leftDown][col + leftDown] !== currentChess && circles[row + leftDown][col - leftDown] !== currentChess)) {
+                        break
+                    }
+                }
+            }
+            return count
+        }
+    </script>
+</body>
+</html>
+```
+
+![5.五子棋](../../../前端/Canvas/3.弧线/1.标准圆弧曲线/5.五子棋.png)
+
+##### （6）阴影
 
 ```html
 <!DOCTYPE html>
@@ -824,4 +1437,4 @@ Canvas中的曲线分为两种：**标准圆弧曲线**、**贝塞尔曲线**
 </html>
 ```
 
-![6.阴影](static/3.弧线/6.阴影.png)
+![6.阴影](static/3.弧线/1.标准圆弧曲线/6.阴影.png)
