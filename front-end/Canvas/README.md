@@ -1438,3 +1438,95 @@ Canvas中的曲线分为两种：**标准圆弧曲线**、**贝塞尔曲线**
 ```
 
 ![6.阴影](static/3.弧线/1.标准圆弧曲线/6.阴影.png)
+
+
+
+#### 2. 贝塞尔曲线
+
+Canvas 提供了二阶和三阶的贝塞尔曲线方法：
+
+- quadraticCurveTo
+- bezierCurveTo
+
+
+
+##### （1）二阶、三阶贝塞尔曲线
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>贝塞尔曲线</title>
+</head>
+<body>
+    <script>
+        // 1.创建 canvas 画布
+        const canvas = document.createElement('canvas')
+        // 设置宽高
+        canvas.width = 500
+        canvas.height = 500
+        document.body.append(canvas)
+
+        // 2.获取 context 对象（画笔）
+        const context = canvas.getContext('2d')
+
+        // // 二阶贝塞尔曲线（第一个点是控制点）
+        // // 3.1 起始点
+        // context.moveTo(100, 100)
+        // // 3.2 调用 quadraticCurveTo 绘制二阶路径
+        // context.quadraticCurveTo(180, 230, 350, 100)
+        // context.stroke()
+
+        // 三阶贝塞尔曲线（第一、二个点是控制点）
+        // 4.1 起始点
+        context.moveTo(100, 100)
+        // 4.2 调用bezierCurveTo绘制三阶路径
+        context.bezierCurveTo(180, 210, 50, 280, 410, 360)
+        context.stroke()
+    </script>
+</body>
+</html>
+```
+
+![1.二阶贝塞尔曲线](static/3.弧线/2.贝塞尔曲线/1.二阶贝塞尔曲线.png)
+
+![2.三阶贝塞尔曲线](static/3.弧线/2.贝塞尔曲线/2.三阶贝塞尔曲线.png)
+
+
+
+##### （2）使用 arcTo 绘制圆弧
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>arcTo绘制圆弧</title>
+</head>
+<body>
+    <script>
+        // 1.创建 canvas 画布
+        const canvas = document.createElement('canvas')
+        // 设置宽高
+        canvas.width = 500
+        canvas.height = 500
+        document.body.append(canvas)
+
+        // 2.获取 context 对象（画笔）
+        const context = canvas.getContext('2d')
+
+        // arcTo 绘制圆弧
+        // 3.1 起始点
+        context.moveTo(100, 100)
+        // 3.2 调用 arcTo 方法，第一、二个参数为控制点，第三个参数为圆弧半径
+        context.arcTo(180, 100, 180, 180, 50)
+        context.stroke()
+    </script>
+</body>
+</html>
+```
+
+![3.arcTo绘制圆弧](static/3.弧线/2.贝塞尔曲线/3.arcTo绘制圆弧.png)
