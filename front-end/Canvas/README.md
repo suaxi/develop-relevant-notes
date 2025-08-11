@@ -1530,3 +1530,105 @@ Canvas 提供了二阶和三阶的贝塞尔曲线方法：
 ```
 
 ![3.arcTo绘制圆弧](static/3.弧线/2.贝塞尔曲线/3.arcTo绘制圆弧.png)
+
+
+
+### 四、图片
+
+#### 1. 绘制图片
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>绘制图片</title>
+</head>
+<body>
+    <script>
+        // 1.创建 canvas 画布
+        const canvas = document.createElement('canvas')
+        // 设置宽高
+        canvas.width = 500
+        canvas.height = 500
+        document.body.append(canvas)
+
+        // 2.获取 context 对象（画笔）
+        const context = canvas.getContext('2d')
+
+        // 3.1 准备图片
+        let img = new Image()
+        img.src = './images/test.jpg'
+
+        // 图片加载时需要一定的时间（该加载过程不会阻塞js进程），需等待加载完成，才能绘制
+        img.onload = function () {
+            // 3.2 使用 drawImage 方法
+            // 方法一：传入绘制的坐标，按图片原有的大小绘制
+            // context.drawImage(img, 100, 100)
+
+            // 方法二：传入绘制的坐标和渲染的大小（宽、高）
+            // context.drawImage(img, 20, img.height)
+
+            // 方法三：传入要裁切的区域，渲染到页面上
+            context.drawImage(img, 10, 20, 15, 25, 100, 100, 100, 100)
+        }
+    </script>
+</body>
+</html>
+```
+
+![1.1绘制图片-方法一](static/4.图片/1.1绘制图片-方法一.png)
+
+![1.2绘制图片-方法二](static/4.图片/1.2绘制图片-方法二.png)
+
+![1.3绘制图片-方法三](static/4.图片/1.3绘制图片-方法三.png)
+
+
+
+#### 2. 动画
+
+*使用的精灵图素材宽1260，高300，分为7份*
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>动画</title>
+</head>
+<body>
+    <script>
+        // 1.创建 canvas 画布
+        const canvas = document.createElement('canvas')
+        // 设置宽高
+        canvas.width = 500
+        canvas.height = 500
+        document.body.append(canvas)
+
+        // 2.获取 context 对象（画笔）
+        const context = canvas.getContext('2d')
+
+        // 3.1 准备图片
+        let img = new Image()
+        img.src = './images/sprite.png'
+
+        // 图片加载时需要一定的时间（该加载过程不会阻塞js进程），需等待加载完成，才能绘制
+        img.onload = function () {
+            let index = 0
+            setInterval(() => {
+                context.clearRect(0, 0, canvas.width, canvas.height)
+                context.drawImage(img, 180 * index, 0, 180, 300, 0, 0, 180, 300)
+                index++
+                index %= 7
+            }, 100)
+        }
+    </script>
+</body>
+</html>
+```
+
+![2.1sprite](static/4.图片/2.1sprite.png)
+
+![2.2动画](static/4.图片/2.2动画.gif)
