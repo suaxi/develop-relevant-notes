@@ -1632,3 +1632,200 @@ Canvas 提供了二阶和三阶的贝塞尔曲线方法：
 ![2.1sprite](static/4.图片/2.1sprite.png)
 
 ![2.2动画](static/4.图片/2.2动画.gif)
+
+#### 3. 文字
+
+##### （1）绘制文字
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>绘制文字</title>
+</head>
+<body>
+    <script>
+        // 1.创建 canvas 画布
+        const canvas = document.createElement('canvas')
+        // 设置宽高
+        canvas.width = 500
+        canvas.height = 500
+        document.body.append(canvas)
+
+        // 2.获取 context 对象（画笔）
+        const context = canvas.getContext('2d')
+
+        // 文字属性
+        context.font = '200 16px Arial'
+
+        // fillText(content, x, y, [maxWidth])
+        // 注：x, y为文字的左下角初始坐标
+        context.fillText('孙笑川', 100, 100)
+        // maxWidth 属性一般不使用
+        context.fillText('孙笑川', 100, 200, 30)
+
+        // strokeText(content, x, y, [maxWidth])
+        context.strokeText('孙笑川', 100, 300)
+    </script>
+</body>
+</html>
+```
+
+![1.绘制文字](static/5.文字/1.绘制文字.png)
+
+
+
+##### （2）绘制渐变的文字
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>绘制渐变的文字</title>
+</head>
+<body>
+    <script>
+        // 1.创建 canvas 画布
+        const canvas = document.createElement('canvas')
+        // 设置宽高
+        canvas.width = 500
+        canvas.height = 500
+        document.body.append(canvas)
+
+        // 2.获取 context 对象（画笔）
+        const context = canvas.getContext('2d')
+
+        // 文字属性
+        context.font = 'italic 40px Arial'
+
+        // 渐变
+        let gradient = context.createLinearGradient(0, 0, 500, 0)
+        gradient.addColorStop(0, 'yellow')
+        gradient.addColorStop(0.25, 'orange')
+        gradient.addColorStop(0.5, 'skyblue')
+        gradient.addColorStop(0.75, 'purple')
+        gradient.addColorStop(1, 'red')
+
+        context.fillStyle = gradient
+
+        // fillText(content, x, y, [maxWidth])
+        // 注：x, y为文字的左下角初始坐标
+        context.fillText('孙笑川', 100, 100)
+        // maxWidth 属性一般不使用
+        context.fillText('孙笑川', 100, 200, 30)
+
+        context.strokeStyle = gradient
+
+        // strokeText(content, x, y, [maxWidth])
+        context.strokeText('孙笑川', 100, 300)
+    </script>
+</body>
+</html>
+```
+
+![2.绘制渐变的文字](static/5.文字/2.绘制渐变的文字.png)
+
+
+
+##### （3）文字的横向对齐方式
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文字的横向对齐方式</title>
+</head>
+<body>
+    <script>
+        // 1.创建 canvas 画布
+        const canvas = document.createElement('canvas')
+        // 设置宽高
+        canvas.width = 500
+        canvas.height = 500
+        document.body.append(canvas)
+
+        // 2.获取 context 对象（画笔）
+        const context = canvas.getContext('2d')
+
+        // 辅助中线
+        context.strokeStyle = 'black'
+        context.moveTo(250, 0)
+        context.lineTo(250, 500)
+        context.stroke()
+
+        // 文字属性
+        context.font = 'italic 24px Arial'
+
+        // 方向控制 direction
+        context.direction = 'ltr' // 默认为从左到右
+
+        // 对齐方式 textAlign
+        // context.textAlign = 'left'
+        // context.textAlign = 'right'
+        // context.textAlign = 'center'
+
+        // fillText(content, x, y, [maxWidth])
+        // 注：x, y为文字的左下角初始坐标
+        context.fillText('孙笑川', 250, 100)
+
+        context.direction = 'rtl' // 默认为从左到右
+
+        // strokeText(content, x, y, [maxWidth])
+        context.strokeText('孙笑川', 250, 300)
+    </script>
+</body>
+</html>
+```
+
+![3.文字的横向对齐方式](static/5.文字/3.文字的横向对齐方式.png)
+
+
+
+##### （4）文字的纵向对齐方式
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文字的纵向对齐方式</title>
+</head>
+<body>
+    <script>
+        // 1.创建 canvas 画布
+        const canvas = document.createElement('canvas')
+        // 设置宽高
+        canvas.width = 500
+        canvas.height = 500
+        document.body.append(canvas)
+
+        // 2.获取 context 对象（画笔）
+        const context = canvas.getContext('2d')
+
+        const baselines = ['top', 'hanging', 'middle', 'alphabetic', 'ideographic']
+
+        context.font = '24px Arial'
+        baselines.forEach((baseline, index) => {
+            // 基线
+            context.textBaseline = baseline
+            const y = 50 + index * 50
+            context.beginPath()
+            context.moveTo(0, y + 0.5)
+            context.lineTo(500, y + 0.5)
+            context.stroke()
+
+            context.fillText(`孙笑川（${baseline})`, 0, y)
+        })
+    </script>
+</body>
+</html>
+```
+
+![4.文字的纵向对齐方式](static/5.文字/4.文字的纵向对齐方式.png)
