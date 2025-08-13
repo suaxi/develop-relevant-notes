@@ -1829,3 +1829,243 @@ Canvas 提供了二阶和三阶的贝塞尔曲线方法：
 ```
 
 ![4.文字的纵向对齐方式](static/5.文字/4.文字的纵向对齐方式.png)
+
+
+
+### 五、滤镜
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>滤镜</title>
+</head>
+<body>
+    <script>
+        // 1.创建 canvas 画布
+        const canvas = document.createElement('canvas')
+        // 设置宽高
+        canvas.width = 500
+        canvas.height = 500
+        document.body.append(canvas)
+
+        // 2.获取 context 对象（画笔）
+        const context = canvas.getContext('2d')
+
+        // 滤镜
+        // context.filter = 'none' // 默认值
+        // context.filter = 'blur(5px)' // 模糊
+        // context.filter = 'brightness(70%)' // 亮度
+        // context.filter = 'contrast(25%)' // 对比度
+        // context.filter = 'grayscale(60%)' // 灰度
+        // context.filter = 'hue-rotate(100deg)' // 色彩旋转
+        // context.filter = 'invert(60%)' // 透明度
+        // context.filter = 'opacity(60%)' // 反相
+        // context.filter = 'saturate(300%)' // 饱和度
+        context.filter = 'sepia(300%)' // 褐度
+
+        const img = new Image()
+        img.src = './images/test.jpg'
+        img.onload = function() {
+            context.drawImage(img, 100, 100)
+        }
+    </script>
+</body>
+</html>
+```
+
+![1.模糊](static/6.滤镜/1.模糊.png)
+
+![2.亮度](static/6.滤镜/2.亮度.png)
+
+![3.对比度](static/6.滤镜/3.对比度.png)
+
+![4.灰度](static/6.滤镜/4.灰度.png)
+
+![5.色彩旋转](static/6.滤镜/5.色彩旋转.png)
+
+![6.透明度](static/6.滤镜/6.透明度.png)
+
+![7.反相](static/6.滤镜/7.反相.png)
+
+![8.饱和度](static/6.滤镜/8.饱和度.png)
+
+![9.褐度](static/6.滤镜/9.褐度.png)
+
+
+
+### 六、变换
+
+#### 1. translate 位移
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>translate位移</title>
+    <style>
+        canvas {
+            background-color: lightblue;
+            display: block;
+            margin: auto;
+        }
+    </style>
+</head>
+<body>
+    <script>
+        // 1.创建 canvas 画布
+        const canvas = document.createElement('canvas')
+        // 设置宽高
+        canvas.width = 500
+        canvas.height = 500
+        document.body.append(canvas)
+
+        // 2.获取 context 对象（画笔）
+        const context = canvas.getContext('2d')
+
+        // 位移（基于原点的变换）
+        context.translate(100, 100)
+
+        context.fillRect(10, 10, 100, 100)
+    </script>
+</body>
+</html>
+```
+
+![1.1translate位移前](static/7.变换/1.1translate位移前.png)
+
+![1.2translate位移后](static/7.变换/1.2translate位移后.png)
+
+
+
+#### 2. rotate 旋转
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>rotate旋转</title>
+    <style>
+        canvas {
+            background-color: lightblue;
+        }
+    </style>
+</head>
+<body>
+    <script>
+        // 1.创建 canvas 画布
+        const canvas = document.createElement('canvas')
+        // 设置宽高
+        canvas.width = 500
+        canvas.height = 500
+        document.body.append(canvas)
+
+        // 2.获取 context 对象（画笔）
+        const context = canvas.getContext('2d')
+
+        // 位移（基于原点的变换）
+        context.translate(200, 200)
+        context.rotate(45 * Math.PI / 180)
+
+        context.fillRect(10, 10, 100, 100)
+    </script>
+</body>
+</html>
+```
+
+![2.rotate旋转](static/7.变换/2.rotate旋转.png)
+
+
+
+#### 3. scale 缩放
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>缩放</title>
+    <style>
+        canvas {
+            background-color: lightblue;
+        }
+    </style>
+</head>
+<body>
+    <script>
+        // 1.创建 canvas 画布
+        const canvas = document.createElement('canvas')
+        // 设置宽高
+        canvas.width = 500
+        canvas.height = 500
+        document.body.append(canvas)
+
+        // 2.获取 context 对象（画笔）
+        const context = canvas.getContext('2d')
+
+        // 缩放
+        context.scale(1.1, 2)
+
+        context.fillRect(10, 10, 100, 100)
+    </script>
+</body>
+</html>
+```
+
+![3.1scale缩放前](static/7.变换/3.1scale缩放前.png)
+
+![3.2scale缩放后](static/7.变换/3.2scale缩放后.png)
+
+
+
+#### 4. transform
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>transform</title>
+    <style>
+        canvas {
+            background-color: lightblue;
+        }
+    </style>
+</head>
+<body>
+    <script>
+        // 1.创建 canvas 画布
+        const canvas = document.createElement('canvas')
+        // 设置宽高
+        canvas.width = 500
+        canvas.height = 500
+        document.body.append(canvas)
+
+        // 2.获取 context 对象（画笔）
+        const context = canvas.getContext('2d')
+
+        /*
+        transform(a, b, c, d, e, f) 该方法集位移、旋转、缩放为一体
+        a 水平缩放
+        b 垂直倾斜
+        c 水平倾斜
+        d 垂直缩放
+        e 水平移动
+        f 垂直移动
+        */
+        context.transform(1.1, 45 * Math.PI / 180, 30 * Math.PI / 180, 1.4, 100, 100)
+        context.fillRect(10, 10, 100, 100)
+    </script>
+</body>
+</html>
+```
+
+![4.transform](static/7.变换/4.transform.png)
