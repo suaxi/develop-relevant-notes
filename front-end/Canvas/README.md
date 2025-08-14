@@ -2069,3 +2069,132 @@ Canvas 提供了二阶和三阶的贝塞尔曲线方法：
 ```
 
 ![4.transform](static/7.变换/4.transform.png)
+
+
+
+### 七、动画
+
+#### 1. requestAnimationFrame
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>requestAnimationFrame</title>
+</head>
+<body>
+    <script>
+        // 1.创建 canvas 画布
+        const canvas = document.createElement('canvas')
+        // 设置宽高
+        canvas.width = 500
+        canvas.height = 500
+        document.body.append(canvas)
+
+        // 2.获取 context 对象（画笔）
+        const context = canvas.getContext('2d')
+
+        context.fillStyle = 'skyblue'
+
+        // 画一个方形，使之随时间左右移动
+        // 调用 requestAnimationFrame 函数，使函数循环执行
+        let x = 0
+        function loop() {
+            context.clearRect(0, 0, canvas.width, canvas.height)
+            context.fillRect(x, 100, 100, 100, 100)
+            x += 1
+            requestAnimationFrame(loop)
+        }
+        requestAnimationFrame(loop)
+    </script>
+</body>
+</html>
+```
+
+![1.requestAnimationFrame](static/8.动画/1.requestAnimationFrame.gif)
+
+
+
+#### 2. 环绕动画 - 行星运动
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>环绕动画-行星运动</title>
+    <style>
+        canvas {
+            background-color: #4d5053;
+            /* color: #4d5053; */
+        }
+    </style>
+</head>
+<body>
+    <script>
+        // 1.创建 canvas 画布
+        const canvas = document.createElement('canvas')
+        // 设置宽高
+        canvas.width = 500
+        canvas.height = 500
+        document.body.append(canvas)
+
+        // 2.获取 context 对象（画笔）
+        const context = canvas.getContext('2d')
+
+        // 地球旋转的角度
+        let earthAngle = 0
+
+        // 月球旋转的角度
+        let moonAngle = 0
+
+        function loop() {
+            context.save()
+            context.clearRect(0, 0, canvas.width, canvas.height)
+
+            // 太阳
+            context.beginPath()
+            context.arc(250, 250, 60, 0, 2 * Math.PI)
+            context.fillStyle = '#f1ce07'
+            context.shadowColor = '#f1ce07'
+            context.shadowBlur = 10
+            context.fill()
+            context.closePath()
+
+            // 地球
+            // 1. 将canvas的原点移至太阳的中心
+            context.beginPath()
+            context.translate(250, 250)
+            context.rotate(earthAngle * Math.PI / 180)
+            // 2. 将canvas的原点移至地球的中心（使日-地-月的中心在一条水平线上）
+            context.translate(170, 0)
+            context.arc(0, 0, 15, 0, 2 * Math.PI)
+            context.fillStyle = 'blue'
+            context.shadowBlur = 0
+            context.fill()
+            earthAngle += 0.3
+            context.closePath()
+
+            // 月亮
+            context.beginPath()
+            context.rotate(moonAngle * Math.PI / 180)
+            context.arc(35, 0, 6, 0, 2 * Math.PI)
+            context.fillStyle = 'white'
+            context.shadowBlur = 0
+            context.fill()
+            moonAngle += 1.3
+            context.closePath()
+
+            context.restore()
+            requestAnimationFrame(loop)
+        }
+        requestAnimationFrame(loop)
+    </script>
+</body>
+</html>
+```
+
+![2.环绕动画-行星运动](static/8.动画/2.环绕动画-行星运动.gif)
