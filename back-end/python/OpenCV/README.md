@@ -266,3 +266,149 @@ cur_img[:,:,2] = 0
 cv_show('B', cur_img)
 ```
 
+
+
+#### 5. 边界填充
+
+```
+top_size,bottom_size,left_size,right_size = (50, 50, 50, 50)
+replicate = cv2.copyMakeBorder(img, top_size, bottom_size, left_size, right_size, borderType=cv2.BORDER_REPLICATE)
+reflect = cv2.copyMakeBorder(img, top_size, bottom_size, left_size, right_size, borderType=cv2.BORDER_REFLECT)
+reflect101 = cv2.copyMakeBorder(img, top_size, bottom_size, left_size, right_size, borderType=cv2.BORDER_REFLECT_101)
+wrap = cv2.copyMakeBorder(img, top_size, bottom_size, left_size, right_size, borderType=cv2.BORDER_WRAP)
+constant = cv2.copyMakeBorder(img, top_size, bottom_size, left_size, right_size, borderType=cv2.BORDER_CONSTANT, value=0)
+import matplotlib.pyplot as plt
+plt.subplot(231), plt.imshow(img, 'gray'), plt.title('ORIGINAL')
+# plt.subplot(231), plt.imshow(replicate, 'gray'), plt.title('REPLICATE')
+# plt.subplot(231), plt.imshow(reflect, 'gray'), plt.title('REFLECT')
+# plt.subplot(231), plt.imshow(reflect101, 'gray'), plt.title('REFLECT_101')
+# plt.subplot(231), plt.imshow(wrap, 'gray'), plt.title('WRAP')
+# plt.subplot(231), plt.imshow(constant, 'gray'), plt.title('CONSTANT')
+plt.show()
+```
+
+![4.1ORIGINAL](static/2.图像基本操作/4.1ORIGINAL.png)![4.2REPLICATE](static/2.图像基本操作/4.2REPLICATE.png)![4.3REFLECT](static/2.图像基本操作/4.3REFLECT.png)
+
+![4.4REFLECT101](static/2.图像基本操作/4.4REFLECT101.png)![4.5WRAP](static/2.图像基本操作/4.5WRAP.png)![4.6CONSTANT](static/2.图像基本操作/4.6CONSTANT.png)
+
+- BORDER_REPLICATE：复制法，复制最边缘像素
+- BORDER_REFLECT：反射法，对感兴趣的图像中的像素在两边进行复制，如：dcba|abcde|edc
+- BORDER_REFLECT_101：反射法，以最边缘像素为轴，对称复制，如：dcb|abcd|cba
+- BORDER_WRAP：外包装法，如：bcde|abcde|abcd
+- BORDER_CONSTANT：常量法，常量数值进行填充
+
+
+
+#### 6. 数值计算
+
+```
+img_jz = cv2.imread('test.jpg')
+
+img_jz[:5,:,0]
+array([[189, 189, 188, ..., 189, 188, 189],
+       [189, 188, 188, ..., 189, 188, 189],
+       [188, 188, 188, ..., 189, 188, 189],
+       [188, 188, 188, ..., 189, 188, 189],
+       [188, 188, 188, ..., 189, 188, 189]], dtype=uint8)
+img_jz1 = img_jz + 10
+
+img_jz1[:5,:,0]
+array([[199, 199, 198, ..., 199, 198, 199],
+       [199, 198, 198, ..., 199, 198, 199],
+       [198, 198, 198, ..., 199, 198, 199],
+       [198, 198, 198, ..., 199, 198, 199],
+       [198, 198, 198, ..., 199, 198, 199]], dtype=uint8)
+# 相加时如果像素点的数值超过边界 255，则会将该值与256进行 % 取余操作
+(img_jz + img_jz1)[:5,:,0]
+
+array([[132, 132, 130, ..., 132, 130, 132],
+       [132, 130, 130, ..., 132, 130, 132],
+       [130, 130, 130, ..., 132, 130, 132],
+       [130, 130, 130, ..., 132, 130, 132],
+       [130, 130, 130, ..., 132, 130, 132]], dtype=uint8)
+# 通过cv2的add方法进行操作时，如果像素点的数值超过边界 255，则取255，否则取它自身
+cv2.add(img_jz,img_jz1)[:5,:,0]
+
+array([[255, 255, 255, ..., 255, 255, 255],
+       [255, 255, 255, ..., 255, 255, 255],
+       [255, 255, 255, ..., 255, 255, 255],
+       [255, 255, 255, ..., 255, 255, 255],
+       [255, 255, 255, ..., 255, 255, 255]], dtype=uint8)
+```
+
+
+
+#### 7. 图像融合
+
+```
+# 当两张图的大小不一致时，无法进行融合，先用cv2.resize()方法调整
+img_ble = cv2.imread('ble.jpg')
+img_jz + img_ble
+
+array([[[139,  68,  57],
+        [140,  69,  58],
+        [137,  68,  59],
+        ...,
+        [139,  70,  55],
+        [138,  69,  53],
+        [139,  69,  55]],
+
+       [[140,  69,  58],
+        [139,  68,  57],
+        [137,  68,  59],
+        ...,
+        [139,  70,  55],
+        [138,  69,  53],
+        [139,  69,  55]],
+
+       [[139,  68,  57],
+        [139,  68,  57],
+        [136,  67,  58],
+        ...,
+        [139,  70,  55],
+        [138,  69,  53],
+        [139,  69,  55]],
+
+       ...,
+
+       [[144,  68,  56],
+        [137,  65,  57],
+        [137,  70,  61],
+        ...,
+        [138,  68,  55],
+        [137,  67,  54],
+        [138,  68,  55]],
+
+       [[143,  67,  55],
+        [136,  64,  56],
+        [135,  68,  59],
+        ...,
+        [138,  68,  55],
+        [137,  66,  55],
+        [139,  69,  56]],
+
+       [[142,  66,  54],
+        [141,  68,  60],
+        [132,  65,  56],
+        ...,
+        [139,  69,  56],
+        [138,  67,  56],
+        [139,  69,  56]]], dtype=uint8)
+# 参数说明：img1,比例,img2,比例,亮度级
+res = cv2.addWeighted(img_jz, 0.1, img_ble, 0.6, 0)
+plt.imshow(res)
+```
+
+<matplotlib.image.AxesImage at 0x24ad14c8860>
+
+![5.1图像融合](static/2.图像基本操作/5.1图像融合.png)
+
+```
+# 将目标值设置为，通过x,y比例进行调整
+res = cv2.resize(img, (0, 0), fx=3, fy=2.5)
+plt.imshow(res)
+```
+
+<matplotlib.image.AxesImage at 0x24ad4d2f4e0>
+
+![5.2按比例调整](static/2.图像基本操作/5.2按比例调整.png)
