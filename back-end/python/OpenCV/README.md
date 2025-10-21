@@ -270,13 +270,16 @@ cv_show('B', cur_img)
 
 #### 5. 边界填充
 
-```
+```python
 top_size,bottom_size,left_size,right_size = (50, 50, 50, 50)
 replicate = cv2.copyMakeBorder(img, top_size, bottom_size, left_size, right_size, borderType=cv2.BORDER_REPLICATE)
 reflect = cv2.copyMakeBorder(img, top_size, bottom_size, left_size, right_size, borderType=cv2.BORDER_REFLECT)
 reflect101 = cv2.copyMakeBorder(img, top_size, bottom_size, left_size, right_size, borderType=cv2.BORDER_REFLECT_101)
 wrap = cv2.copyMakeBorder(img, top_size, bottom_size, left_size, right_size, borderType=cv2.BORDER_WRAP)
 constant = cv2.copyMakeBorder(img, top_size, bottom_size, left_size, right_size, borderType=cv2.BORDER_CONSTANT, value=0)
+```
+
+```python
 import matplotlib.pyplot as plt
 plt.subplot(231), plt.imshow(img, 'gray'), plt.title('ORIGINAL')
 # plt.subplot(231), plt.imshow(replicate, 'gray'), plt.title('REPLICATE')
@@ -301,7 +304,7 @@ plt.show()
 
 #### 6. 数值计算
 
-```
+```python
 img_jz = cv2.imread('test.jpg')
 
 img_jz[:5,:,0]
@@ -318,6 +321,9 @@ array([[199, 199, 198, ..., 199, 198, 199],
        [198, 198, 198, ..., 199, 198, 199],
        [198, 198, 198, ..., 199, 198, 199],
        [198, 198, 198, ..., 199, 198, 199]], dtype=uint8)
+```
+
+```python
 # 相加时如果像素点的数值超过边界 255，则会将该值与256进行 % 取余操作
 (img_jz + img_jz1)[:5,:,0]
 
@@ -326,6 +332,9 @@ array([[132, 132, 130, ..., 132, 130, 132],
        [130, 130, 130, ..., 132, 130, 132],
        [130, 130, 130, ..., 132, 130, 132],
        [130, 130, 130, ..., 132, 130, 132]], dtype=uint8)
+```
+
+```python
 # 通过cv2的add方法进行操作时，如果像素点的数值超过边界 255，则取255，否则取它自身
 cv2.add(img_jz,img_jz1)[:5,:,0]
 
@@ -340,7 +349,7 @@ array([[255, 255, 255, ..., 255, 255, 255],
 
 #### 7. 图像融合
 
-```
+```python
 # 当两张图的大小不一致时，无法进行融合，先用cv2.resize()方法调整
 img_ble = cv2.imread('ble.jpg')
 img_jz + img_ble
@@ -394,6 +403,9 @@ array([[[139,  68,  57],
         [139,  69,  56],
         [138,  67,  56],
         [139,  69,  56]]], dtype=uint8)
+```
+
+```python
 # 参数说明：img1,比例,img2,比例,亮度级
 res = cv2.addWeighted(img_jz, 0.1, img_ble, 0.6, 0)
 plt.imshow(res)
@@ -403,7 +415,7 @@ plt.imshow(res)
 
 ![5.1图像融合](static/2.图像基本操作/5.1图像融合.png)
 
-```
+```python
 # 将目标值设置为，通过x,y比例进行调整
 res = cv2.resize(img, (0, 0), fx=3, fy=2.5)
 plt.imshow(res)
