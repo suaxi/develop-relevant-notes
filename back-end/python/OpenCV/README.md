@@ -833,3 +833,212 @@ plt.imshow(cv2.cvtColor(black_hat, cv2.COLOR_BGR2RGB))
 <matplotlib.image.AxesImage at 0x2914253fb00>
 
 ![7.2黑帽](static/4.图像形态学操作/7.2黑帽.png)
+
+
+
+### 五、图像梯度计算
+
+#### 1. Sobel算子
+
+$$
+G_x = \begin{bmatrix}
+-1 & 0 & +1 \\
+-2 & 0 & +2 \\
+-1 & 0 & +1
+\end{bmatrix} * A
+\quad
+G_y = \begin{bmatrix}
+-1 & -2 & -1 \\
+0 & 0 & 0 \\
++1 & +2 & +1
+\end{bmatrix} * A
+$$
+
+共p1，p2，p3，p4，p5，p6，p7，p8，p9 九个像素值
+
+Gx = p3 - p1 + 2 * p6 - 2 * p4 + p9 - p7
+
+Gy = p9 + 2 * p8 + p7 - p3 - 2 * p2 - p1
+
+
+
+
+```python
+import cv2 # OpenCV 读取的格式是 BGR
+import matplotlib.pyplot as plt
+import numpy as np
+%matplotlib inline
+```
+
+
+```python
+img = cv2.imread('yuan.jpg', cv2.IMREAD_GRAYSCALE)
+
+# cv2.imshow('img', img)
+# cv2.waitKey(0)
+# cv2.destroyAllWindows()
+plt.imshow(img, cmap='gray')
+plt.show()
+```
+
+
+![1.1original](static/5.图像梯度计算/1.1original.png)
+    
+
+**dst = cv2.Sobel(src, ddepth, dx, dy, ksize)**
+
+- src：源图像
+- ddepth：图像的深度
+- dx：水平方向
+- dy：垂直方向
+- ksize：Sobel算子的大小
+
+
+```python
+sobel_x = cv2.Sobel(img, cv2.CV_64F, 1, 0, ksize=3)
+
+# cv2.imshow('sobel_x', sobel_x)
+# cv2.waitKey(0)
+# cv2.destroyAllWindows()
+# 白 --> 黑 是正数，黑 --> 白 是负数，负数会被截断为0，需要进行绝对值转换
+sobel_abs_x = cv2.convertScaleAbs(sobel_x)
+plt.imshow(sobel_abs_x, cmap='gray')
+plt.show()
+```
+
+![1.1original](static/5.图像梯度计算/1.2sobel_x.png)
+
+```python
+sobel_y = cv2.Sobel(img, cv2.CV_64F, 0, 1, ksize=3)
+
+# cv2.imshow('sobel_y', sobel_y)
+# cv2.waitKey(0)
+# cv2.destroyAllWindows()
+# 白 --> 黑 是正数，黑 --> 白 是负数，负数会被截断为0，需要进行绝对值转换
+sobel_abs_y = cv2.convertScaleAbs(sobel_y)
+plt.imshow(sobel_abs_y, cmap='gray')
+plt.show()
+```
+
+![1.3sobel_y](static/5.图像梯度计算/1.3sobel_y.png)
+
+```python
+# 分别计算x和y，再求和
+sobel_x_y = cv2.addWeighted(sobel_display_x, 0.5, sobel_display_y, 0.5, 0)
+plt.imshow(sobel_x_y, cmap='gray')
+plt.show()
+```
+
+
+![1.3sobel_y](static/5.图像梯度计算/1.3sobel_y.png)
+
+
+
+##### 例：分别计算和整体计算的效果进行对比
+
+
+```python
+ble = cv2.imread('ble.jpg', cv2.IMREAD_GRAYSCALE)
+
+# cv2.imshow('ble', ble)
+# cv2.waitKey(0)
+# cv2.destroyAllWindows()
+plt.imshow(ble, cmap='gray')
+plt.show()
+```
+
+
+![1.5original](static/5.图像梯度计算/1.5original.png)
+
+```python
+# 分别计算 (建议的操作方式)
+ble_sobel_x = cv2.Sobel(ble, cv2.CV_64F, 1, 0, ksize=3)
+ble_sobel_y = cv2.Sobel(ble, cv2.CV_64F, 0, 1, ksize=3)
+
+ble_sobel_abs_x = cv2.convertScaleAbs(ble_sobel_x)
+ble_sobel_abs_y = cv2.convertScaleAbs(ble_sobel_y)
+ble_sobel_x_y = cv2.addWeighted(ble_sobel_abs_x, 0.5, ble_sobel_abs_y, 0.5, 0)
+plt.imshow(ble_sobel_x_y, cmap='gray')
+plt.show()
+```
+
+![1.6sobel_x+sobel_y](static/5.图像梯度计算/1.6sobel_x+sobel_y.png)
+
+```python
+# 整体计算
+ble_sobel_xy = cv2.Sobel(ble, cv2.CV_64F, 1, 1, ksize=3)
+
+ble_sobel_abs_xy = cv2.convertScaleAbs(ble_sobel_xy)
+plt.imshow(ble_sobel_abs_xy, cmap='gray')
+plt.show()
+```
+
+![1.7sobel_xy](static/5.图像梯度计算/1.7sobel_xy.png)
+
+
+
+#### 2. Scharr算子
+
+$$
+G_x = \begin{bmatrix}
+-3 & 0 & 3 \\
+-10 & 0 & 10 \\
+-3 & 0 & 3
+\end{bmatrix} * A
+\quad
+G_y = \begin{bmatrix}
+-3 & -10 & -3 \\
+0 & 0 & 0 \\
+-3 & -10 & -3
+\end{bmatrix} * A
+$$
+
+共 p1，p2，p3，p4，p5，p6，p7，p8，p9 九个像素值
+
+Gx = 3 * p3 - 3 * p1 + 10 * p6 - 10 * p4 + 3 * p9 - 3 * p7
+
+Gy = -3 * p1 - 10 * p2 - 3 * p3 - 3 * p7 - 10 * p8 - 3 * p9
+
+
+
+
+```python
+ble_scharr_x = cv2.Scharr(ble, cv2.CV_64F, 1, 0)
+ble_scharr_y = cv2.Scharr(ble, cv2.CV_64F, 0, 1)
+
+ble_scharr_abs_x = cv2.convertScaleAbs(ble_scharr_x)
+ble_scharr_abs_y = cv2.convertScaleAbs(ble_scharr_y)
+ble_scharr_x_y = cv2.addWeighted(ble_scharr_abs_x, 0.5, ble_scharr_abs_y, 0.5, 0)
+plt.imshow(ble_scharr_x_y, cmap='gray')
+plt.show()
+```
+
+![2.scharr_x+scharr_y](static/5.图像梯度计算/2.scharr_x+scharr_y.png)
+
+
+
+#### 3. Laplacian算子
+
+$$
+G = \begin{bmatrix}
+0 & 1 & 0 \\
+1 & -4 & 1 \\
+0 & 1 & 0
+\end{bmatrix}
+$$
+
+共 p1，p2，p3，p4，p5，p6，p7，p8，p9 九个像素值
+
+G = p2 + p6 - 4 * p5 + p3 + p8
+
+
+```python
+ble_laplacian = cv2.Laplacian(ble, cv2.CV_64F)
+
+ble_laplacian_abs = cv2.convertScaleAbs(ble_laplacian)
+plt.imshow(ble_laplacian_abs, cmap='gray')
+plt.show()
+```
+
+
+![3.laplacian](static/5.图像梯度计算/3.laplacian.png)
