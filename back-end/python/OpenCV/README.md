@@ -1064,7 +1064,27 @@ plt.show()
 #### 2. 高斯滤波器
 
 $$
-e = H * A = \begin{bmatrix}h_{11} & h_{12} & h_{13} \\h_{21} & h_{22} & h_{23} \\h_{31} & h_{32} & h_{33}\end{bmatrix}*\begin{bmatrix}a & b & c \\d & e & f \\g & h & i\end{bmatrix}=sum\left(\begin{bmatrix}a \times h_{11} & b \times h_{12} & c \times h_{13} \\d \times h_{21} & e \times h_{22} & f \times h_{23} \\g \times h_{31} & h \times h_{32} & i \times h_{33}\end{bmatrix}\right)
+e = H * A = 
+\begin{bmatrix}
+h_{11} & h_{12} & h_{13} \\
+h_{21} & h_{22} & h_{23} \\
+h_{31} & h_{32} & h_{33}
+\end{bmatrix}
+*
+\begin{bmatrix}
+a & b & c \\
+d & e & f \\
+g & h & i
+\end{bmatrix}
+=
+sum
+\left(
+\begin{bmatrix}
+a \times h_{11} & b \times h_{12} & c \times h_{13} \\
+d \times h_{21} & e \times h_{22} & f \times h_{23} \\
+g \times h_{31} & h \times h_{32} & i \times h_{33}
+\end{bmatrix}
+\right)
 $$
 
 
@@ -1073,13 +1093,9 @@ $$
 
 $$
 G = \sqrt{G_x^2 + G_y^2}
-$$
-
-$$
+\\
 \theta = \arctan\left(\frac{G_y}{G_x}\right)
-$$
-
-$$
+\\
 S_x = \begin{bmatrix}
 -1 & 0 & 1 \\
 -2 & 0 & 2 \\
@@ -1091,9 +1107,7 @@ S_y = \begin{bmatrix}
 0 & 0 & 0 \\
 -1 & -2 & -1 \\
 \end{bmatrix}
-$$
-
-$$
+\\
 G_x = S_x * A =
 \begin{bmatrix}
 -1 & 0 & 1 \\
@@ -1139,7 +1153,7 @@ $$
 
   为了简化计算，由于一个像素周围有八个像素，可以将一个像素的梯度方向离散为八个方向，如此一来计算前后即可，简化插值法
 
-  ![1.3非极大值抑制-线性插值法简化](../../../../Python/OpenCV/6.边缘检测/1.3非极大值抑制-线性插值法简化.png)
+  ![1.3非极大值抑制-线性插值法简化](static/6.边缘检测/1.3非极大值抑制-线性插值法简化.png)
 
 
 
