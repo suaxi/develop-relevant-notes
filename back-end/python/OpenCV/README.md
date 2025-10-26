@@ -1064,26 +1064,27 @@ plt.show()
 #### 2. 高斯滤波器
 
 $$
-e = H * A = 
-\begin{bmatrix}
+e = H * A =
+\begin{pmatrix}
 h_{11} & h_{12} & h_{13} \\
 h_{21} & h_{22} & h_{23} \\
-h_{31} & h_{32} & h_{33}
-\end{bmatrix}
+h_{31} & h_{32} & h_{33} \\
+\end{pmatrix}
 *
-\begin{bmatrix}
+\begin{pmatrix}
 a & b & c \\
 d & e & f \\
-g & h & i
-\end{bmatrix}
+g & h & i \\
+\end{pmatrix}
 =
+\displaystyle
 sum
 \left(
-\begin{bmatrix}
-a \times h_{11} & b \times h_{12} & c \times h_{13} \\
-d \times h_{21} & e \times h_{22} & f \times h_{23} \\
-g \times h_{31} & h \times h_{32} & i \times h_{33}
-\end{bmatrix}
+\begin{matrix}
+a h_{11} & b h_{12} & c h_{13} \\
+d h_{21} & e h_{22} & f h_{23} \\
+g h_{31} & h h_{32} & i h_{33} \\
+\end{matrix}
 \right)
 $$
 
@@ -1092,42 +1093,45 @@ $$
 #### 3. 梯度和方向
 
 $$
-G = \sqrt{G_x^2 + G_y^2}
-\\
-\theta = \arctan\left(\frac{G_y}{G_x}\right)
-\\
-S_x = \begin{bmatrix}
+G = \sqrt{G_x^2 + G_y^2} \\
+\theta = \arctan \left(\frac{G_y}{G_x}\right) \\
+
+S_x =
+\begin{pmatrix}
 -1 & 0 & 1 \\
 -2 & 0 & 2 \\
 -1 & 0 & 1 \\
-\end{bmatrix}
+\end{pmatrix}
 \qquad
-S_y = \begin{bmatrix}
+S_y =
+\begin{pmatrix}
 1 & 2 & 1 \\
 0 & 0 & 0 \\
 -1 & -2 & -1 \\
-\end{bmatrix}
+\end{pmatrix}
 \\
+
 G_x = S_x * A =
-\begin{bmatrix}
+\begin{pmatrix}
 -1 & 0 & 1 \\
 -2 & 0 & 2 \\
 -1 & 0 & 1 \\
-\end{bmatrix}
+\end{pmatrix}
 *
-\begin{bmatrix}
+\begin{pmatrix}
 a & b & c \\
 d & e & f \\
 g & h & i \\
-\end{bmatrix}
+\end{pmatrix}
 =
+\displaystyle
 sum
 \left(
-\begin{bmatrix}
+\begin{matrix}
 -a & 0 & c \\
 -2d & 0 & 2f \\
 -g & 0 & i \\
-\end{bmatrix}
+\end{matrix}
 \right)
 $$
 
@@ -1159,7 +1163,7 @@ $$
 
 #### 5. 双阈值检测
 
-![3.4双阈值检测](static/6.边缘检测/3.4双阈值检测.png)
+![1.4双阈值检测](static/6.边缘检测/1.4双阈值检测.png)
 
 梯度值 > maxVal：则该点处理为边界
 
@@ -1193,8 +1197,8 @@ plt.show()
 # 阈值范围越小细节越多
 ```
 
-![4.1original_gray](static/6.边缘检测/4.1original_gray.png)
+![2.1original_gray](static/6.边缘检测/2.1original_gray.png)
 
-![4.2canny](static/6.边缘检测/4.2canny.png)
+![2.2canny](static/6.边缘检测/2.2canny.png)
 
-![4.3canny](static/6.边缘检测/4.3canny.png)
+![2.3canny](static/6.边缘检测/2.3canny.png)
