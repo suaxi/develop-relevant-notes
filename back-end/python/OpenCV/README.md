@@ -1063,77 +1063,13 @@ plt.show()
 
 #### 2. 高斯滤波器
 
-$$
-e = H * A =
-\begin{pmatrix}
-h_{11} & h_{12} & h_{13} \\
-h_{21} & h_{22} & h_{23} \\
-h_{31} & h_{32} & h_{33} \\
-\end{pmatrix}
-*
-\begin{pmatrix}
-a & b & c \\
-d & e & f \\
-g & h & i \\
-\end{pmatrix}
-=
-\displaystyle
-sum
-\left(
-\begin{matrix}
-a h_{11} & b h_{12} & c h_{13} \\
-d h_{21} & e h_{22} & f h_{23} \\
-g h_{31} & h h_{32} & i h_{33} \\
-\end{matrix}
-\right)
-$$
+![高斯滤波器](static/6.边缘检测/高斯滤波器.png)
 
 
 
 #### 3. 梯度和方向
 
-$$
-G = \sqrt{G_x^2 + G_y^2} \\
-\theta = \arctan \left(\frac{G_y}{G_x}\right) \\
-
-S_x =
-\begin{pmatrix}
--1 & 0 & 1 \\
--2 & 0 & 2 \\
--1 & 0 & 1 \\
-\end{pmatrix}
-\qquad
-S_y =
-\begin{pmatrix}
-1 & 2 & 1 \\
-0 & 0 & 0 \\
--1 & -2 & -1 \\
-\end{pmatrix}
-\\
-
-G_x = S_x * A =
-\begin{pmatrix}
--1 & 0 & 1 \\
--2 & 0 & 2 \\
--1 & 0 & 1 \\
-\end{pmatrix}
-*
-\begin{pmatrix}
-a & b & c \\
-d & e & f \\
-g & h & i \\
-\end{pmatrix}
-=
-\displaystyle
-sum
-\left(
-\begin{matrix}
--a & 0 & c \\
--2d & 0 & 2f \\
--g & 0 & i \\
-\end{matrix}
-\right)
-$$
+![梯度和方向](static/6.边缘检测/梯度和方向.png)
 
 
 
