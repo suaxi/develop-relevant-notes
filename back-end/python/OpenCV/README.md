@@ -1042,3 +1042,145 @@ plt.show()
 
 
 ![3.laplacian](static/5.图像梯度计算/3.laplacian.png)
+
+
+
+### 六、Canny 边缘检测
+
+#### 1. 流程
+
+(1) 使用高斯滤波器，以平滑图像，滤除噪声
+
+(2) 计算图像中每个像素点的梯度强度和方向
+
+(3) 应用非极大值（Nono-Maximum Suppression）抑制，以消除边缘检测带来的杂散响应
+
+(4) 应用双阈值（Double-Threshold）检测来确定真实的和潜在的边缘
+
+(5) 通过抑制孤立的弱边缘最终完成边缘检测
+
+
+
+#### 2. 高斯滤波器
+
+$$
+e = H * A = \begin{bmatrix}h_{11} & h_{12} & h_{13} \\h_{21} & h_{22} & h_{23} \\h_{31} & h_{32} & h_{33}\end{bmatrix}*\begin{bmatrix}a & b & c \\d & e & f \\g & h & i\end{bmatrix}=sum\left(\begin{bmatrix}a \times h_{11} & b \times h_{12} & c \times h_{13} \\d \times h_{21} & e \times h_{22} & f \times h_{23} \\g \times h_{31} & h \times h_{32} & i \times h_{33}\end{bmatrix}\right)
+$$
+
+
+
+#### 3. 梯度和方向
+
+$$
+G = \sqrt{G_x^2 + G_y^2}
+$$
+
+$$
+\theta = \arctan\left(\frac{G_y}{G_x}\right)
+$$
+
+$$
+S_x = \begin{bmatrix}
+-1 & 0 & 1 \\
+-2 & 0 & 2 \\
+-1 & 0 & 1 \\
+\end{bmatrix}
+\qquad
+S_y = \begin{bmatrix}
+1 & 2 & 1 \\
+0 & 0 & 0 \\
+-1 & -2 & -1 \\
+\end{bmatrix}
+$$
+
+$$
+G_x = S_x * A =
+\begin{bmatrix}
+-1 & 0 & 1 \\
+-2 & 0 & 2 \\
+-1 & 0 & 1 \\
+\end{bmatrix}
+*
+\begin{bmatrix}
+a & b & c \\
+d & e & f \\
+g & h & i \\
+\end{bmatrix}
+=
+sum
+\left(
+\begin{bmatrix}
+-a & 0 & c \\
+-2d & 0 & 2f \\
+-g & 0 & i \\
+\end{bmatrix}
+\right)
+$$
+
+
+
+#### 4. 非极大值抑制
+
+- 线性插值法
+
+  ![1.1非极大值抑制-线性插值法](static/6.边缘检测/1.1非极大值抑制-线性插值法.png)
+
+  设g1的梯度幅值M(g1)，g2的梯度幅值M(g2)，则dtmp1可以得到：
+
+  M(dtmp1) = w*M(g2) + (1-w) * M(g1)
+
+  其中w = distance(dtmp1, g2)/distance(g1, g2)
+
+  distance(g1, g2) 表示两点之间的距离
+
+- 简化
+
+  ![1.2非极大值抑制-线性插值法简化](static/6.边缘检测/1.2非极大值抑制-线性插值法简化.png)
+
+  为了简化计算，由于一个像素周围有八个像素，可以将一个像素的梯度方向离散为八个方向，如此一来计算前后即可，简化插值法
+
+  ![1.3非极大值抑制-线性插值法简化](../../../../Python/OpenCV/6.边缘检测/1.3非极大值抑制-线性插值法简化.png)
+
+
+
+#### 5. 双阈值检测
+
+![3.4双阈值检测](static/6.边缘检测/3.4双阈值检测.png)
+
+梯度值 > maxVal：则该点处理为边界
+
+minVal < 梯度值 < maxVal：与现有的点（A点、C点）有关联（能连线），则保留，否则舍弃（B点）
+
+梯度值 < minVal：舍弃
+
+
+
+#### 6. 演示
+
+```python
+import cv2 # OpenCV 读取的格式是 BGR
+import matplotlib.pyplot as plt
+import numpy as np
+%matplotlib inline
+
+img = cv2.imread('ysg.png', cv2.IMREAD_GRAYSCALE)
+plt.imshow(img, cmap='gray')
+plt.show()
+
+# 参数说明：源图，最小值，最大值
+c1 = cv2.Canny(img, 60, 150)
+plt.imshow(c1, cmap='gray')
+plt.show()
+
+c2 = cv2.Canny(img, 50, 95)
+plt.imshow(c2, cmap='gray')
+plt.show()
+
+# 阈值范围越小细节越多
+```
+
+![4.1original_gray](static/6.边缘检测/4.1original_gray.png)
+
+![4.2canny](static/6.边缘检测/4.2canny.png)
+
+![4.3canny](static/6.边缘检测/4.3canny.png)
