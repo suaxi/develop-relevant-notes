@@ -1138,3 +1138,175 @@ plt.show()
 ![2.2canny](static/6.边缘检测/2.2canny.png)
 
 ![2.3canny](static/6.边缘检测/2.3canny.png)
+
+
+
+### 七、图像金字塔与轮廓检测
+
+#### 1. 图像轮廓
+
+**cv2.findContours(img, mode, method)**
+mode（轮廓检测模式）：
+
+- RETR_EXTERNAL：只检测最外面的轮廓
+- RETR_LIST：检测所有的轮廓，并将其保存到链表中
+- RETR_CCOMP：检索所有的轮廓，并将他们组织为两层，第一层为各部分的外部边界，第二层为空洞的边界
+- RETR_TREE：检索所有的轮廓，并重构嵌套轮廓的整个层次
+
+method（轮廓逼近的方法）：
+
+- CHAIN_APPROX_NONE：以 Freeman 链码的方式输出轮廓，所有其他方法输出多边形（顶点的序列）
+- CHAIN_APPROX_SIMPLE：压缩水平的、垂直的和斜的部分，即函数只保留他们的终点部分
+
+![1.1轮廓检测](static/7.图像金字塔与轮廓检测/1.1轮廓检测.png)
+
+```python
+import cv2 # OpenCV 读取的格式是 BGR
+import matplotlib.pyplot as plt
+import numpy as np
+%matplotlib inline
+
+img = cv2.imread('ysg.png')
+gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+# 使用二值图像提高准确率
+ret, thresh = cv2.threshold(gray, 127, 255, cv2.THRESH_BINARY)
+plt.imshow(thresh, cmap='gray')
+plt.show()
+```
+
+![1.2轮廓检测](static/7.图像金字塔与轮廓检测/1.2轮廓检测.png)
+
+```python
+binary, contours, hierarchy = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
+```
+
+
+
+#### 2. 模板匹配
+
+模板匹配类似于卷积原理，模板在原图像上从原点开始滑动，计算模板与（图像被覆盖的地方）的差别程度（OpenCV中共6种计算方法），然后将每一次计算结果放入一个矩阵，作为结果输出。
+
+6种计算方法：
+
+- TM_SQDIFF：计算平方不同，计算结果值越小，越相关
+
+- TM_CCORR：计算相关性，计算结果值越大，越相关
+
+- TM_CCOEFF：计算相关系数，计算结果值越大，越相关
+
+- TM_SQDIFF_NORMED：计算归一化平方不同，计算结果值越接近0，越相关
+
+- TM_CCORR_NORMED：计算归一化相关性，计算结果值越接近1，越相关
+
+- TM_CCOEFF_NORMED：计算归一化相关系数，计算结果值越接近1，越相关
+
+  ![2.1模板匹配方法6种计算方法](static/7.图像金字塔与轮廓检测/2.1模板匹配方法6种计算方法.png)
+
+  如：原图像大小为 A x B，模板大小为 a x b，则输出结果矩阵是(A - a + 1) x (B - b + 1)
+
+
+
+```python
+img = cv2.imread('ysg.png', 0)
+template = cv2.imread('ysg_template.png', 0)
+h, w = template.shape[:2]
+```
+
+```python
+img.shape
+(310, 341)
+```
+
+```python
+template.shape
+(161, 144)
+```
+
+```python
+res = cv2.matchTemplate(img, template, cv2.TM_SQDIFF)
+res.shape
+(150, 198)
+```
+
+
+
+```python
+min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(res)
+# 最小值
+min_val
+0.0
+
+# 最大值
+max_val
+217423616.0
+
+# 最小值位置
+min_loc
+(67, 10)
+
+# 最大值位置
+max_loc
+
+(189, 97)
+```
+
+
+
+```python
+methods = ['cv2.TM_SQDIFF', 'cv2.TM_CCORR', 'cv2.TM_CCOEFF', 'cv2.TM_SQDIFF_NORMED', 'cv2.TM_CCORR_NORMED', 'cv2.TM_CCOEFF_NORMED']
+for item in methods:
+    img_copy = img.copy()
+    
+    # 匹配方法的真值
+    method = eval(item)
+    print(method)
+    res = cv2.matchTemplate(img, template, method)
+    min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(res)
+
+    # 如果平方差匹配TM_SQDIFF,或归一化平方差匹配TM_SQDIFF_NORMED，取最小值
+    if method in [cv2.TM_SQDIFF, cv2.TM_SQDIFF_NORMED]:
+        top_left = min_loc
+    else:
+        top_left = max_loc
+    bottom_right = (top_left[0] + w, top_left[1] + h)
+    
+    cv2.rectangle(img_copy, top_left, bottom_right, 255, 2)
+    plt.subplot(121), plt.imshow(res, cmap='gray')
+    plt.xticks([]), plt.yticks([])
+    plt.subplot(122), plt.imshow(img_copy, cmap='gray')
+    plt.xticks([]), plt.yticks([])
+    plt.suptitle(item)
+    plt.show()
+```
+
+![2.2TM_SQDIFF](static/7.图像金字塔与轮廓检测/2.2TM_SQDIFF.png)
+
+![2.3TM_CCORR](static/7.图像金字塔与轮廓检测/2.3TM_CCORR.png)
+
+![2.4TM_CCOEFF](static/7.图像金字塔与轮廓检测/2.4TM_CCOEFF.png)
+
+![2.5TM_SQDIFF_NORMED](static/7.图像金字塔与轮廓检测/2.5TM_SQDIFF_NORMED.png)
+
+![2.6TM_CCORR_NORMED](static/7.图像金字塔与轮廓检测/2.6TM_CCORR_NORMED.png)
+
+![2.7TM_CCOEFF_NORMED](static/7.图像金字塔与轮廓检测/2.7TM_CCOEFF_NORMED.png)
+
+
+
+#### 3. 图像金字塔
+
+- 高斯金字塔
+
+  ![3.1高斯金字塔](static/7.图像金字塔与轮廓检测/3.1高斯金字塔.png)
+
+  - 向下采样（缩小）
+
+    ![3.2高斯金字塔-向下采样](static/7.图像金字塔与轮廓检测/3.2高斯金字塔-向下采样.png)
+
+  - 向上采样（放大）
+
+    ![3.3高斯金字塔-向上采样](static/7.图像金字塔与轮廓检测/3.3高斯金字塔-向上采样.png)
+
+- 拉普拉斯金字塔
+
+  ![3.4拉普拉斯金字塔](static/7.图像金字塔与轮廓检测/3.4拉普拉斯金字塔.png)
