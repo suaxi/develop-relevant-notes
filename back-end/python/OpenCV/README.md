@@ -1145,7 +1145,10 @@ plt.show()
 
 #### 1. 图像轮廓
 
+##### （1）概念
+
 **cv2.findContours(img, mode, method)**
+
 mode（轮廓检测模式）：
 
 - RETR_EXTERNAL：只检测最外面的轮廓
@@ -1182,7 +1185,41 @@ binary, contours, hierarchy = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_
 
 
 
+##### （2）轮廓绘制
+
+```python
+img_cp = img.copy()
+# 参数：需绘制的图像，轮廓（-1为绘制所有轮廓），颜色模式，线条厚度
+res = cv2.drawContours(img_cp, contours, -1, (0, 0, 255), 1)
+plt.imshow(cv2.cvtColor(res, cv2.COLOR_BGR2RGB))
+plt.show()
+```
+
+![1.3轮廓绘制](static/7.图像金字塔与轮廓检测/1.3轮廓绘制.png)
+
+
+
+##### （3）轮廓特征
+
+```python
+cnt = contours[0]
+
+# 面积
+cv2.contourArea(cnt)
+136.0
+```
+
+```python
+# 周长，True表示闭合
+cv2.arcLength(cnt, True)
+49.65685415267944
+```
+
+
+
 #### 2. 模板匹配
+
+##### （1）概念
 
 模板匹配类似于卷积原理，模板在原图像上从原点开始滑动，计算模板与（图像被覆盖的地方）的差别程度（OpenCV中共6种计算方法），然后将每一次计算结果放入一个矩阵，作为结果输出。
 
@@ -1228,8 +1265,6 @@ res.shape
 (150, 198)
 ```
 
-
-
 ```python
 min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(res)
 # 最小值
@@ -1246,11 +1281,12 @@ min_loc
 
 # 最大值位置
 max_loc
-
 (189, 97)
 ```
 
 
+
+##### （2）示例
 
 ```python
 methods = ['cv2.TM_SQDIFF', 'cv2.TM_CCORR', 'cv2.TM_CCOEFF', 'cv2.TM_SQDIFF_NORMED', 'cv2.TM_CCORR_NORMED', 'cv2.TM_CCOEFF_NORMED']
@@ -1263,7 +1299,7 @@ for item in methods:
     res = cv2.matchTemplate(img, template, method)
     min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(res)
 
-    # 如果平方差匹配TM_SQDIFF,或归一化平方差匹配TM_SQDIFF_NORMED，取最小值
+    # 如果平方差匹配TM_SQDIFF，或归一化平方差匹配TM_SQDIFF_NORMED，取最小值
     if method in [cv2.TM_SQDIFF, cv2.TM_SQDIFF_NORMED]:
         top_left = min_loc
     else:
@@ -1293,6 +1329,29 @@ for item in methods:
 
 
 
+```python
+# 匹配多个对象
+match = cv2.imread('ysg_match.png')
+match_gray = cv2.cvtColor(match, cv2.COLOR_BGR2GRAY)
+template = cv2.imread('ysg_template.png', 0)
+h, w = template.shape[:2]
+
+res = cv2.matchTemplate(match_gray, template, cv2.TM_CCOEFF_NORMED)
+threshold = 0.8
+loc = np.where(res >= threshold)
+# 筛选匹配程度大于等于80%的
+for pt in zip(*loc[::-1]):
+    bottom_right = (pt[0] + w, pt[1] + h)
+    cv2.rectangle(match, pt, bottom_right, (0, 0, 255), 1)
+
+plt.imshow(cv2.cvtColor(match, cv2.COLOR_BGR2RGB))
+plt.show()
+```
+
+![2.8匹配多个对象](static/7.图像金字塔与轮廓检测/2.8匹配多个对象.png)
+
+
+
 #### 3. 图像金字塔
 
 - 高斯金字塔
@@ -1303,10 +1362,144 @@ for item in methods:
 
     ![3.2高斯金字塔-向下采样](static/7.图像金字塔与轮廓检测/3.2高斯金字塔-向下采样.png)
 
+    ```python
+    # 向下采样
+    img_down = cv2.pyrDown(img)
+    plt.imshow(cv2.cvtColor(img_down, cv2.COLOR_BGR2RGB))
+    plt.show()
+    ```
+
+    ![3.3向下采样](static/7.图像金字塔与轮廓检测/3.3向下采样.png)
+
+    ```python
+    img.shape
+    (310, 341, 3)
+    
+    img_down.shape
+    (155, 171, 3)
+    ```
+
+    
+
   - 向上采样（放大）
 
-    ![3.3高斯金字塔-向上采样](static/7.图像金字塔与轮廓检测/3.3高斯金字塔-向上采样.png)
+    ![3.4高斯金字塔-向上采样](static/7.图像金字塔与轮廓检测/3.4高斯金字塔-向上采样.png)
+
+    ```python
+    # 向上采样
+    img = cv2.imread('ysg.png')
+    img_up = cv2.pyrUp(img)
+    plt.imshow(cv2.cvtColor(img_up, cv2.COLOR_BGR2RGB))
+    plt.show()
+    ```
+
+    ![3.5向上采样](static/7.图像金字塔与轮廓检测/3.5向上采样.png)
+
+    ```python
+    img.shape
+    (310, 341, 3)
+    
+    img_up.shape
+    (620, 682, 3)
+    ```
+
+    
 
 - 拉普拉斯金字塔
 
-  ![3.4拉普拉斯金字塔](static/7.图像金字塔与轮廓检测/3.4拉普拉斯金字塔.png)
+  ![3.6拉普拉斯金字塔](static/7.图像金字塔与轮廓检测/3.6拉普拉斯金字塔.png)
+
+  ![3.7拉普拉斯金字塔计算公式](static/7.图像金字塔与轮廓检测/3.7拉普拉斯金字塔计算公式.png)
+
+  ```python
+  img = cv2.imread('ysg.png')
+  down = cv2.pyrDown(img)
+  down_up = cv2.pyrUp(down)
+  
+  if img.shape != down_up.shape:
+      img = cv2.resize(img, (down_up.shape[1], down_up.shape[0]))
+  res = img - down_up
+  plt.imshow(cv2.cvtColor(res, cv2.COLOR_BGR2RGB))
+  plt.show()
+  ```
+
+  ![3.8拉普拉斯金字塔](static/7.图像金字塔与轮廓检测/3.8拉普拉斯金字塔.png)
+
+
+
+#### 4. 轮廓近似
+
+```python
+outline = cv2.imread('outline.png')
+
+gray = cv2.cvtColor(outline, cv2.COLOR_BGR2GRAY)
+ret, thresh = cv2.threshold(gray, 127, 255, cv2.THRESH_BINARY)
+binary, contours, hierarchy = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
+cnt = contours[0]
+
+outline_cp = outline.copy()
+res = cv2.drawContours(outline_cp, [cnt], -1, (0, 0, 255), 2)
+plt.imshow(cv2.cvtColor(res, cv2.COLOR_BGR2RGB))
+plt.show()
+```
+
+![4.1轮廓近似](static/7.图像金字塔与轮廓检测/4.1轮廓近似.png)
+
+```python
+# 值越小，越接近原始轮廓
+epsilon = 0.1 * cv2.arcLength(cnt, True)
+approx = cv2.approxPolyDP(cnt, epsilon, True)
+
+outline_cp1 = outline.copy()
+res = cv2.drawContours(outline_cp1, [approx], -1, (0, 0, 255), 2)
+plt.imshow(cv2.cvtColor(res, cv2.COLOR_BGR2RGB))
+plt.show()
+```
+
+![4.2轮廓近似](static/7.图像金字塔与轮廓检测/4.2轮廓近似.png)
+
+
+
+#### 5. 边界矩形
+
+```python
+outline = cv2.imread('outline.png')
+
+gray = cv2.cvtColor(outline, cv2.COLOR_BGR2GRAY)
+ret, thresh = cv2.threshold(gray, 127, 255, cv2.THRESH_BINARY)
+binary, contours, hierarchy = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
+cnt = contours[0]
+
+x, y, w, h = cv2.boundingRect(cnt)
+res = cv2.rectangle(outline, (x, y), (x + w, y + h), (0, 0, 255), 2)
+plt.imshow(cv2.cvtColor(res, cv2.COLOR_BGR2RGB))
+plt.show()
+```
+
+![5.边界矩形](static/7.图像金字塔与轮廓检测/5.边界矩形.png)
+
+```python
+# 轮廓面积与边界矩形比
+area = cv2.contourArea(cnt)
+x, y, w, h = cv2.boundingRect(cnt)
+rect_area = w * h
+extent = float(area) / rect_area
+print(extent)
+
+0.5060173697270471
+```
+
+
+
+#### 6. 外接圆
+
+```python
+(x, y), radius = cv2.minEnclosingCircle(cnt)
+center = (int(x), int(y))
+radius = int(radius)
+res = cv2.circle(res, center, radius, (0, 0, 255), 2)
+plt.imshow(cv2.cvtColor(res, cv2.COLOR_BGR2RGB))
+plt.show()
+```
+
+![6.外接圆](static/7.图像金字塔与轮廓检测/6.外接圆.png)
