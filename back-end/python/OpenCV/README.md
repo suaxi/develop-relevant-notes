@@ -1503,3 +1503,129 @@ plt.show()
 ```
 
 ![6.外接圆](static/7.图像金字塔与轮廓检测/6.外接圆.png)
+
+
+
+### 八、直方图与傅里叶变换
+
+#### 1. 直方图
+
+统计每个像素点有多少个
+
+![1.1直方图](static/8.直方图与傅里叶变换/1.1直方图.png)
+
+**cv2.calcHist(images, channels, mask, histSize, ranges)**
+
+- images：原图，格式为uint8或float32，传入函数时须带中括号 [img]
+- channels：统幅图像的直方图，入度图为灰度图时值为：[0]，彩色图像时值为[0][1][2]
+- mask：掩模图像，统整幅图像的直方图时值为None，统一部分时使用自定义的掩模图像
+- histSize：BIN的数目，如：[0-10] [11-20] 等等
+- ranges：像素值范围，如：[0, 256]
+
+```python
+import cv2 # OpenCV 读取的格式是 BGR
+import matplotlib.pyplot as plt
+import numpy as np
+%matplotlib inline
+
+# 灰度图
+img = cv2.imread('ysg.png', 0)
+hist = cv2.calcHist([img], [0], None, [256], [0, 256])
+hist.shape
+
+(256, 1)
+```
+
+```python
+plt.hist(img.ravel(), 256)
+plt.show()
+```
+
+![1.2直方图-入度灰度图](static/8.直方图与傅里叶变换/1.2直方图-入度灰度图.png)
+
+```python
+# 彩色图
+img = cv2.imread('ysg.png')
+color = ('b', 'g', 'r')
+for i, col in enumerate(color):
+    hist = cv2.calcHist([img], [i], None, [256], [0, 256])
+    plt.plot(hist, color = col)
+    plt.xlim([0, 256])
+```
+
+![1.3直方图-入度彩色图](static/8.直方图与傅里叶变换/1.3直方图-入度彩色图.png)
+
+
+
+mask操作
+
+```python
+img = cv2.imread('ysg.png', 0)
+
+# 创建mask
+mask = np.zeros(img.shape[:2], np.uint8)
+
+# 掩模图像区域（需要取的地方设置为白色）
+mask[100:300, 100:400] = 255
+
+masked_img = cv2.bitwise_and(img, img, mask=mask)
+
+hist_full = cv2.calcHist([img], [0], None, [256], [0, 256])
+hist_mask = cv2.calcHist([img], [0], mask, [256], [0, 256])
+
+plt.subplot(221), plt.imshow(img, 'gray')
+plt.subplot(222), plt.imshow(mask, 'gray')
+plt.subplot(223), plt.imshow(masked_img, 'gray')
+plt.subplot(224), plt.plot(hist_full), plt.plot(hist_mask)
+plt.xlim([0, 256])
+plt.show()
+```
+
+![1.4mask操作](static/8.直方图与傅里叶变换/1.4mask操作.png)
+
+
+
+#### 2. 直方图均衡化
+
+```python
+img = cv2.imread('ysg.png', 0)
+plt.hist(img.ravel(), 256)
+plt.show()
+```
+
+![2.1直方图-未均衡化](static/8.直方图与傅里叶变换/2.1直方图-未均衡化.png)
+
+```python
+plt.imshow(img, 'gray')
+plt.show()
+```
+
+![2.2直方图-未均衡化](static/8.直方图与傅里叶变换/2.2直方图-未均衡化.png)
+
+```python
+# 均衡化
+equ = cv2.equalizeHist(img)
+plt.hist(equ.ravel(), 256)
+plt.show()
+```
+
+![2.3直方图-均衡化](static/8.直方图与傅里叶变换/2.3直方图-均衡化.png)
+
+```python
+plt.imshow(equ, 'gray')
+plt.show()
+```
+
+![2.4直方图-均衡化](static/8.直方图与傅里叶变换/2.4直方图-均衡化.png)
+
+
+
+```python
+# 自适应直方图均衡化
+clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(1, 1))
+img_clahe = clahe.apply(img)
+plt.imshow(img_clahe, 'gray')
+plt.show()
+```
+
+![2.5自适应直方图均衡化](static/8.直方图与傅里叶变换/2.5自适应直方图均衡化.png)
