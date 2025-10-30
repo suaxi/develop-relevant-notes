@@ -1629,3 +1629,106 @@ plt.show()
 ```
 
 ![2.5自适应直方图均衡化](static/8.直方图与傅里叶变换/2.5自适应直方图均衡化.png)
+
+
+
+#### 3. 傅里叶变换
+
+##### （1）傅里叶变换的作用
+
+- 高频：变化剧烈的灰度分量，如：边界
+- 低频：变化缓慢的灰度分量，如：大海
+
+
+
+##### （2）滤波
+
+- 低通滤波器：只保留低频，会使图像模糊
+- 高通滤波器：只保留高频，会使图像的细节增强
+
+
+
+##### （3）OpenCV cv2.dft()/cv2.idft()
+
+- 输入的图像需要先转换为 np.float32 格式
+- 输出结果中频率为0的部分会在左上角，通常需转换到中心位置（通过 shift 变换实现）
+- cv2.dft()返回结果是双通道的（实部、虚部），需转换为图像格式才能展示(0, 255)
+
+```python
+img = cv2.imread('ysg.png', 0)
+img_float32 = np.float32(img)
+
+dft = cv2.dft(img_float32, flags=cv2.DFT_COMPLEX_OUTPUT)
+dft_shift = np.fft.fftshift(dft)
+
+# 转换为灰度图能表示的形式
+magnitued_spectrum = 20 * np.log(cv2.magnitude(dft_shift[:,:,0], dft_shift[:,:,1]))
+
+plt.subplot(121), plt.imshow(img, cmap='gray')
+plt.title('Input Image'), plt.xticks([]), plt.yticks([])
+plt.subplot(122), plt.imshow(magnitued_spectrum, cmap='gray')
+plt.title('Magnitued Spectrum'), plt.xticks([]), plt.yticks([])
+plt.show()
+```
+
+![3.1magnitued_spectrum](static/8.直方图与傅里叶变换/3.1magnitued_spectrum.png)
+
+```python
+# 低通滤波器
+img = cv2.imread('ysg.png', 0)
+img_float32 = np.float32(img)
+
+dft = cv2.dft(img_float32, flags=cv2.DFT_COMPLEX_OUTPUT)
+dft_shift = np.fft.fftshift(dft)
+
+rows, cols = img.shape
+# 中心位置
+crow, ccol = int(rows/2), int(cols/2)
+
+mask = np.zeros((rows, cols, 2), np.uint8)
+mask[crow - 30 : crow + 30, ccol - 30 : ccol + 30] = 1
+
+# IDFT
+fshift = dft_shift * mask
+f_ishift = np.fft.ifftshift(fshift)
+img_back = cv2.idft(f_ishift)
+img_back = cv2.magnitude(img_back[:,:,0], img_back[:,:,1])
+
+plt.subplot(121), plt.imshow(img, cmap='gray')
+plt.title('Input Image'), plt.xticks([]), plt.yticks([])
+plt.subplot(122), plt.imshow(img_back, cmap='gray')
+plt.title('Result'), plt.xticks([]), plt.yticks([])
+plt.show()
+```
+
+![3.2低通滤波器](static/8.直方图与傅里叶变换/3.2低通滤波器.png)
+
+```python
+# 高通滤波器
+img = cv2.imread('ysg.png', 0)
+img_float32 = np.float32(img)
+
+dft = cv2.dft(img_float32, flags=cv2.DFT_COMPLEX_OUTPUT)
+dft_shift = np.fft.fftshift(dft)
+
+rows, cols = img.shape
+# 中心位置
+crow, ccol = int(rows/2), int(cols/2)
+
+mask = np.ones((rows, cols, 2), np.uint8)
+mask[crow - 30 : crow + 30, ccol - 30 : ccol + 30] = 0
+
+# IDFT
+fshift = dft_shift * mask
+f_ishift = np.fft.ifftshift(fshift)
+img_back = cv2.idft(f_ishift)
+img_back = cv2.magnitude(img_back[:,:,0], img_back[:,:,1])
+
+plt.subplot(121), plt.imshow(img, cmap='gray')
+plt.title('Input Image'), plt.xticks([]), plt.yticks([])
+plt.subplot(122), plt.imshow(img_back, cmap='gray')
+plt.title('Result'), plt.xticks([]), plt.yticks([])
+plt.show()
+```
+
+![3.3高通滤波器](static/8.直方图与傅里叶变换/3.3高通滤波器.png)
