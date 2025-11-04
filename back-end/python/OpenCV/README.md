@@ -2090,3 +2090,65 @@ plt.show()
   1. 边缘检测
   2. 获取轮廓
   3. 变换
+
+
+
+#### 十一、图像特征 harris
+
+##### 1. 基本原理
+
+![1.1角点检测](static/11.图像特征harris/1.1角点检测.png)
+
+![1.2角点检测-基本原理](static/11.图像特征harris/1.2角点检测-基本原理.png)
+
+![1.3角点检测-基本原理](static/11.图像特征harris/1.3角点检测-基本原理.png)
+
+![1.4角点检测-基本原理](static/11.图像特征harris/1.4角点检测-基本原理.png)
+
+![1.5角点检测-基本原理](static/11.图像特征harris/1.5角点检测-基本原理.png)
+
+![1.6角点检测-基本原理](static/11.图像特征harris/1.6角点检测-基本原理.png)
+
+![1.7角点检测-基本原理](static/11.图像特征harris/1.7角点检测-基本原理.png)
+
+![1.8角点检测-基本原理](static/11.图像特征harris/1.8角点检测-基本原理.png)
+
+
+
+##### 2. 演示
+
+**cv2.cornerHarris()**
+
+- img：类型为 float32 的入图像
+- blockSize：角点检测中指定的区域的大小
+- ksize：Sobel 求导中使用的窗口大小（一般为3）
+- k：取值参数 [0.04, 0.06]
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+import cv2
+
+img = cv2.imread('image.png')
+print("img.shape", img.shape)
+
+gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+dst = cv2.cornerHarris(gray, 2, 3, 0.04)
+print("dst.shape", dst.shape)
+
+img.shape (458, 463, 3)
+dst.shape (458, 463)
+```
+
+```python
+img[dst > 0.01 * dst.max()] = [0, 0, 255]
+# cv2.imshow("dst", img)
+# cv2.waitKey(0)
+# cv2.destroyAllWindows()
+
+img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+plt.imshow(img_rgb)
+plt.show()
+```
+
+![2.result](static/11.图像特征harris/2.result.png)
