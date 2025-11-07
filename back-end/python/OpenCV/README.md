@@ -2367,7 +2367,7 @@ array([  3.,  23.,  10.,   3.,  36.,  59.,  20.,   0., 124.,  15.,   1.,
 
 ![left](static/13.全景图像拼接/left.png)
 
-![right](C:/Users/suaxi/Desktop/right.png)
+![right](static/13.全景图像拼接/right.png)
 
 
 
