@@ -7,6 +7,8 @@
         + [基础](https://github.com/suaxi/develop-relevant-notes/tree/main/back-end/python/basic)
         + [FastApi](https://github.com/suaxi/develop-relevant-notes/tree/main/back-end/python/FastApi)
         + [OpenCV](https://github.com/suaxi/develop-relevant-notes/tree/main/back-end/python/OpenCV)
+        + [数据分析](https://github.com/suaxi/develop-relevant-notes/tree/main/back-end/python/data-analysis)
+          + [ndarray](https://github.com/suaxi/develop-relevant-notes/tree/main/back-end/python/data-analysis/1.ndarray)
 + [前端](https://github.com/suaxi/develop-relevant-notes/front-end)
   + [CSS](https://github.com/suaxi/develop-relevant-notes/tree/main/front-end/CSS)
   + [CSS3](https://github.com/suaxi/develop-relevant-notes/tree/main/front-end/CSS3)
