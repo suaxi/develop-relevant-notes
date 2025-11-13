@@ -272,7 +272,7 @@ print(arr)
 矩阵是由 **行（row）** 和 **列（column）** 排列成的矩形数组
 
 $$
-A=\begin{bmatrix}1&2&3\\4&5&6\end{bmatrix}
+A=\begin{bmatrix}1&2&3 \\4&5&6\end{bmatrix}
 $$
 
 形状（shape）：2行3列，记作 2x3 矩阵
