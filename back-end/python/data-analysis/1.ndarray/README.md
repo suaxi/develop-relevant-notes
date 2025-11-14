@@ -271,16 +271,14 @@ print(arr)
 
 矩阵是由 **行（row）** 和 **列（column）** 排列成的矩形数组
 
-$$
-A=\begin{bmatrix}1&2&3 \\4&5&6\end{bmatrix}
-$$
+![1.矩阵.png](static/1.创建/1.矩阵.png)
 
 形状（shape）：2行3列，记作 2x3 矩阵
 元素（entry）：矩阵中的每个数字称作元素
 
 特殊矩阵
 
- ![1.特殊矩阵.png](static/1.ndarray的创建/1.特殊矩阵.png)
+ ![2.特殊矩阵.png](static/1.创建/2.特殊矩阵.png)
 
 
 
