@@ -636,11 +636,12 @@ print(a + b)
 a = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
 b = np.array([[4, 5, 6], [7, 8, 9], [10, 11, 12]])
 print(a + b)
-print(a @ b) # 矩阵乘法
+
 """
 矩阵乘法
 (1, 1) = a(1, 1) * b(1, 1) + a(1, 2) * b (2, 1) + a(1, 3) * b(3, 1) 
 """
+print(a @ b)
 
 [[ 5  7  9]
  [11 13 15]
@@ -648,5 +649,204 @@ print(a @ b) # 矩阵乘法
 [[ 48  54  60]
  [111 126 141]
  [174 198 222]]
+```
+
+
+
+### 七、函数
+
+#### 1. 基本数学函数
+
+````python
+# 平方根
+print(np.sqrt(4))
+print(np.sqrt([1, 4, 9]))
+
+arr = np.array([1, 4, 9])
+print(np.sqrt(arr))
+
+2.0
+[1. 2. 3.]
+[1. 2. 3.]
+````
+
+```python
+# 指数 e^x = y
+print(np.exp(3))
+
+20.085536923187668
+```
+
+```python
+# 对数 ln y = x
+print(np.log(1))
+
+0.0
+```
+
+```python
+# 三角函数
+# 正弦
+print(np.sin(1))
+
+# 余弦
+print(np.cos(np.pi))
+
+0.8414709848078965
+-1.0
+```
+
+```python
+# 绝对值
+arr = np.array([1, 2, -3, 4, -5])
+print(np.abs(arr))
+
+[1 2 3 4 5]
+```
+
+```python
+# a的b次幂
+print(np.power(arr, 2))
+
+[ 1  4  9 16 25]
+```
+
+```python
+# 四舍五入
+"""
+奇进偶不进
+奇进：当5前的数字是奇数时，进位：2.35 ---> 2.4
+偶不进：当5前的数字是偶数时，舍去：2.45 ---> 2.4
+"""
+print(np.round([1.1, 2.6, 3.5, 4.5, 4.51]))
+
+[1. 3. 4. 4. 5.]
+```
+
+```python
+# 向上取整
+arr = np.array([1.5, 2.6, 3.7])
+print(np.ceil(arr))
+
+# 向下取整
+print(np.floor(arr))
+
+[2. 3. 4.]
+[1. 2. 3.]
+```
+
+```python
+# 检测缺失值 NaN
+arr = np.array([1, 2, np.nan, 3])
+print(np.isnan(arr))
+
+[False False  True False]
+```
+
+
+
+#### 2. 统计函数
+
+```python
+arr = np.random.randint(1, 10, 5)
+print(arr)
+
+[3 8 7 7 9]
+```
+
+```python
+# 求和
+print(np.sum(arr))
+
+34
+```
+
+```python
+# 平均值
+print(np.mean(arr))
+
+6.8
+```
+
+```python
+# 中位数
+"""
+元素个数为奇数时：先排序，再计算
+元素个数为偶数时：中间两个数的平均值
+"""
+print(np.median(arr))
+print(np.median([1, 2, 3, 4]))
+
+7.0
+2.5
+```
+
+```python
+# 标准差
+"""
+[1, 2, 3] 的平均值为2
+标准差 = ((1 - 2)^2 + (2 - 2)^2 + (3 - 2)^2) / 3
+"""
+print(np.var([1, 2, 3]))
+
+# 方差
+"""
+根据标准差和方差可以评估一组数据的离散程度，如：温度是否恒定，机器运行是否稳定
+"""
+print(np.std([1, 2, 3]))
+
+0.6666666666666666
+0.816496580927726
+```
+
+```python
+# 最值
+# 最大值
+print("最大值：", np.max(arr), "索引位置：", np.argmax(arr))
+
+# 最小值
+print("最小值：", np.min(arr), "索引位置：", np.argmin(arr))
+
+最大值： 9 索引位置： 4
+最小值： 3 索引位置： 0
+```
+
+```python
+# 分位数
+arr = np.array([1, 2, 3, 4])
+
+"""
+1    2    3    4 等分为4份，中间有3段
+
+30%时：
+0.3 * 3 = 0.9
+(3 - 2) * 0.9 = 0.9 + 1 = 1.9
+
+50%时：
+0.5 * 3 = 1.5
+(3 - 2) * 1.5 = 1.5 + 1 = 2.5
+
+70%时：
+0.7 * 3 = 2.1
+(3 - 2) * 0.1 = 0.1 + 3 = 3.1
+"""
+print(np.percentile(arr, 30))
+print(np.percentile(arr, 50))
+print(np.percentile(arr, 70))
+
+1.9
+2.5
+3.0999999999999996
+```
+
+```python
+# 累积和
+print(np.cumsum(arr))
+
+# 累积积
+print(np.cumprod(arr))
+
+[ 1  3  6 10]
+[ 1  2  6 24]
 ```
 
