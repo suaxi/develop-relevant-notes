@@ -850,3 +850,135 @@ print(np.cumprod(arr))
 [ 1  2  6 24]
 ```
 
+
+
+#### 3. 比较函数
+
+```python
+arr = np.random.randint(1, 20, 5)
+print(arr)
+
+[19  2 15 11  4]
+```
+
+```python
+# 大于
+print(np.greater(arr, 4))
+
+# 小于
+print(np.less(arr, 4))
+
+# 等于
+print(np.equal(arr, 4))
+
+# 矩阵间比较时需注意矩阵的形状要相同
+print(np.equal(np.array([1, 2, 3]), np.array([2, 3, 4])))
+
+[ True False  True  True False]
+[False  True False False False]
+[False False False False  True]
+[False False False]
+```
+
+```python
+# 与
+print(np.logical_and([1, 0], [1, 1]))
+
+# 或
+print(np.logical_or([1, 0], [1, 1]))
+
+# 非
+print(np.logical_not([1, 0]))
+
+[ True False]
+[ True  True]
+[False  True]
+```
+
+```python
+# 检查至少有一个元素为 True
+print(np.any([1, 0, 0, 0, 1]))
+
+# 检查所有元素是否为 True
+print(np.all([1, 0, 0, 0, 1]))
+
+True
+False
+```
+
+```python
+# 自定义条件
+# 参数：判断条件，符合条件的，不符合条件的
+print(np.where(arr > 5, arr, 0))
+print(np.where(arr > 5, True, False))
+
+[19  0 15 11  0]
+[ True False  True  True False]
+```
+
+```python
+# np.select(条件, 要返回的结果, 默认值)
+print(np.select([arr > 5, arr < 6], ["大于5", "小于5"], default='未知'))
+
+['大于5' '小于5' '大于5' '大于5' '小于5']
+```
+
+
+
+#### 4. 排序函数
+
+```python
+arr = np.random.randint(1, 30, 10)
+print(arr)
+
+[11 29 21 28  5  9 23 17 20 21]
+```
+
+```python
+# 改变原数组
+# arr.sort()
+# print(arr)
+
+# 不改变原数组
+print("排序后的数组：", np.sort(arr))
+print("原数组：", arr)
+
+排序后的数组： [ 5  9 11 17 20 21 21 23 28 29]
+原数组： [11 29 21 28  5  9 23 17 20 21]
+```
+
+```python
+# 去重（注：去重的同时也做了排序）
+print(np.unique(arr))
+
+[ 5  9 11 17 20 21 23 28 29]
+```
+
+```python
+# 数组拼接
+arr1 = np.array([1, 2, 3])
+arr2 = np.array([3, 4, 5])
+print(np.concat((arr1, arr2)))
+
+[1 2 3 3 4 5]
+```
+
+```python
+# 数组的分割（注：切割的份数必须能让原数组等分）
+print(np.split(arr, 2))
+
+[array([11, 29, 21, 28,  5], dtype=int32), array([ 9, 23, 17, 20, 21], dtype=int32)]
+```
+
+```python
+# 调整数组的形状
+# 注：reshape的形状需满足能让原数组等分
+print(np.reshape(arr, [5, 2]))
+
+[[11 29]
+ [21 28]
+ [ 5  9]
+ [23 17]
+ [20 21]]
+```
+
