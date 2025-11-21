@@ -260,3 +260,294 @@ G    200
 Name: 测试, dtype: int64
 ```
 
+
+
+#### 4. 常用方法
+
+| 方法              | 说明                                                         |
+| ----------------- | ------------------------------------------------------------ |
+| head()            | 查看前n行数据，默认值为5                                     |
+| tail()            | 查看后n行数据，默认值为5                                     |
+| isin()            | 判断集合中的每一个元素是否包含在指定的集合中                 |
+| isna()            | 判断指定元素是否为缺失值（NaN/None）                         |
+| sum()             | 求和（自动忽略缺失值）                                       |
+| mean()            | 平均值                                                       |
+| min()             | 最小值                                                       |
+| max()             | 最大值                                                       |
+| var()             | 方差                                                         |
+| std()             | 标准差                                                       |
+| median()          | 中位数                                                       |
+| mode()            | 众数（返回值可以有多个）                                     |
+| quantile(q)       | 分位数，q的取值范围：0 ~ 1                                   |
+| describe()        | 常见统计信息（如：count、mean、std、min、25%、50%、75%、max） |
+| value_count()     | 每个唯一值出现的次数                                         |
+| count()           | 集合中非缺失值的数量                                         |
+| nunique()         | 唯一值个数（去重后的）                                       |
+| unique()          | 数组去重                                                     |
+| drop_duplicates() | 去除重复项，同理 unique()                                    |
+| sample()          | 随机抽样                                                     |
+| sort_index()      | 按索引值排序                                                 |
+| sort_values()     | 按值排序                                                     |
+| replace()         | 替换                                                         |
+| keys()            | 返回集合的索引                                               |
+
+```python
+s = pd.Series([5, 1, np.nan, 3, 2, None, 8])
+s.name = 'datas'
+print(s)
+
+0    5.0
+1    1.0
+2    NaN
+3    3.0
+4    2.0
+5    NaN
+6    8.0
+Name: datas, dtype: float64
+```
+
+```python
+# head()
+print(s.head())
+
+0    5.0
+1    1.0
+2    NaN
+3    3.0
+4    2.0
+Name: datas, dtype: float64
+```
+
+```python
+# tail()
+print(s.tail())
+print("================")
+print(s.tail(1))
+
+2    NaN
+3    3.0
+4    2.0
+5    NaN
+6    8.0
+Name: datas, dtype: float64
+================
+6    8.0
+Name: datas, dtype: float64
+```
+
+```python
+# 查看所有的描述信息
+print(s.describe())
+
+count    5.000000
+mean     3.800000
+std      2.774887
+min      1.000000
+25%      2.000000
+50%      3.000000
+75%      5.000000
+max      8.000000
+Name: datas, dtype: float64
+```
+
+```python
+# 获取集合的元素个数（忽略缺失值）
+print(s.count())
+
+5
+```
+
+```python
+# 获取集合的索引
+print("通过方法获取：")
+print(s.keys())
+
+print("通过属性获取：")
+print(s.index)
+
+通过方法获取：
+RangeIndex(start=0, stop=7, step=1)
+通过属性获取：
+RangeIndex(start=0, stop=7, step=1)
+```
+
+```python
+# isna() 检查集合中的每一个元素是否为缺失值
+print(s.isna())
+
+0    False
+1    False
+2     True
+3    False
+4    False
+5     True
+6    False
+Name: datas, dtype: bool
+```
+
+```python
+# isin()
+print(s.isin([4, 5, 6]))
+
+0     True
+1    False
+2    False
+3    False
+4    False
+5    False
+6    False
+Name: datas, dtype: bool
+```
+
+```python
+# mean()
+print(s.mean())
+
+# std()
+print(s.std())
+
+# var()
+print(s.var())
+
+# min() max()
+print(s.min())
+print(s.max())
+
+# median()
+print(s.median())
+
+3.8
+2.7748873851023212
+7.699999999999999
+1.0
+8.0
+3.0
+```
+
+```python
+"""
+|----|----|----|----|
+1    2    3    5    8
+
+去掉缺失值后等分4段（元素个数减一）
+quantile(0.25)
+4 * 0.25 = 1
+1在等分的第一段
+分位数 = 1 + (2-1) * 1 = 2
+"""
+print(s.sort_values())
+print("===============")
+# quantile()
+print(s.quantile(0.25))
+print(s.quantile(0.50))
+print(s.quantile(0.75))
+
+1    1.0
+4    2.0
+3    3.0
+0    5.0
+6    8.0
+2    NaN
+5    NaN
+Name: datas, dtype: float64
+===============
+2.0
+3.0
+5.0
+```
+
+```python
+# mode()
+s[len(s)] = 1
+print(s)
+print("===============")
+print(s.mode())
+
+0    5.0
+1    1.0
+2    NaN
+3    3.0
+4    2.0
+5    NaN
+6    8.0
+7    1.0
+Name: datas, dtype: float64
+===============
+0    1.0
+Name: datas, dtype: float64
+```
+
+```python
+# 元素计数
+print(s.value_counts())
+
+datas
+1.0    2
+5.0    1
+3.0    1
+2.0    1
+8.0    1
+Name: count, dtype: int64
+```
+
+```python
+# drop_duplicates()
+print(s)
+print("====================")
+print(s.drop_duplicates())
+print("====================")
+s[len(s)] = 1
+print(s.unique())
+# 去重后的元素个数
+print(s.nunique())
+
+0    5.0
+1    1.0
+2    NaN
+3    3.0
+4    2.0
+5    NaN
+6    8.0
+7    1.0
+Name: datas, dtype: float64
+====================
+0    5.0
+1    1.0
+2    NaN
+3    3.0
+4    2.0
+6    8.0
+Name: datas, dtype: float64
+====================
+[ 5.  1. nan  3.  2.  8.]
+5
+```
+
+```python
+# sort_index()
+print(s.sort_index())
+
+# sort_values()
+print(s.sort_values())
+
+0    5.0
+1    1.0
+2    NaN
+3    3.0
+4    2.0
+5    NaN
+6    8.0
+7    1.0
+8    1.0
+Name: datas, dtype: float64
+1    1.0
+7    1.0
+8    1.0
+4    2.0
+3    3.0
+0    5.0
+6    8.0
+2    NaN
+5    NaN
+Name: datas, dtype: float64
+```
