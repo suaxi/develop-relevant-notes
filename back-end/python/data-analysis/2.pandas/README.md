@@ -551,3 +551,253 @@ Name: datas, dtype: float64
 5    NaN
 Name: datas, dtype: float64
 ```
+
+
+
+
+
+### 三、DataFrame
+
+#### 1. 创建方法
+
+
+```python
+import numpy as np
+import pandas as pd
+
+# 通过Series创建
+s1 = pd.Series([1, 2, 3])
+s2 = pd.Series([4, 5, 6])
+df = pd.DataFrame({"1": s1, "2": s2})
+print(df)
+
+   1  2
+0  1  4
+1  2  5
+2  3  6
+```
+
+
+
+```python
+# 通过字典创建
+# 可以通过columns属性指定列的顺序
+df = pd.DataFrame(
+    {
+        "id": [1, 2, 3],
+        "name": ["孙笑川", "药水哥", "Giao哥"],
+        "age": [33, 30, 33]
+    }
+)
+print(df)
+
+   id   name  age
+0   1    孙笑川   33
+1   2    药水哥   30
+2   3  Giao哥   33
+```
+
+
+
+#### 2. 属性
+
+| 属性    | 说明                           |
+| ------- | ------------------------------ |
+| index   | 行索引                         |
+| values  | 值                             |
+| dtypes  | 元素类型                       |
+| shape   | 形状                           |
+| ndim    | 维度                           |
+| size    | 元素个数                       |
+| columns | 列标签                         |
+| loc[]   | 显示索引，按行列标签索引或切片 |
+| iloc[]  | 隐式索引，按行列位置索引或切片 |
+| at[]    | 使用行列标签访问指定元素       |
+| iat[]   | 使用行列位置访问指定元素       |
+| T       | 行列转置                       |
+
+
+
+
+```python
+print("行索引：", df.index)
+print("列标签", df.columns)
+print("值：", df.values)
+
+行索引： RangeIndex(start=0, stop=3, step=1)
+列标签 Index(['id', 'name', 'age'], dtype='object')
+值： [[1 '孙笑川' 33]
+ [2 '药水哥' 30]
+ [3 'Giao哥' 33]]
+```
+
+
+
+```python
+print("形状：", df.shape)
+print("维度：", df.ndim)
+print("数据类型：")
+print(df.dtypes)
+
+形状： (3, 3)
+维度： 2
+数据类型：
+id       int64
+name    object
+age      int64
+dtype: object
+```
+
+
+
+```python
+# 行数据
+# loc
+print(df.loc[1])
+print("==================")
+
+# iloc
+print(df.iloc[1])
+
+id        2
+name    药水哥
+age      30
+Name: 1, dtype: object
+==================
+id        2
+name    药水哥
+age      30
+Name: 1, dtype: object
+```
+
+
+
+```python
+# 列数据
+print(df.loc[:, 'name'])
+print("==================")
+print(df.iloc[:, 1])
+
+0      孙笑川
+1      药水哥
+2    Giao哥
+Name: name, dtype: object
+==================
+0      孙笑川
+1      药水哥
+2    Giao哥
+Name: name, dtype: object
+```
+
+
+
+```python
+# 获取指定元素
+print(df.at[0, 'name'])
+print("==================")
+print(df.iat[0, 1])
+print("==================")
+print(df.loc[0, 'name'])
+print("==================")
+print(df.iloc[0, 1])
+
+孙笑川
+==================
+孙笑川
+==================
+孙笑川
+==================
+孙笑川
+```
+
+
+
+```python
+# 行列转置
+#print(df.T)
+```
+
+
+```python
+# 获取单列数据
+print(df['name'])
+print("==================")
+print(df.name)
+print("==================")
+column = df[['name']]
+print(column)
+print(type(column))
+
+0      孙笑川
+1      药水哥
+2    Giao哥
+Name: name, dtype: object
+==================
+0      孙笑川
+1      药水哥
+2    Giao哥
+Name: name, dtype: object
+==================
+    name
+0    孙笑川
+1    药水哥
+2  Giao哥
+<class 'pandas.core.frame.DataFrame'>
+```
+
+
+
+```python
+# 多列数据
+print(df[['name', 'age']])
+
+    name  age
+0    孙笑川   33
+1    药水哥   30
+2  Giao哥   33
+```
+
+
+
+```python
+# 获取部分数据
+print(df.head(2))
+print("==================")
+print(df.tail(2))
+
+   id name  age
+0   1  孙笑川   33
+1   2  药水哥   30
+==================
+   id   name  age
+1   2    药水哥   30
+2   3  Giao哥   33
+```
+
+
+
+```python
+# 布尔索引
+print(df[df.age > 32])
+print("==================")
+print(df[(df.age > 32) & (df.id == 1)])
+
+   id   name  age
+0   1    孙笑川   33
+2   3  Giao哥   33
+==================
+   id name  age
+0   1  孙笑川   33
+```
+
+
+
+```python
+# 随机抽样
+print(df.sample(2))
+
+   id   name  age
+0   1    孙笑川   33
+2   3  Giao哥   33
+```
+
