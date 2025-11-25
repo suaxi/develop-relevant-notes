@@ -801,3 +801,324 @@ print(df.sample(2))
 2   3  Giao哥   33
 ```
 
+
+
+
+
+#### 3. 常用方法
+
+| 方法              | 说明                                                      |
+| ----------------- | --------------------------------------------------------- |
+| head()            | 获取前n行数据，默认值5                                    |
+| tail()            | 获取后n行数据，默认值5                                    |
+| isin()            | 判断元素是否包含在参数集合中                              |
+| isna()            | 判断每一个元素是否为缺失值（NaN/None）                    |
+| sum()             | 求和，自动忽略缺失值                                      |
+| mean()            | 平均值                                                    |
+| min()             | 最小值                                                    |
+| max()             | 最大值                                                    |
+| var()             | 方差                                                      |
+| std()             | 标准差                                                    |
+| median()          | 中位数                                                    |
+| mode()            | 众数（可以有多个返回值）                                  |
+| quantile(q)       | 分位数，q取值范围为：0~1                                  |
+| describe()        | 常见统计信息（count、mean、std、min、25%、50%、75%、max） |
+| value_counts()    | 每个唯一值的出现次数                                      |
+| count()           | 非缺失值数量                                              |
+| duplicated()      | 是否重复                                                  |
+| drop_duplicates() | 去除重复项                                                |
+| sample()          | 随机抽样                                                  |
+| replace()         | 替换                                                      |
+| sort_index()      | 按索引排序                                                |
+| sort_values()     | 按值排序                                                  |
+| nlargest()        | 返回某列最大的n条数据                                     |
+| nsmallest()       | 返回某列最小的n条数据                                     |
+
+
+
+
+```python
+df = pd.DataFrame(
+    {
+        "id": [1, 2, 3],
+        "name": ["孙笑川", "药水哥", "Giao哥"],
+        "age": [33, 30, 31],
+        "address": ["成都", "武汉", "河南"]
+    }
+)
+print(df)
+
+   id   name  age address
+0   1    孙笑川   33      成都
+1   2    药水哥   30      武汉
+2   3  Giao哥   31      河南
+```
+
+
+
+```python
+print(df.head(1))
+print("============================")
+print(df.tail(1))
+
+   id name  age address
+0   1  孙笑川   33      成都
+============================
+   id   name  age address
+2   3  Giao哥   31      河南
+```
+
+
+
+```python
+# 查看元素是否包含在参数集合中
+print(df.isin(["药水哥", 31]))
+
+      id   name    age  address
+0  False  False  False    False
+1  False   True  False    False
+2  False  False   True    False
+```
+
+
+
+```python
+# 查看元素是否是缺失值
+print(df.isna())
+
+      id   name    age  address
+0  False  False  False    False
+1  False  False  False    False
+2  False  False  False    False
+```
+
+
+
+```python
+# 求和
+print(df.sum())
+print("============================")
+print(df.age.sum())
+
+id                   6
+name       孙笑川药水哥Giao哥
+age                 94
+address         成都武汉河南
+dtype: object
+============================
+94
+```
+
+
+
+```python
+# 最值
+print(df.age.max())
+print(df.name.min())
+
+33
+Giao哥
+```
+
+
+
+```python
+# 平均数
+print(df.age.mean())
+
+# 中位数
+print(df.age.median())
+
+# 众数
+print(df.age.mode())
+
+31.333333333333332
+31.0
+0    30
+1    31
+2    33
+Name: age, dtype: int64
+```
+
+
+
+```python
+# 标准差
+print(df.age.std())
+
+# 方差
+print(df.age.var())
+
+# 分位数
+print(df.age.quantile(0.25))
+
+1.5275252316519468
+2.3333333333333335
+30.5
+```
+
+
+
+```python
+# 描述信息
+print(df.describe())
+
+        id        age
+count  3.0   3.000000
+mean   2.0  31.333333
+std    1.0   1.527525
+min    1.0  30.000000
+25%    1.5  30.500000
+50%    2.0  31.000000
+75%    2.5  32.000000
+max    3.0  33.000000
+```
+
+
+
+```python
+# 每一列中非缺失值的个数
+print(df.count())
+
+id         3
+name       3
+age        3
+address    3
+dtype: int64
+```
+
+
+
+```python
+# 每一个唯一值的出现次数
+print(df.value_counts())
+
+id  name   age  address
+1   孙笑川    33   成都         1
+2   药水哥    30   武汉         1
+3   Giao哥  31   河南         1
+Name: count, dtype: int64
+```
+
+
+
+```python
+# 去重
+print(df.drop_duplicates())
+
+   id   name  age address
+0   1    孙笑川   33      成都
+1   2    药水哥   30      武汉
+2   3  Giao哥   31      河南
+```
+
+
+
+```python
+# 判重
+print(df.duplicated())
+print("============================")
+# 指定列判重
+print(df.duplicated(subset="name"))
+
+0    False
+1    False
+2    False
+dtype: bool
+============================
+0    False
+1    False
+2    False
+dtype: bool
+```
+
+
+
+```python
+# 随机抽样
+print(df.sample())
+
+   id   name  age address
+2   3  Giao哥   31      河南
+```
+
+
+
+```python
+# replace
+print(df.replace(30, 35))
+
+   id   name  age address
+0   1    孙笑川   33      成都
+1   2    药水哥   35      武汉
+2   3  Giao哥   31      河南
+```
+
+
+
+```python
+# 累计和
+print(df.cumsum())
+print("============================")
+
+# 参数 axis 0：按列累计，1按行累计
+# 注：累计时需确保元素类型一直
+print(df.cummax(axis=0))
+
+   id         name  age address
+0   1          孙笑川   33      成都
+1   3       孙笑川药水哥   63    成都武汉
+2   6  孙笑川药水哥Giao哥   94  成都武汉河南
+============================
+   id name  age address
+0   1  孙笑川   33      成都
+1   2  药水哥   33      武汉
+2   3  药水哥   33      河南
+```
+
+
+
+```python
+# 排序
+print(df.sort_index())
+print("============================")
+
+# 按值排序时需指定按哪一列排
+print(df.sort_values(by='name'))
+print("============================")
+
+# 多列排序，并指定排序方式 False：倒序 True：升序
+print(df.sort_values(by=['name', 'age'], ascending=[False, False]))
+
+   id   name  age address
+0   1    孙笑川   33      成都
+1   2    药水哥   30      武汉
+2   3  Giao哥   31      河南
+============================
+   id   name  age address
+2   3  Giao哥   31      河南
+0   1    孙笑川   33      成都
+1   2    药水哥   30      武汉
+============================
+   id   name  age address
+1   2    药水哥   30      武汉
+0   1    孙笑川   33      成都
+2   3  Giao哥   31      河南
+```
+
+
+
+```python
+print(df.nlargest(2, columns=['age']))
+print("============================")
+print(df.nsmallest(2, columns=['age']))
+
+   id   name  age address
+0   1    孙笑川   33      成都
+2   3  Giao哥   31      河南
+============================
+   id   name  age address
+1   2    药水哥   30      武汉
+2   3  Giao哥   31      河南
+```
+
