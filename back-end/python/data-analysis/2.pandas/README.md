@@ -1122,3 +1122,428 @@ print(df.nsmallest(2, columns=['age']))
 2   3  Giao哥   31      河南
 ```
 
+
+
+### 四、数据分析
+
+*演示数据：*[data](https://github.com/suaxi/develop-relevant-notes/tree/main/back-end/python/data-analysis/2.pandas/static/2.pandas/data)
+
+
+
+#### 1. 数据的导入导出
+
+```python
+import pandas as pd
+
+# 导入数据
+# csv
+df = pd.read_csv('static/2_pandas/data/employees.csv')
+print(df.salary.sum())
+
+691400.0
+```
+
+
+
+```python
+# 导出
+df = df.head()
+df.to_csv('static/2_pandas/data/employees1.csv')
+```
+
+
+```python
+# json
+df_json = pd.read_json('static/2_pandas/data/data1.json')
+print(df_json)
+
+   id name  age
+0   1   张三   25
+1   2   李四   30
+2   3   王五   28
+```
+
+
+
+```python
+import json
+
+# 复杂json
+with open('static/2_pandas/data/test.json', encoding='utf-8') as f:
+    data = json.load(f)
+print(type(data))
+print(data['users'])
+print()
+
+df_json2 = pd.DataFrame(data['users'])
+print(df_json2)
+
+<class 'dict'>
+[{'id': 1, 'name': '张三', 'age': 28, 'email': 'zhangsan@example.com', 'is_active': True, 'join_date': '2022-03-15'}, {'id': 2, 'name': '李四', 'age': 35, 'email': 'lisi@example.com', 'is_active': False, 'join_date': '2021-11-02'}, {'id': 3, 'name': '王五', 'age': 24, 'email': 'wangwu@example.com', 'is_active': True, 'join_date': '2023-01-20'}]
+
+   id name  age                 email  is_active   join_date
+0   1   张三   28  zhangsan@example.com       True  2022-03-15
+1   2   李四   35      lisi@example.com      False  2021-11-02
+2   3   王五   24    wangwu@example.com       True  2023-01-20
+```
+
+
+
+#### 2. 缺失值的处理
+
+
+```python
+import numpy as np
+import pandas as pd
+
+# 缺失值的处理
+df = pd.DataFrame([[1, 2, pd.NA], ['A', None, 'D'], [7, 8, 9]], columns=['A', 'B', 'C'])
+print(df)
+print()
+
+# 检查元素是否是缺失值
+print(df.isna())
+print(df.isnull())
+print()
+
+# 计算缺失值个数
+# print(df.isna().sum()) # 列
+print(df.isna().sum(axis=1))  # 行
+
+   A    B     C
+0  1  2.0  <NA>
+1  A  NaN     D
+2  7  8.0     9
+
+       A      B      C
+0  False  False   True
+1  False   True  False
+2  False  False  False
+       A      B      C
+0  False  False   True
+1  False   True  False
+2  False  False  False
+
+0    1
+1    1
+2    0
+dtype: int64
+```
+
+
+
+```python
+# 剔除缺失值
+# 剔除包含缺失值的行记录
+print(df.dropna())
+print()
+
+# 当前行的元素都为缺失值时才剔除
+print(df.dropna(how='all'))
+print()
+
+# 如果有n个元素不是缺失值，则保留
+print(df.dropna(thresh=2))
+print()
+
+   A    B  C
+2  7  8.0  9
+
+   A    B     C
+0  1  2.0  <NA>
+1  A  NaN     D
+2  7  8.0     9
+
+   A    B     C
+0  1  2.0  <NA>
+1  A  NaN     D
+2  7  8.0     9
+```
+
+
+
+```python
+# 按列剔除
+print(df.dropna(axis=1))
+print()
+
+# 如果某列有缺失值，则删除这一行
+print(df.dropna(subset=['B']))
+print()
+
+   A
+0  1
+1  A
+2  7
+
+   A    B     C
+0  1  2.0  <NA>
+2  7  8.0     9
+```
+
+
+
+```python
+# 填充缺失值
+df = pd.read_csv('static/2_pandas/data/weather_withna.csv')
+print(df.isna().sum())
+
+date               0
+precipitation    303
+temp_max         303
+temp_min         303
+wind             303
+weather          303
+dtype: int64
+```
+
+
+
+```python
+# 使用字典填充
+print(df.fillna({"temp_max": 100, "wind": 20}).tail())
+
+            date  precipitation  temp_max  temp_min  wind weather
+1456  2015-12-27            NaN     100.0       NaN  20.0     NaN
+1457  2015-12-28            NaN     100.0       NaN  20.0     NaN
+1458  2015-12-29            NaN     100.0       NaN  20.0     NaN
+1459  2015-12-30            NaN     100.0       NaN  20.0     NaN
+1460  2015-12-31           20.6      12.2       5.0   3.8    rain
+```
+
+
+
+```python
+# 使用统计值填充
+print(df.fillna(df[['temp_max', 'wind']].mean()).tail())
+
+            date  precipitation   temp_max  temp_min      wind weather
+1456  2015-12-27            NaN  15.851468       NaN  3.242055     NaN
+1457  2015-12-28            NaN  15.851468       NaN  3.242055     NaN
+1458  2015-12-29            NaN  15.851468       NaN  3.242055     NaN
+1459  2015-12-30            NaN  15.851468       NaN  3.242055     NaN
+1460  2015-12-31           20.6  12.200000       5.0  3.800000    rain
+```
+
+
+
+```python
+# 根据附近的值填充 front
+print(df.ffill().tail())
+print()
+
+# 根据附近的值填充 behind
+print(df.bfill().tail())
+
+            date  precipitation  temp_max  temp_min  wind weather
+1456  2015-12-27            0.0      11.1       4.4   4.8     sun
+1457  2015-12-28            0.0      11.1       4.4   4.8     sun
+1458  2015-12-29            0.0      11.1       4.4   4.8     sun
+1459  2015-12-30            0.0      11.1       4.4   4.8     sun
+1460  2015-12-31           20.6      12.2       5.0   3.8    rain
+
+            date  precipitation  temp_max  temp_min  wind weather
+1456  2015-12-27           20.6      12.2       5.0   3.8    rain
+1457  2015-12-28           20.6      12.2       5.0   3.8    rain
+1458  2015-12-29           20.6      12.2       5.0   3.8    rain
+1459  2015-12-30           20.6      12.2       5.0   3.8    rain
+1460  2015-12-31           20.6      12.2       5.0   3.8    rain
+```
+
+
+
+
+#### 3. 重复数据处理
+
+
+```python
+import pandas as pd
+
+data = {
+    "name": ["孙笑川", "药水哥", "孙笑川", "刘波", "冬泳怪鸽", "刘波"],
+    "age": [33, 30, 33, 30, 40, 30],
+    "address": ["成都", "武汉", "成都", "武汉", "北京", "武汉"]
+}
+df = pd.DataFrame(data)
+print(df)
+
+   name  age address
+0   孙笑川   33      成都
+1   药水哥   30      武汉
+2   孙笑川   33      成都
+3    刘波   30      武汉
+4  冬泳怪鸽   40      北京
+5    刘波   30      武汉
+```
+
+
+
+```python
+# 一整条记录都是重复的才标记
+print(df.duplicated())
+print()
+
+# 去重
+# print(df.drop_duplicates())
+
+# 根据指定列去重
+print(df.drop_duplicates(subset=['address']))
+print()
+
+# 根据指定列去重（保持最新的记录）
+print(df.drop_duplicates(subset=['address'], keep='last'))
+
+0    False
+1    False
+2     True
+3    False
+4    False
+5     True
+dtype: bool
+
+   name  age address
+0   孙笑川   33      成都
+1   药水哥   30      武汉
+4  冬泳怪鸽   40      北京
+
+   name  age address
+2   孙笑川   33      成都
+4  冬泳怪鸽   40      北京
+5    刘波   30      武汉
+```
+
+
+
+
+#### 4. 数据类型的转换
+
+
+```python
+import pandas as pd
+
+df = pd.read_csv('static/2_pandas/data/sleep.csv')
+print(df)
+
+     person_id  gender  age     occupation  sleep_duration  sleep_quality  \
+0            1    Male   29   Manual Labor             7.4            7.0   
+1            2  Female   43        Retired             4.2            4.9   
+2            3    Male   44        Retired             6.1            6.0   
+3            4    Male   29  Office Worker             8.3           10.0   
+4            5    Male   67        Retired             9.1            9.5   
+..         ...     ...  ...            ...             ...            ...   
+395        396  Female   36        Student             4.5            7.9   
+396        397  Female   45   Manual Labor             6.0            6.1   
+397        398  Female   30        Student             5.3            6.5   
+398        399  Female   41        Retired            11.0            9.1   
+399        400    Male   37        Retired             5.8            7.0   
+
+     physical_activity_level  stress_level bmi_category blood_pressure  \
+0                         41             7        Obese         124/70   
+1                         41             5        Obese         131/86   
+2                        107             4  Underweight         122/70   
+3                         20            10        Obese         124/72   
+4                         19             4   Overweight         133/78   
+..                       ...           ...          ...            ...   
+395                       73             7       Normal         118/66   
+396                       72             8        Obese         132/80   
+397                       58            10        Obese         125/76   
+398                       73             9        Obese         130/75   
+399                       41             6       Normal         118/70   
+
+     heart_rate  daily_steps sleep_disorder  
+0            91         8539            NaN  
+1            81        18754            NaN  
+2            81         2857            NaN  
+3            55         6886            NaN  
+4            97        14945       Insomnia  
+..          ...          ...            ...  
+395          64        14497    Sleep Apnea  
+396          65        12848       Insomnia  
+397          66        15255       Insomnia  
+398          75         6567    Sleep Apnea  
+399          51        18079            NaN  
+
+[400 rows x 13 columns]
+```
+
+
+
+```python
+print(df.dtypes)
+
+person_id                    int64
+gender                      object
+age                          int64
+occupation                  object
+sleep_duration             float64
+sleep_quality              float64
+physical_activity_level      int64
+stress_level                 int64
+bmi_category                object
+blood_pressure              object
+heart_rate                   int64
+daily_steps                  int64
+sleep_disorder              object
+dtype: object
+```
+
+
+
+```python
+df.age = df.age.astype('int16')
+print(df.dtypes)
+
+person_id                    int64
+gender                      object
+age                          int16
+occupation                  object
+sleep_duration             float64
+sleep_quality              float64
+physical_activity_level      int64
+stress_level                 int64
+bmi_category                object
+blood_pressure              object
+heart_rate                   int64
+daily_steps                  int64
+sleep_disorder              object
+dtype: object
+```
+
+
+
+```python
+df.gender = df.gender.astype('category')
+print(df.dtypes)
+print()
+
+print(df.gender)
+
+person_id                     int64
+gender                     category
+age                           int16
+occupation                   object
+sleep_duration              float64
+sleep_quality               float64
+physical_activity_level       int64
+stress_level                  int64
+bmi_category                 object
+blood_pressure               object
+heart_rate                    int64
+daily_steps                   int64
+sleep_disorder               object
+dtype: object
+
+0        Male
+1      Female
+2        Male
+3        Male
+4        Male
+        ...  
+395    Female
+396    Female
+397    Female
+398    Female
+399      Male
+Name: gender, Length: 400, dtype: category
+Categories (2, object): ['Female', 'Male']
+```
