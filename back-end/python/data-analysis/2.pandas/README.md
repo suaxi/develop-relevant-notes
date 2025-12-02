@@ -1547,3 +1547,159 @@ dtype: object
 Name: gender, Length: 400, dtype: category
 Categories (2, object): ['Female', 'Male']
 ```
+
+
+
+#### 5. 数据变形
+
+
+```python
+import pandas as pd
+
+data = {
+    "id": [1001, 1002],
+    "name": ["孙笑川", "刘波"],
+    "math": [99, 89],
+    "english": [60, 95],
+}
+
+df = pd.DataFrame(data)
+print(df)
+
+     id name  math  english
+0  1001  孙笑川    99       60
+1  1002   刘波    89       95
+```
+
+
+
+```python
+# 行列转置
+print(df.T)
+
+            0     1
+id       1001  1002
+name      孙笑川    刘波
+math       99    89
+english    60    95
+```
+
+
+
+```python
+# 宽表转长表
+"""
+1001 孙笑川 math 99
+1001 孙笑川 english 99
+"""
+
+print(df)
+print()
+
+df1 = pd.melt(df, id_vars=['id', 'name'], var_name='科目', value_name='分数')
+print(df1)
+
+     id name  math  english
+0  1001  孙笑川    99       60
+1  1002   刘波    89       95
+
+     id name       科目  分数
+0  1001  孙笑川     math  99
+1  1002   刘波     math  89
+2  1001  孙笑川  english  60
+3  1002   刘波  english  95
+```
+
+
+
+```python
+# 长表转宽表
+df2 = pd.pivot(df1, index=['id', 'name'], columns='科目', values='分数')
+print(df2)
+
+科目         english  math
+id   name               
+1001 孙笑川        60    99
+1002 刘波         95    89
+```
+
+
+
+```python
+# 分列
+data = {
+    "id": [1001, 1002],
+    "name": ["孙笑川 带带大师兄", "刘波 药水哥"],
+    "math": [99, 89],
+    "english": [60, 95],
+}
+
+df = pd.DataFrame(data)
+
+df[['first name', 'last name']] = df.name.str.split(" ", expand=True)
+print(df)
+
+     id       name  math  english first name last name
+0  1001  孙笑川 带带大师兄    99       60        孙笑川     带带大师兄
+1  1002     刘波 药水哥    89       95         刘波       药水哥
+```
+
+
+
+```python
+df = pd.read_csv('static/2_pandas/data/sleep.csv')
+df = df[['person_id', 'blood_pressure']]
+print(df)
+print()
+
+df[['high_pressure', 'low_pressure']] = df['blood_pressure'].str.split("/", expand=True)
+df.high_pressure = df.high_pressure.astype('int16')
+df.low_pressure = df.low_pressure.astype('int16')
+print(df)
+print()
+
+df.info()
+
+     person_id blood_pressure
+0            1         124/70
+1            2         131/86
+2            3         122/70
+3            4         124/72
+4            5         133/78
+..         ...            ...
+395        396         118/66
+396        397         132/80
+397        398         125/76
+398        399         130/75
+399        400         118/70
+
+[400 rows x 2 columns]
+
+     person_id blood_pressure  high_pressure  low_pressure
+0            1         124/70            124            70
+1            2         131/86            131            86
+2            3         122/70            122            70
+3            4         124/72            124            72
+4            5         133/78            133            78
+..         ...            ...            ...           ...
+395        396         118/66            118            66
+396        397         132/80            132            80
+397        398         125/76            125            76
+398        399         130/75            130            75
+399        400         118/70            118            70
+
+[400 rows x 4 columns]
+
+<class 'pandas.core.frame.DataFrame'>
+RangeIndex: 400 entries, 0 to 399
+Data columns (total 4 columns):
+ #   Column          Non-Null Count  Dtype 
+---  ------          --------------  ----- 
+ 0   person_id       400 non-null    int64 
+ 1   blood_pressure  400 non-null    object
+ 2   high_pressure   400 non-null    int16 
+ 3   low_pressure    400 non-null    int16 
+dtypes: int16(2), int64(1), object(1)
+memory usage: 7.9+ KB
+```
+
