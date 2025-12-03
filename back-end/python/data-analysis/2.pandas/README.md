@@ -1703,3 +1703,521 @@ dtypes: int16(2), int64(1), object(1)
 memory usage: 7.9+ KB
 ```
 
+
+
+#### 6. 数据分箱
+
+
+```python
+import pandas as pd
+
+df = pd.read_csv('static/2_pandas/data/employees.csv')
+print(df.head(10))
+
+   employee_id first_name  last_name     email  phone_number      job_id  \
+0          100     Steven       King     SKING  515.123.4567     AD_PRES   
+1          101      N_ann    Kochhar  NKOCHHAR  515.123.4568       AD_VP   
+2          102        Lex    De Haan   LDEHAAN  515.123.4569       AD_VP   
+3          103  Alexander     Hunold   AHUNOLD  590.423.4567     IT_PROG   
+4          104      Bruce      Ernst    BERNST  590.423.4568     IT_PROG   
+5          105      David     Austin   DAUSTIN  590.423.4569     IT_PROG   
+6          106      Valli  Pataballa  VPATABAL  590.423.4560     IT_PROG   
+7          107      Diana    Lorentz  DLORENTZ  590.423.5567     IT_PROG   
+8          108      Nancy  Greenberg  NGREENBE  515.124.4569      FI_MGR   
+9          109     Daniel     Faviet   DFAVIET  515.124.4169  FI_ACCOUNT   
+
+    salary  commission_pct  manager_id  department_id  
+0  24000.0             NaN         NaN           90.0  
+1  17000.0             NaN       100.0           90.0  
+2  17000.0             NaN       100.0           90.0  
+3   9000.0             NaN       102.0           60.0  
+4   6000.0             NaN       103.0           60.0  
+5   4800.0             NaN       103.0           60.0  
+6   4800.0             NaN       103.0           60.0  
+7   4200.0             NaN       103.0           60.0  
+8  12000.0             NaN       101.0          100.0  
+9   9000.0             NaN       108.0          100.0  
+```
+
+
+
+```python
+df1 = df.head(10)[['employee_id', 'salary']]
+print(df1)
+print()
+
+# pd.cut()
+# bins=n 分成n段区间，起始值，结束值是所有数据中的最小值、最大值
+print(pd.cut(df1['salary'], bins=2))
+print()
+
+# bins=[] 自定义区间的值
+df1_cut = pd.cut(df1['salary'], bins=[0, 5000, 10000, 20000])
+print(df1_cut)
+print()
+df1_cut['收入范围'] = pd.cut(df1['salary'], bins=[0, 5000, 10000, 20000], labels=['低', '中', '高'])
+print(df1_cut)
+print()
+
+# 等分为指定的段数
+df1_qcut = pd.qcut(df1['salary'], 3)
+print(df1_qcut)
+
+   employee_id   salary
+0          100  24000.0
+1          101  17000.0
+2          102  17000.0
+3          103   9000.0
+4          104   6000.0
+5          105   4800.0
+6          106   4800.0
+7          107   4200.0
+8          108  12000.0
+9          109   9000.0
+
+0    (14100.0, 24000.0]
+1    (14100.0, 24000.0]
+2    (14100.0, 24000.0]
+3     (4180.2, 14100.0]
+4     (4180.2, 14100.0]
+5     (4180.2, 14100.0]
+6     (4180.2, 14100.0]
+7     (4180.2, 14100.0]
+8     (4180.2, 14100.0]
+9     (4180.2, 14100.0]
+Name: salary, dtype: category
+Categories (2, interval[float64, right]): [(4180.2, 14100.0] < (14100.0, 24000.0]]
+
+0                   NaN
+1    (10000.0, 20000.0]
+2    (10000.0, 20000.0]
+3     (5000.0, 10000.0]
+4     (5000.0, 10000.0]
+5         (0.0, 5000.0]
+6         (0.0, 5000.0]
+7         (0.0, 5000.0]
+8    (10000.0, 20000.0]
+9     (5000.0, 10000.0]
+Name: salary, dtype: category
+Categories (3, interval[int64, right]): [(0, 5000] < (5000, 10000] < (10000, 20000]]
+
+0                                                     NaN
+1                                          (10000, 20000]
+2                                          (10000, 20000]
+3                                           (5000, 10000]
+4                                           (5000, 10000]
+5                                               (0, 5000]
+6                                               (0, 5000]
+7                                               (0, 5000]
+8                                          (10000, 20000]
+9                                           (5000, 10000]
+收入范围    0    NaN
+1      高
+2      高
+3      中
+4      中
+5...
+Name: salary, dtype: object
+
+0    (12000.0, 24000.0]
+1    (12000.0, 24000.0]
+2    (12000.0, 24000.0]
+3     (6000.0, 12000.0]
+4     (6000.0, 12000.0]
+5    (4199.999, 6000.0]
+6    (4199.999, 6000.0]
+7    (4199.999, 6000.0]
+8    (12000.0, 24000.0]
+9     (6000.0, 12000.0]
+Name: salary, dtype: category
+Categories (3, interval[float64, right]): [(4199.999, 6000.0] < (6000.0, 12000.0] < (12000.0, 24000.0]]
+```
+
+
+
+```python
+df = pd.read_csv('static/2_pandas/data/sleep.csv')
+df1 = df.head(10)[['person_id', 'sleep_quality']]
+
+# 源数据 ---> 分箱 ---> 统计
+df1['睡眠质量'] = pd.cut(df1['sleep_quality'], bins=3, labels=['差', '良好', '优秀'])
+print(df1['睡眠质量'].value_counts())
+
+睡眠质量
+良好    5
+差     3
+优秀    2
+Name: count, dtype: int64
+```
+
+
+
+```python
+# df.rename()
+df = pd.DataFrame({
+    "name": ["孙笑川", "药水哥", "刘波", "冬泳怪鸽"],
+    "age": [33, 30, 40, 30],
+    "address": ["成都", "武汉", "武汉", "北京"]
+})
+print(df)
+print()
+
+print(df.rename(index={0: 5}, columns={"address": "地址"}))
+
+   name  age address
+0   孙笑川   33      成都
+1   药水哥   30      武汉
+2    刘波   40      武汉
+3  冬泳怪鸽   30      北京
+
+   name  age  地址
+5   孙笑川   33  成都
+1   药水哥   30  武汉
+2    刘波   40  武汉
+3  冬泳怪鸽   30  北京
+```
+
+
+
+```python
+# df.set_index()
+# inplace=True 在原数据上修改
+df.set_index('name', inplace=True)
+print(df)
+
+      age address
+name             
+孙笑川    33      成都
+药水哥    30      武汉
+刘波     40      武汉
+冬泳怪鸽   30      北京
+```
+
+
+
+```python
+# df.reset_index()
+df.reset_index(inplace=True)
+print(df)
+
+   name  age address
+0   孙笑川   33      成都
+1   药水哥   30      武汉
+2    刘波   40      武汉
+3  冬泳怪鸽   30      北京
+```
+
+
+
+#### 7. 时间数据的处理
+
+
+```python
+import pandas as pd
+
+d = pd.Timestamp('2025-12-03 14:58')
+print(d)
+print(type(d))
+
+2025-12-03 14:58:00
+<class 'pandas._libs.tslibs.timestamps.Timestamp'>
+```
+
+
+
+```python
+# 属性
+print("年：", d.year)
+print("月：", d.month)
+print("日：", d.day)
+print("时间：", d.hour, d.minute, d.second)
+print("是否为当月的最后一天：", d.is_month_end)
+
+年： 2025
+月： 12
+日： 3
+时间： 14 58 0
+是否为当月的最后一天： False
+```
+
+
+
+```python
+# 方法
+print("周几：", d.day_name())
+print("转换为日期（天）：", d.to_period('D'))
+
+周几： Wednesday
+转换为日期（天）： 2025-12-03
+```
+
+
+
+```python
+# 字符串转换为日期类型
+d = pd.to_datetime('2025-12-03 14:58')
+print(d)
+print(type(d))
+
+2025-12-03 14:58:00
+<class 'pandas._libs.tslibs.timestamps.Timestamp'>
+```
+
+
+
+```python
+df = pd.DataFrame({
+    "id": [1001, 1002],
+    "name": ["孙笑川", "药水哥"],
+    "date_str": ["20251201", "20251202"]
+})
+print(df)
+print()
+
+df['create_time'] = pd.to_datetime(df['date_str'])
+print(df)
+print()
+
+df['week'] = df['create_time'].dt.day_name()
+print(df)
+
+     id name  date_str
+0  1001  孙笑川  20251201
+1  1002  药水哥  20251202
+
+     id name  date_str create_time
+0  1001  孙笑川  20251201  2025-12-01
+1  1002  药水哥  20251202  2025-12-02
+
+     id name  date_str create_time     week
+0  1001  孙笑川  20251201  2025-12-01   Monday
+1  1002  药水哥  20251202  2025-12-02  Tuesday
+```
+
+
+
+```python
+# csv中的日期转换
+df = pd.read_csv('static/2_pandas/data/weather.csv')
+df['datetime'] = pd.to_datetime(df['date'])
+print(df.head(10))
+print()
+
+# 读取csv时同步进行转换
+df = pd.read_csv('static/2_pandas/data/weather.csv', parse_dates=['date'])
+print(df['date'].dtypes)
+
+         date  precipitation  temp_max  temp_min  wind  weather   datetime
+0  2012-01-01            0.0      12.8       5.0   4.7  drizzle 2012-01-01
+1  2012-01-02           10.9      10.6       2.8   4.5     rain 2012-01-02
+2  2012-01-03            0.8      11.7       7.2   2.3     rain 2012-01-03
+3  2012-01-04           20.3      12.2       5.6   4.7     rain 2012-01-04
+4  2012-01-05            1.3       8.9       2.8   6.1     rain 2012-01-05
+5  2012-01-06            2.5       4.4       2.2   2.2     rain 2012-01-06
+6  2012-01-07            0.0       7.2       2.8   2.3     rain 2012-01-07
+7  2012-01-08            0.0      10.0       2.8   2.0      sun 2012-01-08
+8  2012-01-09            4.3       9.4       5.0   3.4     rain 2012-01-09
+9  2012-01-10            1.0       6.1       0.6   3.4     rain 2012-01-10
+
+datetime64[ns]
+```
+
+
+
+```python
+# 日期数据作为索引
+df1 = df.set_index('date')
+print(df1)
+print()
+
+            precipitation  temp_max  temp_min  wind  weather
+date                                                        
+2012-01-01            0.0      12.8       5.0   4.7  drizzle
+2012-01-02           10.9      10.6       2.8   4.5     rain
+2012-01-03            0.8      11.7       7.2   2.3     rain
+2012-01-04           20.3      12.2       5.6   4.7     rain
+2012-01-05            1.3       8.9       2.8   6.1     rain
+...                   ...       ...       ...   ...      ...
+2015-12-27            8.6       4.4       1.7   2.9     rain
+2015-12-28            1.5       5.0       1.7   1.3     rain
+2015-12-29            0.0       7.2       0.6   2.6      fog
+2015-12-30            0.0       5.6      -1.0   3.4      sun
+2015-12-31            0.0       5.6      -2.1   3.5      sun
+
+[1461 rows x 5 columns]
+```
+
+
+
+```python
+# 时间间隔
+d1 = pd.Timestamp('2020-01-10')
+d2 = pd.Timestamp('2020-03-05')
+print(d2-d1)
+
+55 days 00:00:00
+```
+
+
+
+```python
+# 按时间维度重采样
+df = pd.read_csv('static/2_pandas/data/weather.csv', parse_dates=['date'])
+
+df.set_index('date', inplace=True)
+print(df[['temp_max', 'temp_min']].resample("YE").mean())
+
+             temp_max  temp_min
+date                           
+2012-12-31  15.276776  7.289617
+2013-12-31  16.058904  8.153973
+2014-12-31  16.995890  8.662466
+2015-12-31  17.427945  8.835616
+```
+
+
+
+#### 8. 分组聚合
+
+
+```python
+# df.groupby('分组的字段')['聚合的字段'].聚合函数
+
+import pandas as pd
+
+df = pd.read_csv('static/2_pandas/data/employees.csv')
+print(df.head(10))
+
+   employee_id first_name  last_name     email  phone_number      job_id  \
+0          100     Steven       King     SKING  515.123.4567     AD_PRES   
+1          101      N_ann    Kochhar  NKOCHHAR  515.123.4568       AD_VP   
+2          102        Lex    De Haan   LDEHAAN  515.123.4569       AD_VP   
+3          103  Alexander     Hunold   AHUNOLD  590.423.4567     IT_PROG   
+4          104      Bruce      Ernst    BERNST  590.423.4568     IT_PROG   
+5          105      David     Austin   DAUSTIN  590.423.4569     IT_PROG   
+6          106      Valli  Pataballa  VPATABAL  590.423.4560     IT_PROG   
+7          107      Diana    Lorentz  DLORENTZ  590.423.5567     IT_PROG   
+8          108      Nancy  Greenberg  NGREENBE  515.124.4569      FI_MGR   
+9          109     Daniel     Faviet   DFAVIET  515.124.4169  FI_ACCOUNT   
+
+    salary  commission_pct  manager_id  department_id  
+0  24000.0             NaN         NaN           90.0  
+1  17000.0             NaN       100.0           90.0  
+2  17000.0             NaN       100.0           90.0  
+3   9000.0             NaN       102.0           60.0  
+4   6000.0             NaN       103.0           60.0  
+5   4800.0             NaN       103.0           60.0  
+6   4800.0             NaN       103.0           60.0  
+7   4200.0             NaN       103.0           60.0  
+8  12000.0             NaN       101.0          100.0  
+9   9000.0             NaN       108.0          100.0  
+```
+
+
+
+```python
+# 缺失值处理
+df = df.dropna(subset=['department_id'])
+
+df['department_id'] = df['department_id'].astype('int64')
+print(df.head(10))
+
+   employee_id first_name  last_name     email  phone_number      job_id  \
+0          100     Steven       King     SKING  515.123.4567     AD_PRES   
+1          101      N_ann    Kochhar  NKOCHHAR  515.123.4568       AD_VP   
+2          102        Lex    De Haan   LDEHAAN  515.123.4569       AD_VP   
+3          103  Alexander     Hunold   AHUNOLD  590.423.4567     IT_PROG   
+4          104      Bruce      Ernst    BERNST  590.423.4568     IT_PROG   
+5          105      David     Austin   DAUSTIN  590.423.4569     IT_PROG   
+6          106      Valli  Pataballa  VPATABAL  590.423.4560     IT_PROG   
+7          107      Diana    Lorentz  DLORENTZ  590.423.5567     IT_PROG   
+8          108      Nancy  Greenberg  NGREENBE  515.124.4569      FI_MGR   
+9          109     Daniel     Faviet   DFAVIET  515.124.4169  FI_ACCOUNT   
+
+    salary  commission_pct  manager_id  department_id  
+0  24000.0             NaN         NaN             90  
+1  17000.0             NaN       100.0             90  
+2  17000.0             NaN       100.0             90  
+3   9000.0             NaN       102.0             60  
+4   6000.0             NaN       103.0             60  
+5   4800.0             NaN       103.0             60  
+6   4800.0             NaN       103.0             60  
+7   4200.0             NaN       103.0             60  
+8  12000.0             NaN       101.0            100  
+9   9000.0             NaN       108.0            100  
+```
+
+
+
+```python
+# 计算不同部门的平均薪资
+# .groups 查看分组
+print(df.groupby('department_id').groups)
+print()
+
+# get_group() 查看具体的分组数据
+print(df.groupby('department_id').get_group(20))
+
+{10: [100], 20: [101, 102], 30: [14, 15, 16, 17, 18, 19], 40: [103], 50: [20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99], 60: [3, 4, 5, 6, 7], 70: [104], 80: [45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 79], 90: [0, 1, 2], 100: [8, 9, 10, 11, 12, 13], 110: [105, 106]}
+
+     employee_id first_name  last_name     email  phone_number  job_id  \
+101          201    Michael  Hartstein  MHARTSTE  515.123.5555  MK_MAN   
+102          202        Pat        Fay      PFAY  603.123.6666  MK_REP   
+
+      salary  commission_pct  manager_id  department_id  
+101  13000.0             NaN       100.0             20  
+102   6000.0             NaN       201.0             20  
+```
+
+
+
+```python
+df1 = df.groupby('department_id')[['salary']].mean()
+df1['salary'] = df1['salary'].round(2)
+df1.reset_index(inplace=True)
+print(df1.sort_values('salary', ascending=False))
+
+    department_id    salary
+8              90  19333.33
+10            110  10150.00
+6              70  10000.00
+1              20   9500.00
+7              80   8955.88
+9             100   8600.00
+3              40   6500.00
+5              60   5760.00
+0              10   4400.00
+2              30   4150.00
+4              50   3475.56
+```
+
+
+
+```python
+# 按部门、岗位分组聚合
+df2 = df.groupby(['department_id', 'job_id'])[['salary']].mean()
+df2['salary'] = df2['salary'].round(2)
+df2.reset_index(inplace=True)
+print(df2.sort_values('salary', ascending=False))
+
+    department_id      job_id    salary
+13             90     AD_PRES  24000.00
+14             90       AD_VP  17000.00
+1              20      MK_MAN  13000.00
+11             80      SA_MAN  12200.00
+16            100      FI_MGR  12000.00
+18            110      AC_MGR  12000.00
+4              30      PU_MAN  11000.00
+10             70      PR_REP  10000.00
+12             80      SA_REP   8396.55
+17            110  AC_ACCOUNT   8300.00
+15            100  FI_ACCOUNT   7920.00
+8              50      ST_MAN   7280.00
+5              40      HR_REP   6500.00
+2              20      MK_REP   6000.00
+9              60     IT_PROG   5760.00
+0              10     AD_ASST   4400.00
+6              50    SH_CLERK   3215.00
+7              50    ST_CLERK   2785.00
+3              30    PU_CLERK   2780.00
+```
