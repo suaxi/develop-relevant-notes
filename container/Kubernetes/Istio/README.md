@@ -248,3 +248,255 @@ spec:
 ```
 
 部署完之后，通过 curl -v x.x.x.x 即可测试
+
+
+
+#### 2. VirtualService
+
+通过 VirtualService，可以定义流量路由规则
+
+| 字段名                  | 说明                                                         |
+| ----------------------- | ------------------------------------------------------------ |
+| spec.hosts              | 定义路由规则关联一组的hosts，可以是带有通配符的DNS名称或者IP地址（IP地址仅能应用于来源流量为边缘代理网关）。该字段能应用于 HTTP 和 TCP 流量。在 Kubernetes 环境中，可以使用 service 的名称作为缩写，lstio 会按照 VirtualService 所在 namespace 补齐缩写，例如在 default namespace 的 VirtualService 包含 host 缩写 reviews 会被补齐为 reviews.default.svc.cluster.local，为避免误配置，推荐填写 host 全称。 |
+| spec.gateway            | 定义应用路由规则的来源流量，可以是一个或多个网关，或网格内部的 sidecar，指定方式为[gateway namespace]/[gateway name]，保留字段 mesh 表示网格内部所有的 sidecar，当该参数缺省时,会默认填写 mesh，即该路由规则的来源流量为网格内部所有的 sidecar。 |
+| spec.http               | 定义一组有序的（优先匹配靠前的路由规则）应用于 HTTP 流量的路由规则，HTTP 路由规则会应用于网格内部的 service 端口命名为http-， http2-，grpc- 开头的流量以及来自 gateway 的协议为 HTTP，HTTP2，GRPC，TLS-Terminated-HTTPS 的流量。 |
+| spec.http.match         | 定义路由的匹配规则列表，单个匹配规则项内所有条件是且关系，多个匹配规则之间为或关系。 |
+| spec.http.route         | 定义路由转发目的地列表，一条 HTTP 路由可以是重定向或转发（默认)，转发的目的地可以是一个或多个服务（服务版本），同时也可以配置权重、header 操作等行为。 |
+| spec.http.redirect      | 定义路由重定向，一条 HTTP 路由可以是重定向或转发（默认），如规则中指定了 passthrough 选项，route.redirect 均会被忽略，可将 HTTP 301重定向到另外的 URL 或Authority。 |
+| spec.http.rewrite       | 定义重写HTTP URL 或 Authority headers，不能与重定向同时配置，重写操作会在转发前执行。 |
+| spec.http.timeout       | 请求超时时间                                                 |
+| spec.http.retries       | 请求重试次数                                                 |
+| spec.http.fault         | 故障注入策略，开启时超时和重试策略不生效                     |
+| spec.http.mirror        | 定义将 HTTP 流量复制到另一个指定的目的端，被复制的流量按照“best effort”原则，sidecar / 网关不会等待复制流量的响应结果就会从源目的端返回响应。 |
+| spec.http.mirrorPercent | 定义镜像流量的复制百分比，默认值为100，即100%                |
+| spec.http.corsPolicy    | 定义 CORS 策略                                               |
+| spec.http.headers       | 定义 header 操作规则，包括 request 和 response header 的增删改。 |
+| spec.tcp                | 定义一组有序的（优先匹配靠前的路由规则）应用于 TCP 流量的路由规则，该规则会应用于任何非 HTTP 和 TLS 的端口。 |
+| spec.tcp.match          | 定义路由的匹配规则列表，单个匹配规则项内所有条件是且关系，多个匹配规则之间为或关系。 |
+| spec.tcp.route          | 定义 TCP 连接转发的目的端。                                  |
+| spec.tls                | 定义一组有序的（优先匹配靠前的路由规则）应用于未终止的 TLS 或 HTTPS 流量的路由规则，该路由规则会应用于网格内部的 service 端口命名为 https-，tls- 开头的流量，来自 gateway 的端口协议为 HTTPS，TLS 的未终止加密流量，ServiceEntry 使用 HTTPS，TLS 协议的端口，当 https-，tls- 端口未关联 VirtualService 规则时将会被视为 TCP 流量。 |
+| spec.tls.match          | 定义 TLS 流量路由的匹配规则列表，单个匹配规则项内所有条件是且关系，多个匹配规则之间为或关系。 |
+| spec.tls.route          | 定义连接转发的目的端                                         |
+
+
+
+##### 2.1 route
+
+HTTP Route 规则的功能：满足 HTTPMatchRequest 条件的流量都会被路由到 HTTPRouteDestination，执行重定向（HTTPRedirect）、重写（HTTPRewrite）、重试（HTTPRetry）、故障注入（HTTPFaultInjection）、跨站（CorsPolicy）等策略。
+
+
+
+##### 2.2 match
+
+match 是路由的匹配规则，支持 uri、scheme、method、authority 等字段，且支持 perfix（前缀）、exact（精确）、regex（正则）三种匹配模式：
+
+```yaml
+# 匹配 uri 以 test 开头的请求
+- match:
+  - uri:
+    prefix: "/test"
+```
+
+```yaml
+# 匹配 header 中 key 为 source，value 为 abc 的请求
+- match:
+  - headers:
+    source:
+      exact: abc
+```
+
+```yaml
+# 根据来源标签匹配
+- match:
+  sourceLabels:
+    app: nginx
+    version: v1
+```
+
+```yaml
+# 匹配 header 中 key 为 source，value 为 test1 的请求 或 uri 以 test2 开头的请求
+- match:
+  - headers:
+    source:
+      exact: abc
+    uri:
+    prefix: "/test1"
+  - uri:
+    prefix: "/test2"
+```
+
+
+
+##### 2.3 路由目标（RouteDestionation）
+
+在 HTTPRouteDestionation 中主要包含三个字段：destination（请求目标）、weight（权重）、headers（请求头），其中 destination 必填。
+
+- destination：通过 host、subset 和 port 三个属性描述，表示最终将流量路由到此目标。host 是 Destination 必选字段，表示在 lstio 中注册的服务名（建议写全域名），subset 表示在 host 上定义的一个子集，如：在灰度发布中将版本定义为 subset，配置路由策略会将流量转发到不同版本的 subset 上。
+
+  ```yaml
+  spec:
+    hosts:
+      - test.com
+    http:
+      - route:
+        - destination:
+            host: test.com
+            subset: v1
+          destination:
+            host: test.com
+            subset : v2
+  ```
+
+- weight：表示流量分配的比例，在一个 route 下多个 destination 的 weight 总和要求是100（默认100，必填字段）。如：从原有的 v1 版本中切分 20% 的流量到 v2 版本，这也是灰度发布常用的一个流量策略，即不区分内容，平等的从总流量中切出一部分流量给新版本。
+
+  ```yaml
+  spec:
+    hosts:
+      - test.com
+    http:
+      - route:
+        - destination:
+            host: test.com
+            subset: v1
+            weight: 80
+          destination:
+            host: test.com
+            subset : v2
+            weight: 20
+  ```
+
+- headers：提供了对 HTTP header 的一种操作机制，可以修改一次 HTTP 请求中的Request 或 Response 的值，包含 request 和 response 两个字段。
+
+  - request：表示在发请求给目标地址时修改 Request 的 header
+  - response：表示在返回应答时修改 Response 的 header
+  - 对应的类型都是 HeaderOperations 类型，使用set、add、remove字段来定义对 Header 的操作
+    - set：使用map上的key和value覆盖 Request 和 Response 中对应的 Header
+    - add：追加map上的key和value到原有的 Header
+    - remove：删除在列表中指定的 Header
+
+
+
+##### 2.4 HTTP重定向（HTTPRedirect）
+
+HTTPRedirect 包含两个字段来表示重定向的目标：
+
+- uri：替换 URL 中的 uri 部分
+- authority：替换 URL 中的 authority 部分
+
+```yaml
+# 对 nginx 服务中，所有前缀为 test1 的请求都会被重定向到 new-test 的 /test/a1 地址
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: nginx
+  namespace: test
+spec:
+  hosts:
+    - test.com
+  http:
+    - match:
+      - uri:
+          prefix: /test1
+        redirect:
+          uri: /test/a1
+          authority: new-test.com
+```
+
+
+
+##### 2.5 HTTP重写（HTTPRewrite）
+
+通过 HTTP 重写可以在将请求转发给目标服务前修改 HTTP 请求中指定部分的内容，HTTP 重写对用户是不可见的（在服务端执行）
+
+HTTPRewrite 包含两个字段：
+
+- uri：重写 URL 中的 uri 部分
+- authority：重写 URL 中的 authority 部分
+
+和 HTTPRedirect 规则稍有不同的是，HTTPRedirect 的 uri 只能替换全部的 path，但 HTTPRewrite 的 uri 是可以重写前缀的，即匹配条件是前缀匹配，则只修改匹配到的前缀。
+
+```yaml
+# 将请求前缀中的 /test1 重写为 /test/a1
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: nginx
+  namespace: test
+spec:
+  hosts:
+    - test.com
+  http:
+    - match:
+      - uri:
+          prefix: /test1
+        rewrite:
+          uri: /test/a1
+        route:
+          - destination:
+              host: new-test
+```
+
+
+
+##### 2.6 HTTP重试（HTTPRetry）
+
+HTTPRetry 可以定义请求失败时的重试策略，包含三个字段：
+
+- attempts：必选字段，定义重试的次数
+- perTryTimeout：每次重试超时的时间，单位可以是 ms、s、m和h
+- retryOn：进行重试的条件，多个条件时以逗号分隔
+  - 5xx：在上游服务返回 5xx 应答码，或者在没有返回时重试
+  - gateway-error：类似于5xx异常，只对502、503和504应答码进行重试
+  - connect-failure：在链接上游服务失败时重试
+  - retriable-4xx：在上游服务返回可重试的4xx应答码时执行重试
+  - refused-stream：在上游服务使用 REFUSED_STREAM 错误码重置时执行重试
+  - cancelled：gRPC 应答的 Header 中状态码是 cancelled 时执行重试
+  - deadline-exceeded：在 gRPC 应答的 Header 中状态码是 deadline-exceeded 时执行重试
+  - internal：在 gRPC 应答的 Header 中状态码是 internal 时执行重试
+  - resource-exhausted：在 gRPC 应答的 Header 中状态码是 resource-exhausted 时执行重试
+  - unavailable：在 gRPC 应答的 Header 中状态码是 unavailable 时执行重试
+
+```yaml
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: nginx
+  namespace: test
+spec:
+  hosts:
+    - test.com
+  http:
+    - route:
+        - destination:
+            host: test.com
+          retries:
+           attempts: 3
+           perTryTimeout: 5s
+           retryOn: 5xx,connect-failure
+```
+
+
+
+##### 2.7 HTTP流量镜像（HTTPMirror）
+
+HTTP 流量镜像指的是将流量转发到原目标地址的同时将流量给另外一个目标地址镜像一份。把生产环境中的实际流量镜像一份到另外一个系统上，完全不会对生产系统产生影响，这里只是镜像了一份流量，数据面代理只需要关注原来转发的流量就可以，不用等待镜像目标地址的返回。
+
+```yaml
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: nginx
+  namespace: test
+spec:
+  hosts:
+    - test.com
+  http:
+    - route:
+        - destination:
+            host: test.com
+            subset: v1
+          mirror:
+            host: test.net
+            subset: v2
+```
+
