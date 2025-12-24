@@ -500,3 +500,92 @@ spec:
             subset: v2
 ```
 
+
+
+##### 2.8 HTTP故障注入（HTTPFaultInjection）
+
+HTTPFaultInjection 通过 delay 和 abort 设置延时和中止两种故障，分别表示 Proxy 延迟转发和终止 HTTP 请求。
+
+delay 包含以下两个字段：
+
+- fixedDelay：必选，表示延迟时间，单位可以是毫秒，秒，分钟和小时，要求至少要大于1毫秒
+- percentage：延时作用在多少比例的请求上
+
+```yaml
+# 让 1.5% 的请求延时 5s
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: nginx
+  namespace: test
+spec:
+  hosts:
+    - test.com
+  http:
+    - route:
+        - destination:
+            host: test.com
+            subset: v1
+          fault:
+            delay:
+              fixedDelay: 5s
+              percentage:
+                value: 1.5
+```
+
+abort 包含以下两个字段：
+
+- httpStatus：必选，http 状态码
+- percentage：终止故障作用在多少比例的请求上
+
+```yaml
+# 让 1.5% 的请求返回 500
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: nginx
+  namespace: test
+spec:
+  hosts:
+    - test.com
+  http:
+    - route:
+        - destination:
+            host: test.com
+            subset: v1
+          fault:
+            abort:
+              httpStatus: 500
+              percentage:
+                value: 1.5
+```
+
+
+
+##### 2.9 HTTP跨域资源共享（CorsPolicy）
+
+在 VirtualService 中可以对满足条件的请求配置跨域资源共享，allowOrigin，allowMethods，allowHeader，exposeHeader，maxAge，allowCredentials，等都被转化为 Access-Control-* 的 Header。
+
+```yaml
+# 允许来自 new-test.com 的 GET 请求
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: nginx
+  namespace: test
+spec:
+  hosts:
+    - test.com
+  http:
+    - route:
+        - destination:
+            host: test.com
+            subset: v1
+          corsPolicy:
+            allowOrigin:
+              - new-test.com
+            allowMethod:
+              - GET
+            maxAge: 2d
+```
+
