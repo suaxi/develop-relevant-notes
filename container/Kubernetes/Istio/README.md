@@ -589,3 +589,134 @@ spec:
             maxAge: 2d
 ```
 
+
+
+#### 五、DestinationRule
+
+#### 1. 概念
+
+| 字段名称                             | 说明                                                         |
+| ------------------------------------ | ------------------------------------------------------------ |
+| spec.host                            | 关联 DestinationRule 配置的服务名称，可以是自动发现的服务（例如Kubernetes service name），或通过 ServiceEntry 声明的 hosts。如填写的服务名无法在上述源中找到。则该 DestinationRule 中定义的规则无效 |
+| spec.subsets                         | 定义服务的版本（subsets），版本可通过标签键值对匹配服务中的endpoints。可以在 subsets 级覆盖流量策略配置 |
+| spec.trafficPolicy                   | 定义流量策略，包括负载均衡、连接池、健康检查、TLS 策略等     |
+| spec.spec.trafficPolicy.loadBalancer | 配置负载均衡算法，可配置：简单负载均衡算法(round robin，least conn，random...) ，一致性哈希（会话保持，支持按 header name，cookie，IP，query parameter 哈希)，地域感知负载均衡算法 |
+| spec.trafficPolicy.connectionPool    | 配置与上游服务的连接量，可设置 TCP/HTTP 连接池               |
+| spec.trafficPolicy.outlierDetection  | 配置从负载均衡池中驱逐不健康的 hosts                         |
+| spec.trafficPolicy.tls               | 连接上游服务的 client 端 TLS 相关配置，与 PeerAuthentication 策略（server 端 TLS 模式配置）配合使用 |
+| spec.trafficPolicy.portLevelSettings | 配置端口级的流量策略，该策略会覆盖服务 / subsets 级别的流量策略配置 |
+
+DestinationRule 在路由发生后应用于流量，支持如下配置：
+
+- 负载均衡
+- 连接池
+- 局部异常点检测
+- 客户端 TLS 配置
+- 端口流量策略
+
+
+
+#### 2. 负载均衡设置
+
+通过负载均衡设置，可以控制目的地使用的负载均衡算法
+
+```yaml
+apiVersion: netweorking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: nginx-destination
+spec:
+  host: nginx.test.svc.cluster.local
+  trafficPolicy:
+    loadBalancer:
+      simple: ROUND_ROBIN # 轮询
+    subsets:
+      - name: v1
+        labels:
+          version: vl
+      - name: v2
+        labels:
+          version: v2
+```
+
+- simple字段：
+
+  - ROUND_ROBIN：轮询算法，如果未指定则默认采用这种算法
+
+  - LEAST_CONN：最少连接算法，从两个随机选择的服务选择一个活动请求数较少的后端实例
+
+  - RANDOM：从可用的健康实例中随机选择一个
+
+  - PASSTHROUGH：直接转发连接到客户端连接的目标地址，即不做做负载均衡
+
+- consistentHash 字段：
+  - httpHeaderName：基于 Header
+  - httpCookie：基于 Cookie
+  -  useSourcelp：基于源 IP 计算哈希值
+  - minimumRingSize：哈希环上虚拟节点数的最小值，节点数越多则负载均衡越精细
+
+```yaml
+trafficPolicy:
+  loadBalancer:
+    consistentHash:
+      httpCokkie:
+        name: location
+        ttl: 2s
+```
+
+
+
+#### 3. 连接池配置
+
+可以在 TCP 和 HTTP 层面应用于上游服务的每个主机，可以用它们来控制连接量
+
+tcp 连接池配置：
+
+- maxConnections：上游服务的所有实例建立的最大连接数，默认值1024，属于 TCP 层的配置，对于HTTP，只作用于 HTTP/1.1，因为 HTTP/2 对每个主机都使用单个连接
+- connectTimeout：TCP 连接超时，表示主机网络连接超时，可以改善因调用服务变慢而导致整个链路变慢的情况
+- tcpKeepalive：lstio1.1 版本开始新支持的配置，定期给对端发送一个 keepalive 探测包，判断连接是否可用
+
+```yaml
+spec:
+  host: nginx.test.svc.cluster.local
+  trafficPolicy:
+    connectionPool:
+      tcp:
+        maxConnections: 50
+        connectTimeout: 25ms
+        tcpKeepalive:
+          probes: 5
+          time: 3600
+          interval: 60s
+```
+
+
+
+http 连接池配置：
+
+- http1MaxPendingRequests：最大等待 HTTP 请求数，默认值1024，只适用于 HTTP/1.1 的服务，因为 HTTP/2 协议的请求在到来时会立即复用连接，不会在连接池等待
+
+- http2MaxRequests：最大请求数，默认值1024，只适用于 HTTP/2 服务，因为 HTTP/1.1 使用最大连接数 maxConnections 即可，表示上游服务的所有实例处理的最大请求数
+
+- maxRequestsPerConnection：每个连接的最大请求数，HTTP/1.1 和 HTTP/2 连接池都遵循此参数，如果没有设置，则代表不限制
+
+  设置为1时表示每个连接只处理一个请求，相当于禁用了 Keep-alive
+
+- maxRetries：最大重试次数，默认值3，表示服务可以执行的最大重试次数。如果调用端因为偶发的抖动导致请求直接失败，则可能会带来业务损失，一般建议配置重试，若重试成功则可正常返回数据，只不过比原来响应得慢一点，但如果重试次数太多，会对性能造成一定的影响
+
+- idleTimeout：空闲超时，即：在多长时间内没有活动请求则关闭连接
+
+```yaml
+# 配置最大80个连接，最多100个并发请求，每个请求的连接数不超过10个，超时时间为30ms
+spec:
+  host: nginx.test.cluster.local
+  trafficPolicy:
+    connectionPool:
+      tcp:
+        maxConnections: 80
+        connectTimeout: 30ms
+      http:
+        http2MaxRequests: 100
+        maxRequestsPerConnection: 10
+```
+
