@@ -720,3 +720,108 @@ spec:
         maxRequestsPerConnection: 10
 ```
 
+
+
+#### 4. 异常点检测
+
+异常点检测是一个断路器的实现，它跟踪上游服务中每个主机（Pod）的状态，如果其中一个主机开始返回 5xx HTTP 错误，它就会在预定的时间内被从负载均衡池中弹出，对于 TCP 服务，Envoy 将连接超时或失败计算为错误。
+
+两种健康检查：
+
+- 主动检查：定期探测目标服务实例，根据应答来判断服务实例的健康状态，如负载均衡器中的健康检查
+- 被动检查：通过实际的访问情况来找出不健康的实例，如 Istio 中的异常点检查
+
+异常实例检查相关的配置：
+
+- consecutiveErrors：实例被驱逐前的连续错误次数，默认值5。对于 HTTP 服务，返回502、503 和 504 的请求会被认为异常；对于 TCP 服务，连接超时或者连接错误事件会被认为异常
+
+- interval：驱逐的时间间隔，默认值10秒，要求大于1毫秒，单位可以是时、分、毫秒
+- baseEjectionTime：最小驱逐时间，一个实例被驱逐的时间等于这个最小驱逐时间乘以驱逐的次数，这样一个因多次异常被驱逐的实例，被驱逐的时间会越来越长，默认值30秒，要求大于1毫秒，单位可以是时、分、毫秒
+- maxEjectionPercent：指负载均衡池中可以被驱逐的故障实例的最大比例，默认值10%，该设置是为了避免太多的服务实例被驱逐导致服务整体能力下降
+- minHealthPercent：最小健康实例比例，是 lstio 1.1 新增的配置，当负载均衡池中的健康实例数的比例大于这个比例时，异常点检查机制可用，反之该功能将被禁用；所有服务实例不管被认定为健康还是不健康，都可以接收请求，参数的默认值为50%
+
+```yaml
+# 最大500个http2请求，每个连接不超过10个请求，每5分钟扫描一次上游主机（Pod），如果其中任何一个主机连续失败10次，Envoy 会将其弹出10分钟
+trafficPolicy:
+  coninectionPool:
+    http:
+      http2MaxRequests: 500
+      maxRequestsPerConnection: 10
+    outlierDetection:
+      consecutiveErrors: 10
+      interval: 5m
+      baseEjectionTime: 1om
+```
+
+
+
+#### 5. TLS 设置
+
+其包含任何与上游服务连接的 TLS 相关设置
+
+```yaml
+trafficPolicy:
+  tls:
+    mode: MUTUAL
+    clientCertificate: ./certs/cert.pem
+    privatekey: ./certs/key - pem
+    caCertificates: ./certs/ca.pem
+```
+
+mTLS：双向认证，客户端和服务端都通过证书颁发机构验证彼此的身份，即：由同一个 root ca 生成两套证书，客户端、服务端各一个，客户端通过 https 访问服务时，双方会交换证书，并进行认证，认证通过后即可进行通信
+
+TLS 模式：
+
+- DISABLE：无 TLS 连接
+- SIMPLE：在上游端点发起 TLS 连接
+- ISTIO_MUTUAL：与 MUTUAL 类似，使用 Istio 的 mTLS 证书
+
+
+
+#### 6. 端口流量策略
+
+在端口上配置流量策略，配置后其会覆盖全局的流量策略
+
+```yaml
+trafficPolicy:
+  connectionPool:
+    tcp:
+      maxConnections: 80
+      portLevelSettings:
+        - port:
+            number: 80
+          loadBalancer:
+            simple: LEAST_CONN
+          connectionPool:
+            tcp:
+              maxConnections: 100
+        - port:
+            number: 80
+          loadBalancer:
+            simple: ROUND_ROBIN
+```
+
+
+
+#### 7. 服务子集
+
+subset：定义服务的子集
+
+- name：服务子集的名称，必填字段，VirtualService 通过该属性引用
+- label：标签，通过一组标签定义属于这个服务子集的实例，如：version（版本）
+- trafficPolicy：应用到该子集上的流量策略
+
+```yaml
+# 给名称为 nginx-v1 的服务子集配置最大连接数
+spec:
+  hosts: nginx
+  subsets:
+    - name: nginx-v1
+      labels:
+        version: v2
+      trafficPolicy:
+        connectionPool:
+          tcp:
+            maxConnections: 100
+```
+
