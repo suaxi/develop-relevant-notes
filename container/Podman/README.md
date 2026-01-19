@@ -333,3 +333,142 @@ Error: pulling image "localhost:5000/alpine": unable to pull localhost:5000/alpi
 ......
 ```
 
+
+
+#### 四、网络
+
+##### 1. 简介
+
+Podman 管理的容器在进行网络连接时，非特权用户无法在主机上创建网络接口，默认是 `slirp4netns`，相比于特权用户而言缺少一部分功能，如：无法为容器分配 IP 地址；特权用户运行的容器默认网络模式是 `netavark`。
+
+
+
+**防火墙**
+
+当容器执行端口映射时，防火墙也会同步打开对应的端口，但当重新加载防火墙规则时，会删除 netavark iptables，导致容器丢失网络连接，Podman v3 提供了 `podman network reload` 命令来恢复对应设置，且无需重启容器。
+
+
+
+##### 2. 桥接
+
+![1.bridge](static/4.网络/1.bridge.png)
+
+桥接指创建一个内部网络，容器和主机都连接到该网络，以此实现容器与外部主机通信
+
+Podman 默认使用桥接模式，同时也提供了一个默认的桥接网络，从 4.0 版本开始，非特权用户运行的容器也可以使用 `netavark`（但不提供默认配置）从旧版本 CNI 切换到 netavark 时，需执行 `podman system reset --force` 命令，该命令会删除所有的镜像、容器和自定义网络
+
+rootless 容器的网络操作是在一个额外的命名空间内执行的，可以通过 `podman unshare --rootless-netns` 命令加入
+
+
+
+##### 3. 默认
+
+Netavark 是纯内存网络，由于需要向后兼容 Docker，因此不支持 DNS 解析，可通过以下命令修改对应的配置文件
+
+```bash
+# 特权
+podman network inspect podman | jq .[] > /etc/containers/networks/podman.json
+
+# 非特权
+podman network inspect podman | jq .[] > ~/.local/share/containers/storage/networks/podman.json
+```
+
+以特权和非特权为例，将服务暴露至主机外
+
+```bash
+# 特权
+sudo podman run -d --name webserver -p 8080:80 quay.io/libpod/banner
+00f3440c7576aae2d5b193c40513c29c7964e96bf797cf0cc352c2b68ccbe66a
+
+# 非特权
+podman run -d --name webserver --network podman1 -p 8081:80 quay.io/libpod/banner
+269fd0d6b2c8ed60f2ca41d7beceec2471d72fb9a33aa8ca45b81dc9a0abbb12
+```
+
+外部客户端可通过8080 或 8081 端口访问到对应的服务
+
+
+
+##### 4. Macvlan
+
+![2.macvlan](static/4.网络/2.macvlan.png)
+
+Podman 必须以 root 身份才能操作 macvlan
+
+```bash
+# 创建 macvlan，eth0 为主机的网络接口（与 Docker 的创建方式一致）
+sudo podman network create -d macvlan -o parent=eth0 macvlan_test
+macvlan_test
+
+# --subnet指定子网，不使用 DHCP（可选）
+sudo podman network create -d macvlan  \
+     --subnet 192.168.123.0/24  \
+     --gateway 192.168.123.1 \
+     -o parent=eth0  \
+     macvlan_test
+
+# 使用 DHCP
+# 查看当前使用的网络后端
+sudo podman info --format {{.Host.NetworkBackend}}
+
+# NetAvark 启用 DHCP（以systemd为例）
+sudo systemctl enable --now netavark-dhcp-proxy.socket
+
+# CNI 启用 DHCP（以systemd为例）
+sudo systemctl enable --now cni-dhcp.socket
+```
+
+```bash
+# 容器使用 macvlan
+sudo podman run -d --name webserver --network macvlan_test quay.io/libpod/banner
+03d82083c434d7e937fc0b87c25401f46ab5050007df403bf988e25e52c5cc40
+
+# 使用外部客户端访问
+(outside_host): $ curl http://<容器分配到的ip>
+   ___           __
+  / _ \___  ___/ /_ _  ___ ____
+ / ___/ _ \/ _  /  ' \/ _ `/ _ \
+/_/   \___/\_,_/_/_/_/\_,_/_//_/
+```
+
+
+
+##### 5. Slirp4netns
+
+Slirp4netns 是 rootless 容器和 Pod 的默认网络配置，它的出现是因为非特权用户无法在主机上创建网络接口。Slirp4netns 会在容器的网络命名空间中创建一个 TAP 设备，并连接到用户模式 TCP/IP 协议栈
+
+![3.rootless_default](static/4.网络/3.rootless_default.png)
+
+非特权用户必须使用 1024 到 65535 端口，因为更低的端口需要 root 权限，可以使用以下方法调整默认的设置 `sysctl net.ipv4.ip_unprivileged_port_start`
+
+slirp4netns 网络模式下，容器与容器之间完全隔离，且没有虚拟网络，容器之间要进行通信时，需要使用与宿主机的端口映射，或者将它们放入同一个 Pod 中（即共享同一个网络命名空间）
+
+以两个 rootless 容器通信为例
+
+```bash
+# 假设主机 ip 为 192.168.123.123
+
+# 运行 rootless 容器
+podman run -d --name webserver -p 8080:80 quay.io/libpod/banner
+17ea33ccd7f55ff45766b3ec596b990a5f2ba66eb9159cb89748a85dc3cebfe0
+
+# 运行另一个 rootless 容器，并执行 curl
+podman run -it quay.io/libpod/banner curl http://192.168.123.123:8080
+
+# 外部客户端访问
+(outside_host): $ curl http://192.168.123.123:8080
+   ___           __
+  / _ \___  ___/ /_ _  ___ ____
+ / ___/ _ \/ _  /  ' \/ _ `/ _ \
+/_/   \___/\_,_/_/_/_/\_,_/_//_/
+```
+
+
+
+##### 6. 容器与 Pod 之间的通信
+
+Podman Pod 中的所有容器共享同一个网络命名空间（即它们将具有相同的 IP 地址、MAC 地址和端口映射），Pod 中的容器之间可以使用 localhost 方便地进行通信
+
+![4.pod](static/4.网络/4.pod.png)
+
+如上图所示，该 Pod 中的 DB Container 和 Web Container 所属同一个网络命名空间下，他们之间可以通过 localhost:[port] 进行通信，也可以通过分配给 Pod 的 ip 进行寻址，在 DNS 服务可用时，也可以使用 dns name 进行通信（类似于 K8s 中的 Core DNS）。
