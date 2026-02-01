@@ -372,3 +372,68 @@ export default App
 
 ```
 
+
+
+### 七、组件的样式处理
+
+#### 1. 内联样式（不推荐）
+
+```jsx
+<div style={{ color='red' }}>测试</div>
+```
+
+
+
+#### 2. class 类名控制
+
+```css
+.App {
+    color: red
+}
+```
+
+```jsx
+import './index.css'
+
+function App() {
+  return (
+    <div className="App">测试</div>
+  )
+}
+
+export default App
+
+```
+
+
+
+#### 3. 示例
+
+```css
+.test {
+    color: plum;
+}
+```
+
+```jsx
+import './index.css'
+
+const style = {
+  color: 'lightBlue',
+  fontSize: 20
+}
+
+function App() {
+  return (
+    <div className="App">
+      <div style={style}>行内样式</div>
+      <div className="test">行内样式</div>
+    </div>
+  )
+}
+
+export default App
+
+```
+
+![1.示例](static/7.组件样式控制/1.示例.png)
