@@ -3,6 +3,7 @@ import ble from '/images/ble.jpg'
 import zjl from '/images/zjl.jpg'
 import xs from '/images/xs.jpg'
 import { useState } from 'react'
+import classNames from 'classnames'
 
 // 评论列表数据
 const defaultList = [
@@ -92,7 +93,9 @@ const App = () => {
             {tabs.map((item) => (
               <span
                 key={item.type}
-                className={`nav-item ${type === item.type && 'active'}`}
+                className={classNames('nav-item', {
+                  active: type === item.type
+                })}
                 onClick={() => tabChangeHandler(item.type)}
               >
                 {item.text}
