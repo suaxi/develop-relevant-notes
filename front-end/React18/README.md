@@ -439,3 +439,103 @@ export default App
 ```
 
 ![1.示例](static/7.组件样式控制/1.示例.png)
+
+
+
+### 八、classnames 优化类名控制
+
+该库可以通过条件动态控制 class 类名的显示，github：https://github.com/JedWatson/classnames
+
+
+
+#### 1. 安装
+
+```bash
+npm install classnames
+```
+
+
+
+#### 2. 使用
+
+```jsx
+import classNames from 'classnames'
+
+<li className="nav-sort">
+    {tabs.map((item) => (
+        <span
+            key={item.type}
+            className={classNames('nav-item', {
+                active: type === item.type
+            })}
+            onClick={() => tabChangeHandler(item.type)}
+            >
+            {item.text}
+        </span>
+    ))}
+</li>
+```
+
+
+
+### 九、受控表单绑定
+
+概念：使用 useState 控制表单的状态
+
+```jsx
+import { useState } from 'react'
+
+function App() {
+  // 1. 通过 value 属性绑定 react 状态
+  const [inputVal, setInputVal] = useState('')
+
+  // 2. 绑定 onChange 事件，通过事件参数（即输入框最新的值）反向修改 react 状态
+  return (
+    <div className="App">
+      <input
+        type="text"
+        value={inputVal}
+        onChange={(e) => setInputVal(e.target.value)}
+      ></input>
+    </div>
+  )
+}
+
+export default App
+
+```
+
+
+
+### 十、获取 DOM
+
+通过 useRef 钩子函数实现：
+
+1. 使用 useRef 创建 ref 对象
+2. 在 DOM 可用时，通过创建的 xxxRef.current 拿到 DOM 对象
+
+```jsx
+import { useRef } from 'react'
+
+function App() {
+  const inputRef = useRef(null)
+
+  // 组件渲染完毕后获取 DOM
+  const getDom = () => {
+    console.dir(inputRef.current)
+  }
+
+  return (
+    <div className="App">
+      <input type="text" ref={inputRef}></input>
+      <button onClick={getDom}>获取 DOM</button>
+    </div>
+  )
+}
+
+export default App
+
+```
+
+![1.获取DOM](static/10.获取DOM/1.获取DOM.png)
+
