@@ -2,8 +2,10 @@ import './App.scss'
 import ble from '/images/ble.jpg'
 import zjl from '/images/zjl.jpg'
 import xs from '/images/xs.jpg'
-import { useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import classNames from 'classnames'
+import { v4 as uuidv4 } from 'uuid'
+import dayjs from 'dayjs'
 
 // 评论列表数据
 const defaultList = [
@@ -54,29 +56,63 @@ const tabs = [
 ]
 
 const App = () => {
+  // 评论列表
   const [commentList, setCommentList] = useState(defaultList)
 
+  // 删除评论
   const deleteCommentHandler = (id) => {
     if (window.confirm('确定删除这条评论吗？')) {
       setCommentList(commentList.filter((item) => item.rpid !== id))
     }
   }
 
+  // tab 标签
   const [type, setType] = useState('hot')
   const tabChangeHandler = (type) => {
     setType(type)
+  }
+  const displayList = useMemo(() => {
+    const list = [...commentList]
     if (type === 'hot') {
-      const sortList = [...commentList].sort((o1, o2) => o2.like - o1.like)
-      setCommentList(sortList)
+      return list.sort((o1, o2) => o2.like - o1.like)
     }
     if (type === 'time') {
       const year = new Date().getFullYear()
-      const sortList = [...commentList].sort(
+      return list.sort(
         (o1, o2) =>
-          new Date(`${year}-${o2.ctime}`) - new Date(`${year}-${o1.ctime}`)
+          new Date(`${year}-${o1.ctime}`) - new Date(`${year}-${o2.ctime}`)
       )
-      setCommentList(sortList)
     }
+    return list
+  }, [commentList, type])
+
+  // 发布评论
+  const [content, setContent] = useState('')
+  const contentInputRef = useRef(null)
+  const publishHandler = () => {
+    if (!content) {
+      return
+    }
+
+    setCommentList((prev) => [
+      ...prev,
+      {
+        rpid: uuidv4(),
+        user: {
+          uid: user.uid,
+          avatar: ble,
+          uname: user.uname
+        },
+        content,
+        ctime: dayjs(new Date()).format('MM-DD HH:mm'),
+        like: 100
+      }
+    ])
+
+    // 清空输入框
+    setContent('')
+    // 重新聚焦
+    contentInputRef.current.focus()
   }
 
   return (
@@ -115,15 +151,20 @@ const App = () => {
           <div className="reply-box-wrap">
             <textarea
               className="reply-box-textarea"
-              placeholder="发一条友善的评论"
+              placeholder="发布一条评论"
+              ref={contentInputRef}
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
             />
             <div className="reply-box-send">
-              <div className="send-text">发布</div>
+              <div className="send-text" onClick={publishHandler}>
+                发布
+              </div>
             </div>
           </div>
         </div>
         <div className="reply-list">
-          {commentList.map((item) => (
+          {displayList.map((item) => (
             <div key={item.rpid} className="reply-item">
               <div className="root-reply-avatar">
                 <div className="bili-avatar">
