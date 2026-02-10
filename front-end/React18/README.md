@@ -539,3 +539,116 @@ export default App
 
 ![1.获取DOM](static/10.获取DOM/1.获取DOM.png)
 
+
+
+### 十一、组件间通信
+
+#### 1. 概念
+
+组件之间的数据传递
+
+
+
+#### 2. 父传子
+
+##### （1）实现步骤：
+
+1. 父组件传递数据：在子组件标签上绑定属性
+2. 子组件接收数据：子组件通过 props 参数接收数据
+
+```jsx
+function Son(props) {
+  return <div>{props.name}</div>
+}
+
+function App() {
+  const name = '孙笑川'
+  return (
+    <div className="App">
+      <Son name={name} />
+    </div>
+  )
+}
+
+export default App
+
+```
+
+##### （2）props 说明
+
+- props 可传递任意类型的数据
+
+  数字、字符串、布尔值、数组、对象、函数、JSX
+
+- props 是只读对象
+
+  子组件只能读取 props 中的数据，不能直接修改（即父组件的数据只能由父组件修改）
+
+
+
+#### 3. props children
+
+当我们把内容嵌套在子组件标签中时，父组件会自动在名为 children 的 prop属性中接收该内容
+
+```jsx
+function Son(props) {
+  console.log(props)
+  return <div>Son Compent, {props.children}</div>
+}
+
+function App() {
+  return (
+    <div className="App">
+      <Son>
+        <span>Nested content</span>
+      </Son>
+    </div>
+  )
+}
+
+export default App
+
+```
+
+
+
+![3.props children](static/11.组件间通信/3.props children.png)
+
+
+
+#### 4. 子传父
+
+在子组件中调用父组件中的函数并传递参数
+
+```jsx
+import { useState } from 'react'
+
+function Son({ getMsg }) {
+  const data = '孙笑川'
+  return (
+    <div>
+      Son Compent
+      <button onClick={() => getMsg(data)}>点一下</button>
+    </div>
+  )
+}
+
+function App() {
+  const [msg, setMsg] = useState('')
+  const getMsg = (msg) => {
+    setMsg(msg)
+    console.log('son compent transmit data:', msg)
+  }
+  return (
+    <div className="App">
+      This is React Demo, {msg}
+      <Son getMsg={getMsg} />
+    </div>
+  )
+}
+
+export default App
+
+```
+
+![4.子传父](static/11.组件间通信/4.子传父.png)
