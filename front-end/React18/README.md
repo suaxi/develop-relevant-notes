@@ -652,3 +652,99 @@ export default App
 ```
 
 ![4.子传父](static/11.组件间通信/4.子传父.png)
+
+
+
+#### 5. 兄弟组件通信
+
+借助“状态提示”机制，通过父组件进行兄弟组件间的数据传递
+
+1. A 组件子传父
+2. 父组件父传子给 B 组件
+
+```jsx
+import { useState } from 'react'
+
+function A({ getAData }) {
+  const data = 'a compent data'
+  return (
+    <div>
+      <p>Son A Compent</p>
+      <button onClick={() => getAData(data)}>A Compent</button>
+    </div>
+  )
+}
+
+function B(props) {
+  return <p>Son B Compent, {props.data}</p>
+}
+
+function App() {
+  const [data, setData] = useState('')
+  const getAData = (data) => {
+    setData(data)
+    console.log(data)
+  }
+  return (
+    <div className="App">
+      <A getAData={getAData} />
+      <B data={data} />
+    </div>
+  )
+}
+
+export default App
+
+```
+
+![5.兄弟组件通信](static/11.组件间通信/5.兄弟组件通信.png)
+
+
+
+#### 6. 使用 Context 机制跨层级组件通信
+
+实现步骤：
+
+1. 使用 createContext 方法创建 Ctx 上下文对象
+2. 在顶层组件（App）中通过 Ctx.provider 组件提供数据
+3. 在底层组件中通过 useContext 钩子函数获取消费数据
+
+```jsx
+import { createContext, useContext } from 'react'
+
+const Ctx = createContext()
+
+function A() {
+  return (
+    <div>
+      <p>Son A Compent</p>
+    </div>
+  )
+}
+
+function B() {
+  const data = useContext(Ctx)
+  return <p>Son B Compent, {data}</p>
+}
+
+function App() {
+  const data = 'App data'
+  return (
+    <div className="App">
+      <Ctx value={data}>
+        this is App
+        <A />
+        <B />
+      </Ctx>
+    </div>
+  )
+}
+
+export default App
+
+```
+
+![6.使用Context机制跨层传递数据](static/11.组件间通信/6.使用Context机制跨层传递数据.png)
+
+
+
