@@ -748,3 +748,196 @@ export default App
 
 
 
+### 十二、useEffect
+
+#### 1. 概念
+
+useEffect 是 React 的一个 Hook 函数，用于在 React 组件中创建不是由事件引起而是由渲染本身引起的操作，如：ajax请求，更改 DOM 等
+
+
+
+#### 2. 基础使用
+
+语法：
+
+```jsx
+useEffect(() => {}, [])
+```
+
+参数一：函数（副作用函数），可在函数内部放置要执行的操作
+
+参数二：数组（可选），数组中放置的是依赖项，不同依赖项会影响第一个参数（函数）的执行，当数组为空时，副作用函数只会在组件渲染完毕后执行一次
+
+```jsx
+import { useEffect, useState } from 'react'
+
+const URL = 'https://geek.itheima.net/v1_0/channels'
+function App() {
+  const [list, setList] = useState([])
+  useEffect(() => {
+    async function getChannels() {
+      const res = await fetch(URL)
+      const jsonRes = await res.json()
+      console.log(jsonRes)
+      setList(jsonRes.data.channels)
+    }
+    getChannels()
+  }, [])
+  return (
+    <div className="App">
+      this is App
+      <ul>
+        {list.map((item) => (
+          <li key={item.id}>{item.name}</li>
+        ))}
+      </ul>
+    </div>
+  )
+}
+
+export default App
+
+```
+
+
+
+#### 3. 依赖项参数说明
+
+| 依赖项     | 副作用函数执行时机                  |
+| ---------- | ----------------------------------- |
+| 无         | 组件初始渲染 + 组件更新时执行       |
+| 空数组     | 只在组件渲染完毕后执行一次          |
+| 特定依赖项 | 组件初始渲染 + 特定依赖项变化时执行 |
+
+
+
+#### （1）没有依赖项
+
+```jsx
+import { useEffect, useState } from 'react'
+
+function App() {
+  const [count, setCount] = useState(0)
+  useEffect(() => {
+    console.log('useEffect函数执行', count)
+  })
+  return (
+    <div className="App">
+      this is App
+      <button onClick={() => setCount(count + 1)}>点击</button>
+    </div>
+  )
+}
+
+export default App
+
+```
+
+![3.1依赖项参数说明-无依赖项](static/12.useEffect/3.1依赖项参数说明-无依赖项.png)
+
+
+
+#### （2）空数组依赖
+
+```jsx
+import { useEffect, useState } from 'react'
+
+function App() {
+  const [count, setCount] = useState(0)
+  useEffect(() => {
+    console.log('useEffect函数执行', count)
+  }, [])
+  return (
+    <div className="App">
+      this is App
+      <button onClick={() => setCount(count + 1)}>点击</button>
+    </div>
+  )
+}
+
+export default App
+
+```
+
+![3.2依赖项参数说明-空数组依赖项](static/12.useEffect/3.2依赖项参数说明-空数组依赖项.png)
+
+
+
+#### （3）特定依赖项
+
+```jsx
+import { useEffect, useState } from 'react'
+
+function App() {
+  const [count, setCount] = useState(0)
+  useEffect(() => {
+    console.log('useEffect函数执行', count)
+  }, [count])
+  return (
+    <div className="App">
+      this is App
+      <button onClick={() => setCount(count + 1)}>点击</button>
+    </div>
+  )
+}
+
+export default App
+
+```
+
+![3.3依赖项参数说明-特定依赖项](static/12.useEffect/3.3依赖项参数说明-特定依赖项.png)
+
+
+
+#### 4. 清除副作用
+
+概念：在 useEffect 中编写的**由渲染本身引起的对接组件外部的操作**，就称为**副作用操作**，如：useEffect 中设置了一个定时器，在组件卸载时想清除定时器，这个过程就是清理副作用
+
+
+
+语法：
+
+```jsx
+useEffect(() => {
+    // 业务逻辑
+    return () => {
+        // 清除副作用
+    }
+}, [])
+```
+
+
+
+执行时机：一般情况下在组件卸载时执行
+
+```jsx
+import { useEffect, useState } from 'react'
+
+function Son() {
+  useEffect(() => {
+    const timer = setInterval(() => {
+      console.log('执行定时器')
+    }, 1000)
+    return () => {
+      clearInterval(timer)
+    }
+  }, [])
+  return <div>Son Compent</div>
+}
+function App() {
+  const [show, setShow] = useState(true)
+  return (
+    <div className="App">
+      this is App
+      {show && <Son />}
+      <button onClick={() => setShow(false)}>卸载Son组件</button>
+    </div>
+  )
+}
+
+export default App
+
+```
+
+
+
