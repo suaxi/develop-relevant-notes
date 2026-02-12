@@ -941,3 +941,74 @@ export default App
 
 
 
+### 十三、自定义 Hook 实现
+
+#### 1. 概念
+
+自定义 Hook 是以 use 开头的函数，通过它可以实现逻辑的封装和复用
+
+
+
+#### 2. 案例
+
+未使用自定义 Hook
+
+```jsx
+import { useState } from 'react'
+
+function App() {
+  const [show, setShow] = useState(true)
+  const toggle = () => {
+    setShow(false)
+  }
+  return (
+    <div className="App">
+      {show && <div>this is App</div>}
+      <button onClick={toggle}>按钮</button>
+    </div>
+  )
+}
+
+export default App
+
+```
+
+
+
+使用自定义 Hook
+
+```jsx
+import { useState } from 'react'
+
+function useToggle() {
+  const [show, setShow] = useState(true)
+  const toggle = () => {
+    setShow(!show)
+  }
+  return {
+    show,
+    toggle
+  }
+}
+
+function App() {
+  const { show, toggle } = useToggle()
+  return (
+    <div className="App">
+      {show && <div>this is App</div>}
+      <button onClick={toggle}>按钮</button>
+    </div>
+  )
+}
+
+export default App
+
+```
+
+
+
+#### 3. 使用规则
+
+（1）只能在组件中或其他自定义 Hook 函数中调用
+
+（2）只能在组件得顶层调用，不能嵌套在 if、for、其他函数中
