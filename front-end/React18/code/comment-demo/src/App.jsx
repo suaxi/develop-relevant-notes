@@ -2,10 +2,11 @@ import './App.scss'
 import ble from '/images/ble.jpg'
 import zjl from '/images/zjl.jpg'
 import xs from '/images/xs.jpg'
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import classNames from 'classnames'
 import { v4 as uuidv4 } from 'uuid'
 import dayjs from 'dayjs'
+import axios from 'axios'
 
 // 评论列表数据
 const defaultList = [
@@ -55,9 +56,64 @@ const tabs = [
   { type: 'time', text: '最新' }
 ]
 
+function useGetCommentList() {
+  const [commentList, setCommentList] = useState([])
+  useEffect(() => {
+    async function getCommentList() {
+      const res = await axios.get('http://localhost:3001/list')
+      setCommentList(res.data)
+    }
+    getCommentList()
+  }, [])
+
+  return {
+    commentList,
+    setCommentList
+  }
+}
+
+function Item({ item, deleteCommentHandler }) {
+  return (
+    <div className="reply-item">
+      <div className="root-reply-avatar">
+        <div className="bili-avatar">
+          <img
+            className="bili-avatar-img"
+            alt={item.user.uname}
+            src={item.user.avatar}
+          />
+        </div>
+      </div>
+
+      <div className="content-wrap">
+        <div className="user-info">
+          <div className="user-name">{item.user.uname}</div>
+        </div>
+        <div className="root-reply">
+          <span className="reply-content">{item.content}</span>
+          <div className="reply-info">
+            <span className="reply-time">{item.ctime}</span>
+            <span className="reply-time">点赞数:{item.like}</span>
+            {/* 条件渲染 */}
+            {user.uid === item.user.uid && (
+              <span
+                className="delete-btn"
+                onClick={() => deleteCommentHandler(item.rpid)}
+              >
+                删除
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 const App = () => {
   // 评论列表
-  const [commentList, setCommentList] = useState(defaultList)
+  // const [commentList, setCommentList] = useState(defaultList)
+  const { commentList, setCommentList } = useGetCommentList()
 
   // 删除评论
   const deleteCommentHandler = (id) => {
@@ -165,39 +221,11 @@ const App = () => {
         </div>
         <div className="reply-list">
           {displayList.map((item) => (
-            <div key={item.rpid} className="reply-item">
-              <div className="root-reply-avatar">
-                <div className="bili-avatar">
-                  <img
-                    className="bili-avatar-img"
-                    alt={item.user.uname}
-                    src={item.user.avatar}
-                  />
-                </div>
-              </div>
-
-              <div className="content-wrap">
-                <div className="user-info">
-                  <div className="user-name">{item.user.uname}</div>
-                </div>
-                <div className="root-reply">
-                  <span className="reply-content">{item.content}</span>
-                  <div className="reply-info">
-                    <span className="reply-time">{item.ctime}</span>
-                    <span className="reply-time">点赞数:{item.like}</span>
-                    {/* 条件渲染 */}
-                    {user.uid === item.user.uid && (
-                      <span
-                        className="delete-btn"
-                        onClick={() => deleteCommentHandler(item.rpid)}
-                      >
-                        删除
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
+            <Item
+              key={item.rpid}
+              item={item}
+              deleteCommentHandler={deleteCommentHandler}
+            />
           ))}
         </div>
       </div>

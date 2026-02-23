@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "db-server": "json-server db.json --port 3001"
   },
   "dependencies": {
     "@testing-library/jest-dom": "^5.16.5",
