@@ -1122,3 +1122,64 @@ RTK 是官方推荐的编写 Redux 逻辑的方式之一，是一套工具的集
 
 https://github.com/suaxi/develop-relevant-notes/tree/main/front-end/React18/code/redux-demo
 
+
+
+
+
+### 十五、Router
+
+#### 1. 示例
+
+https://github.com/suaxi/develop-relevant-notes/tree/main/front-end/React18/code/react-router-demo
+
+
+
+#### 2. 路由导航
+
+##### （1）声明式路由导航
+
+在模板中通过 `<Link />` 组件描述要去哪里
+
+```jsx
+const Login = () => {
+  return (
+    <div>
+      登录
+      {/* 声明式导航 */}
+      <Link to="/article">跳转到文章页面</Link>
+    </div>
+  )
+}
+
+export default Login
+
+```
+
+语法说明：通过给组件的 to 属性指定要跳转的路由path，组件会被渲染为浏览器支持的 a 链接，如需要传参时，直接通过字符串拼接的形式即可
+
+
+
+##### （2）编程式导航
+
+指通过 `useNavigate` 钩子函数得到导航方法，然后通过调用方法以命令式的形式进行路由跳转
+
+```jsx
+import { Link, useNavigate } from 'react-router-dom'
+const Login = () => {
+  const naigate = useNavigate()
+  return (
+    <div>
+      登录
+      {/* 声明式导航 */}
+      <Link to="/article">跳转到文章页面</Link>
+      {/* 编程式导航 */}
+      <button onClick={() => naigate('/article')}>跳转到文章页面</button>
+    </div>
+  )
+}
+
+export default Login
+
+```
+
+语法说明：通过调用 `navigate` 方法传入路由 path 进行跳转
