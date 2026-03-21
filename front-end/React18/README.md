@@ -1183,3 +1183,161 @@ export default Login
 ```
 
 语法说明：通过调用 `navigate` 方法传入路由 path 进行跳转
+
+
+
+#### 3. 路由传参
+
+##### （1）searchParams 传参
+
+```jsx
+naigate('/article?name="孙笑川"&age=33')
+```
+
+```jsx
+const [params] = useSearchParams()
+const name = params.get('name')
+const age = params.get('age')
+```
+
+
+
+##### （2）params 传参
+
+```jsx
+naigate('/article/33')
+```
+
+```jsx
+// 绑定参数
+const router = createBrowserRouter([
+  {
+    path: '/article/:name/:age',
+    element: <Article />
+  }
+])
+```
+
+```jsx
+const params = useParams()
+const name = params.name
+const age = params.age
+```
+
+
+
+#### 4. 嵌套路由
+
+在一级路由中又嵌套了其他路由，这种关系就叫做嵌套路由
+
+
+
+##### （1）实现步骤
+
+- 使用 children 属性配置路由嵌套关系
+- 使用 `<Outlet />` 组件配置二级路由渲染位置
+
+```jsx
+{
+  path: '/',
+  element: <Layout />,
+  children: [
+    {
+      path: 'board',
+      element: <Board />
+    },
+    {
+      path: 'about',
+      element: <About />
+    }
+  ]
+}
+```
+
+```jsx
+const Layout = () => {
+  return (
+    <div>
+      <h1>一级路由 Layout</h1>
+      <Link to="/board">看板</Link>
+      <br />
+      <Link to="/about">关于</Link>
+
+      {/* 二级路由出口 */}
+      <Outlet />
+    </div>
+  )
+}
+```
+
+
+
+##### （2）默认二级路由
+
+一般情况下，访问一级路由时，是不会渲染二级路由的，当去掉二级路由的 path，添加 `index: true` 属性时，访问一级路由时，会默认渲染出二级路由
+
+```jsx
+{
+  path: '/',
+  element: <Layout />,
+  children: [
+    {
+      // path: 'board',
+      index: true,
+      element: <Board />
+    },
+    {
+      path: 'about',
+      element: <About />
+    }
+  ]
+}
+```
+
+![4.默认二级路由](static/15.Router/4.默认二级路由.png)
+
+
+
+#### 5. 404 路由
+
+当用户输入的 url 在整个路由配置中都找不到对应的 path 时，可以使用 404 兜底组件改善用户体验
+
+
+
+##### （1）实现步骤
+
+- 404 组件
+- 在路由表数组的末尾，以 `*` 号作为路由 path 进行配置
+
+```jsx
+const NotFound = () => {
+  return (
+    <div>
+      <h1>404 Not Found</h1>
+    </div>
+  )
+}
+
+export default NotFound
+
+```
+
+```jsx
+{
+  path: '*',
+  element: <NotFound />
+}
+```
+
+
+
+#### 6. 两种路由模式
+
+| 路由模式 | url          | 原理                          | 是否需要后端支持 |
+| -------- | ------------ | ----------------------------- | ---------------- |
+| history  | url/layout   | history 对象 + pushState 事件 | 是               |
+| hash     | usr/#/layout | 监听 hashChange 事件          | 否               |
+
+
+
+使用方式：创建路由时，通过切换 `createBrowserRouter`、`createHashRouter` Api即可
