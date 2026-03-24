@@ -4,7 +4,8 @@ import './index.scss'
 import classNames from 'classnames'
 import dayjs from 'dayjs'
 import { useSelector } from 'react-redux'
-import _, { set } from 'lodash'
+import _ from 'lodash'
+import DailyBill from './components/Day'
 
 const Month = () => {
   // 日期选择器显示状态
@@ -42,6 +43,18 @@ const Month = () => {
   useEffect(() => {
     setCurrentMonthBillList(monthGroup[currentDate] || [])
   }, [monthGroup])
+
+  // 当前月按日分组
+  const dayGroup = useMemo(() => {
+    const groupData = _.groupBy(currentMonthBillList, (item) => {
+      return dayjs(item.date).format('YYYY-MM-DD')
+    })
+    const keys = Object.keys(groupData).sort()
+    return {
+      keys,
+      groupData
+    }
+  }, [currentMonthBillList])
 
   const dataPickerConfirm = (date) => {
     const dateStr = dayjs(date).format('YYYY-MM')
@@ -91,6 +104,16 @@ const Month = () => {
             max={new Date()}
           />
         </div>
+        {/* 单日列表统计 */}
+        {dayGroup.keys.map((item) => {
+          return (
+            <DailyBill
+              key={item}
+              date={item}
+              billList={dayGroup.groupData[item]}
+            />
+          )
+        })}
       </div>
     </div>
   )
