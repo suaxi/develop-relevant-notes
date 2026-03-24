@@ -1,5 +1,5 @@
 import { NavBar, DatePicker } from 'antd-mobile'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import './index.scss'
 import classNames from 'classnames'
 import dayjs from 'dayjs'
@@ -37,6 +37,11 @@ const Month = () => {
       total: pay + income
     }
   }, [currentMonthBillList])
+
+  // 当前月数据
+  useEffect(() => {
+    setCurrentMonthBillList(monthGroup[currentDate] || [])
+  }, [monthGroup])
 
   const dataPickerConfirm = (date) => {
     const dateStr = dayjs(date).format('YYYY-MM')
