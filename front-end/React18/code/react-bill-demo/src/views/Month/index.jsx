@@ -59,7 +59,7 @@ const Month = () => {
   const dataPickerConfirm = (date) => {
     const dateStr = dayjs(date).format('YYYY-MM')
     setCurrentDate(dateStr)
-    setCurrentMonthBillList(monthGroup[dateStr])
+    setCurrentMonthBillList(monthGroup[dateStr] || [])
     setDateVisible(false)
   }
   return (
