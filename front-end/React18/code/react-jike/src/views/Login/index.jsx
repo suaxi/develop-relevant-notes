@@ -17,7 +17,11 @@ const Login = () => {
     <div className="login">
       <Card className="login-container">
         <img className="login-logo" src={logo} alt="" />
-        <Form onFinish={onFinish} validateTrigger="onBlur">
+        <Form
+          onFinish={onFinish}
+          validateTrigger="onBlur"
+          initialValues={{ mobile: '13800000002', code: '246810' }}
+        >
           <Form.Item
             name="mobile"
             rules={[
