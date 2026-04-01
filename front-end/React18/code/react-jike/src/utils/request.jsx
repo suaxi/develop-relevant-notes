@@ -1,5 +1,6 @@
 import axios from 'axios'
-import { getToken } from '@/utils'
+import { getToken, removeToken } from '@/utils'
+import router from '@/router'
 
 const request = axios.create({
   baseURL: 'https://geek.itheima.net/v1_0',
@@ -24,6 +25,11 @@ request.interceptors.response.use(
     return res.data
   },
   (error) => {
+    if (error.response.status === 401) {
+      removeToken()
+      router.navigate('/login')
+      window.location.reload()
+    }
     return Promise.reject(error)
   }
 )
