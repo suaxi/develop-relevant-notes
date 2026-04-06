@@ -14,3 +14,11 @@ export function submit(formData) {
     data: formData
   })
 }
+
+export function list(params) {
+  return request({
+    url: '/mp/articles',
+    method: 'GET',
+    params
+  })
+}
