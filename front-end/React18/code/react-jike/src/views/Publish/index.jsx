@@ -16,21 +16,15 @@ import './index.scss'
 
 import ReactQuill from 'react-quill'
 import 'react-quill/dist/quill.snow.css'
-import { useEffect, useState } from 'react'
-import { channels, submit as submitApi } from '@/api/article'
+import { useState } from 'react'
+import { submit as submitApi } from '@/api/article'
+import { useChannels } from '@/hooks/useChannels'
 
 const { Option } = Select
 
 const Publish = () => {
   // 文章频道
-  const [channelList, setChannelList] = useState([])
-  useEffect(() => {
-    const getChannelList = async () => {
-      const res = await channels()
-      setChannelList(res.data.channels)
-    }
-    getChannelList()
-  }, [])
+  const { channelList } = useChannels()
 
   // 保存文章
   const submit = (formData) => {
