@@ -38,14 +38,25 @@ const Publish = () => {
       title: formData.title,
       content: formData.content,
       cover: {
-        type: 0,
-        images: []
+        type: coverType,
+        images: imageList?.map((item) => item.response.data.url)
       },
       channel_id: formData.channel_id
     }
     submitApi(article)
   }
 
+  // 文件上传
+  const [imageList, setImageList] = useState([])
+  const onFileUploadChange = (info) => {
+    setImageList(info.fileList)
+  }
+
+  // 切换封面图片类型
+  const [coverType, setCoverType] = useState(1)
+  const onCoverTypeChange = (e) => {
+    setCoverType(e.target.value)
+  }
   return (
     <div className="publish">
       <Card
@@ -84,6 +95,30 @@ const Publish = () => {
               ))}
             </Select>
           </Form.Item>
+          <Form.Item label="封面">
+            <Form.Item name="type">
+              <Radio.Group onChange={onCoverTypeChange}>
+                <Radio value={1}>单图</Radio>
+                <Radio value={3}>三图</Radio>
+                <Radio value={0}>无图</Radio>
+              </Radio.Group>
+            </Form.Item>
+            {coverType > 0 && (
+              <Upload
+                listType="picture-card"
+                showUploadList
+                action={'http://geek.itheima.net/v1_0/upload'}
+                name="image"
+                onChange={onFileUploadChange}
+                maxCount={coverType}
+                // fileList={imageList}
+              >
+                <div style={{ marginTop: 8 }}>
+                  <PlusOutlined />
+                </div>
+              </Upload>
+            )}
+          </Form.Item>
           <Form.Item
             label="内容"
             name="content"
@@ -95,7 +130,6 @@ const Publish = () => {
               placeholder="请输入文章内容"
             />
           </Form.Item>
-
           <Form.Item wrapperCol={{ offset: 4 }}>
             <Space>
               <Button size="large" type="primary" htmlType="submit">
