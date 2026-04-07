@@ -87,24 +87,45 @@ const Article = () => {
     }
   ]
 
+  // 查询参数
+  const [queryParams, setQueryParams] = useState({
+    status: '',
+    channel_id: '',
+    begin_pubdate: null,
+    end_pubdate: null,
+    page: 1,
+    per_page: 10
+  })
+  const [count, setCount] = useState(0)
+
   // 文章列表
   const [articleList, setArticleList] = useState([])
-  const [page, setPage] = useState({
-    count: 0,
-    pageNum: 1,
-    pageSize: 10
-  })
   useEffect(() => {
-    async function getArticleList(params) {
-      const res = await list(params)
-      setPage((prev) => ({
-        ...prev,
-        count: res.data.total_count
-      }))
+    async function getArticleList() {
+      const res = await list(queryParams)
       setArticleList(res.data.results)
+      setCount(res.data.total_count)
     }
     getArticleList()
-  }, [])
+  }, [queryParams])
+
+  const onFinish = (formData) => {
+    setQueryParams({
+      ...queryParams,
+      status: formData.status,
+      channel_id: formData.channel_id,
+      begin_pubdate: formData.date?.[0].format('YYYY-MM-DD'),
+      end_pubdate: formData.date?.[1].format('YYYY-MM-DD')
+    })
+  }
+
+  const onPageChange = (pageNum, pageSize) => {
+    setQueryParams({
+      ...queryParams,
+      page: pageNum,
+      per_page: pageSize
+    })
+  }
   return (
     <div>
       <Card
@@ -118,7 +139,7 @@ const Article = () => {
         }
         style={{ marginBottom: 20 }}
       >
-        <Form initialValues={{ status: '' }}>
+        <Form initialValues={{ status: '' }} onFinish={onFinish}>
           <Form.Item label="状态" name="status">
             <Radio.Group>
               <Radio value={''}>全部</Radio>
@@ -136,7 +157,6 @@ const Article = () => {
               ))}
             </Select>
           </Form.Item>
-
           <Form.Item label="日期" name="date">
             {/* 传入locale属性 控制中文显示*/}
             <RangePicker locale={locale}></RangePicker>
@@ -149,8 +169,17 @@ const Article = () => {
           </Form.Item>
         </Form>
       </Card>
-      <Card title={`根据筛选条件共查询到 ${page.count} 条结果：`}>
-        <Table rowKey="id" columns={columns} dataSource={articleList} />
+      <Card title={`根据筛选条件共查询到 ${count} 条结果：`}>
+        <Table
+          rowKey="id"
+          columns={columns}
+          dataSource={articleList}
+          pagination={{
+            total: count,
+            pageSize: queryParams.per_page,
+            onChange: onPageChange
+          }}
+        />
       </Card>
     </div>
   )
