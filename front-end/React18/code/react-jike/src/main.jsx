@@ -1,4 +1,3 @@
-import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.scss'
 import 'normalize.css'
@@ -9,8 +8,13 @@ import router from './router'
 import { Provider } from 'react-redux'
 import store from './store'
 
+import { ConfigProvider } from 'antd'
+import zhCN from 'antd/es/locale/zh_CN'
+
 createRoot(document.getElementById('root')).render(
   <Provider store={store}>
-    <RouterProvider router={router} />
+    <ConfigProvider locale={zhCN}>
+      <RouterProvider router={router} />
+    </ConfigProvider>
   </Provider>
 )
