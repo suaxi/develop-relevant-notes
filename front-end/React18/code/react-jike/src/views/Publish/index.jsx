@@ -11,18 +11,20 @@ import {
   message
 } from 'antd'
 import { PlusOutlined } from '@ant-design/icons'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import './index.scss'
 
 import ReactQuill from 'react-quill'
 import 'react-quill/dist/quill.snow.css'
-import { useState } from 'react'
-import { submit as submitApi } from '@/api/article'
+import { useEffect, useState } from 'react'
+import { add, update, getArticle as getArticleApi } from '@/api/article'
 import { useChannels } from '@/hooks/useChannels'
 
 const { Option } = Select
 
 const Publish = () => {
+  const navigate = useNavigate()
+
   // 文章频道
   const { channelList } = useChannels()
 
@@ -33,11 +35,28 @@ const Publish = () => {
       content: formData.content,
       cover: {
         type: coverType,
-        images: imageList?.map((item) => item.response.data.url)
+        images: imageList?.map((item) => {
+          if (item.response) {
+            return item.response.data.url
+          } else {
+            return item.url
+          }
+        })
       },
       channel_id: formData.channel_id
     }
-    submitApi(article)
+    if (articleId) {
+      update({
+        ...article,
+        id: articleId
+      }).then(() => {
+        navigate('/article')
+      })
+    } else {
+      add(article).then(() => {
+        navigate('/article')
+      })
+    }
   }
 
   // 文件上传
@@ -51,6 +70,30 @@ const Publish = () => {
   const onCoverTypeChange = (e) => {
     setCoverType(e.target.value)
   }
+
+  // 数据回显
+  const [searchParams] = useSearchParams()
+  const articleId = searchParams.get('id')
+  const [form] = Form.useForm()
+  useEffect(() => {
+    async function getArticle() {
+      const res = await getArticleApi(articleId)
+      const articleData = res.data
+      form.setFieldsValue({
+        ...articleData,
+        type: articleData.cover?.type
+      })
+      setCoverType(articleData.cover?.type)
+      setImageList(
+        articleData.cover?.images?.map((url) => {
+          return { url }
+        })
+      )
+    }
+    if (articleId) {
+      getArticle()
+    }
+  }, [articleId, form])
   return (
     <div className="publish">
       <Card
@@ -58,7 +101,7 @@ const Publish = () => {
           <Breadcrumb
             items={[
               { title: <Link to={'/'}>首页</Link> },
-              { title: '发布文章' }
+              { title: `${articleId ? '编辑' : '发布'}文章` }
             ]}
           />
         }
@@ -68,6 +111,7 @@ const Publish = () => {
           wrapperCol={{ span: 16 }}
           initialValues={{ type: 1 }}
           onFinish={submit}
+          form={form}
         >
           <Form.Item
             label="标题"
@@ -105,7 +149,7 @@ const Publish = () => {
                 name="image"
                 onChange={onFileUploadChange}
                 maxCount={coverType}
-                // fileList={imageList}
+                fileList={imageList}
               >
                 <div style={{ marginTop: 8 }}>
                   <PlusOutlined />

@@ -7,10 +7,18 @@ export function channels() {
   })
 }
 
-export function submit(formData) {
+export function add(formData) {
   return request({
     url: '/mp/articles?draft=false',
     method: 'POST',
+    data: formData
+  })
+}
+
+export function update(formData) {
+  return request({
+    url: `/mp/articles/${formData.id}?draft=false`,
+    method: 'PUT',
     data: formData
   })
 }
@@ -27,5 +35,12 @@ export function del(id) {
   return request({
     url: `/mp/articles/${id}`,
     method: 'DELETE'
+  })
+}
+
+export function getArticle(id) {
+  return request({
+    url: `/mp/articles/${id}`,
+    method: 'GET'
   })
 }

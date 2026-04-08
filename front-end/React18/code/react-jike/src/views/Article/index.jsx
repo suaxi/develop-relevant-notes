@@ -23,6 +23,7 @@ const { Option } = Select
 const { RangePicker } = DatePicker
 
 const Article = () => {
+  const navigate = useNavigate()
   // 文章频道
   const { channelList } = useChannels()
 
@@ -74,7 +75,12 @@ const Article = () => {
       render: (data) => {
         return (
           <Space size="middle">
-            <Button type="primary" shape="circle" icon={<EditOutlined />} />
+            <Button
+              type="primary"
+              shape="circle"
+              icon={<EditOutlined />}
+              onClick={() => navigate(`/publish?id=${data.id}`)}
+            />
             <Popconfirm
               title="提示"
               description="确认删除?"
