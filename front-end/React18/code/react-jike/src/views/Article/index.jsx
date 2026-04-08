@@ -17,7 +17,7 @@ import { EditOutlined, DeleteOutlined } from '@ant-design/icons'
 import img404 from '@/assets/error.png'
 import { useChannels } from '@/hooks/useChannels'
 import { useEffect, useState } from 'react'
-import { list } from '@/api/article'
+import { list, del } from '@/api/article'
 
 const { Option } = Select
 const { RangePicker } = DatePicker
@@ -75,12 +75,20 @@ const Article = () => {
         return (
           <Space size="middle">
             <Button type="primary" shape="circle" icon={<EditOutlined />} />
-            <Button
-              type="primary"
-              danger
-              shape="circle"
-              icon={<DeleteOutlined />}
-            />
+            <Popconfirm
+              title="提示"
+              description="确认删除?"
+              onConfirm={() => onDeleteArticleConfirm(data.id)}
+              okText="确定"
+              cancelText="取消"
+            >
+              <Button
+                type="primary"
+                danger
+                shape="circle"
+                icon={<DeleteOutlined />}
+              />
+            </Popconfirm>
           </Space>
         )
       }
@@ -124,6 +132,15 @@ const Article = () => {
       ...queryParams,
       page: pageNum,
       per_page: pageSize
+    })
+  }
+
+  // 删除文章
+  const onDeleteArticleConfirm = (id) => {
+    del(id).then(() => {
+      setQueryParams({
+        ...queryParams
+      })
     })
   }
   return (

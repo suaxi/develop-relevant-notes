@@ -22,3 +22,10 @@ export function list(params) {
     params
   })
 }
+
+export function del(id) {
+  return request({
+    url: `/mp/articles/${id}`,
+    method: 'DELETE'
+  })
+}
