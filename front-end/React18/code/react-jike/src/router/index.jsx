@@ -2,9 +2,14 @@ import Layout from '@/views/Layout/index'
 import Login from '@/views/Login/index'
 import { createBrowserRouter } from 'react-router-dom'
 import { Auth } from '@/components/Auth'
-import Home from '@/views/Home'
-import Article from '@/views/Article'
-import Publish from '@/views/Publish'
+// import Home from '@/views/Home'
+// import Article from '@/views/Article'
+// import Publish from '@/views/Publish'
+import { lazy, Suspense } from 'react'
+
+const Home = lazy(() => import('@/views/Home'))
+const Article = lazy(() => import('@/views/Article'))
+const Publish = lazy(() => import('@/views/Publish'))
 
 const router = createBrowserRouter([
   {
@@ -18,15 +23,27 @@ const router = createBrowserRouter([
       {
         // path: 'home',
         index: true,
-        element: <Home />
+        element: (
+          <Suspense fallback={'加载中...'}>
+            <Home />
+          </Suspense>
+        )
       },
       {
         path: 'article',
-        element: <Article />
+        element: (
+          <Suspense fallback={'加载中...'}>
+            <Article />
+          </Suspense>
+        )
       },
       {
         path: 'publish',
-        element: <Publish />
+        element: (
+          <Suspense fallback={'加载中...'}>
+            <Publish />
+          </Suspense>
+        )
       }
     ]
   },
