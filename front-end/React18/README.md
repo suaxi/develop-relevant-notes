@@ -1338,6 +1338,182 @@ export default NotFound
 | history  | url/layout   | history 对象 + pushState 事件 | 是               |
 | hash     | usr/#/layout | 监听 hashChange 事件          | 否               |
 
-
-
 使用方式：创建路由时，通过切换 `createBrowserRouter`、`createHashRouter` Api即可
+
+
+
+### 十六、useReducer
+
+作用：和 useState 类似，用于管理相对复杂的状态数据
+
+基础用法：
+
+1. 定义 reducer 函数
+2. 组件中调用 useReducer，并传入 reducer 函数和初始值
+3. 通过 dispatch 函数分派一个 action 对象（通知 reducer 要返回哪个新状态并渲染 UI）
+
+```jsx
+import { useReducer } from 'react'
+
+function reducer(state, action) {
+  switch (action.type) {
+    case 'INC':
+      return state + 1
+    case 'DEC':
+      return state - 1
+    case 'SET':
+      return action.payload
+    default:
+      return state
+  }
+}
+
+function App() {
+  const [state, dispatch] = useReducer(reducer, 0)
+  return <div className="App">{state}
+  <button onClick={() => {dispatch({type: 'INC'})}}>+</button>
+  <button onClick={() => {dispatch({type: 'DEC'})}}>-</button>
+  <button onClick={() => {dispatch({type: 'SET', payload: 100})}}>SET</button>
+  </div>
+}
+
+export default App
+```
+
+
+
+### 十七、useMemo
+
+作用：在组件每次重新渲染的时候缓存计算的结果
+
+```jsx
+import { useMemo, useState } from 'react'
+
+function fib(n) {
+  console.log('执行斐波那契计算函数')
+
+  if (n < 3) {
+    return 1
+  }
+  return fib(n - 2) + fib(n - 1)
+}
+
+function App() {
+  const [count1, setCount1] = useState(0)
+  const [count2, setCount2] = useState(0)
+
+  // 只有count1变化时，才重新执行斐波那契计算函数
+  // useMemo 在计算密集型场景使用
+  const result = useMemo(() => {
+    return fib(count1)
+  }, [count1])
+
+  console.log('组件执行重新渲染')
+  return (
+    <div className="App">
+      count1: {count1}
+      <button onClick={() => setCount1(count1 + 1)}>count1 + 1</button>
+      count2: {count2}
+      <button onClick={() => setCount2(count2 + 1)}>count2 + 1</button>
+      result: {result}
+    </div>
+  )
+}
+
+export default App
+
+```
+
+
+
+### 十八、React.memo
+
+作用：允许组件在 Props 没有改变的情况下跳过渲染
+
+注：React 组件渲染机制，只要父组件重新渲染，子组件也会重新渲染
+
+#### 1. 示例
+
+```jsx
+import { memo, useState } from 'react'
+
+// function Son() {
+//   console.log('执行子组件渲染')
+//   return <div>Son Component</div>
+// }
+
+// props 发生变化时才重新渲染子组件
+const MemoSon = memo(function Son() {
+  console.log('执行子组件渲染')
+  return <div>Son Component</div>
+})
+
+function App() {
+  const [count, setCount] = useState(0)
+  return (
+    <div className="App">
+      count: {count}
+      <button onClick={() => setCount(count + 1)}>count + 1</button>
+      <MemoSon />
+    </div>
+  )
+}
+
+export default App
+
+```
+
+
+
+#### 2. props 的比较机制
+
+在使用 memo 缓存组件后，React 会对每一个 prop 使用 Object.is 方法比较心值和旧值
+
+- prop 是简单（基本）类型
+
+  Object.is(1, 1) ---> true 无变化
+
+- prop 是引用类型（对象/数组）
+
+  Object.is([], []) ---> false 有变化（即：React 不关心内容，只关心引用是否发生变化）
+
+```jsx
+import { memo, useMemo, useState } from 'react'
+
+const MemoSon = memo(function Son({ count, list }) {
+  console.log('执行子组件渲染')
+  return <div>Son Component</div>
+})
+
+function App() {
+  const [count, setCount] = useState(0)
+  const index = 100
+  const list = [1, 2, 3]
+
+  // 保持引用稳定
+  const memoList = useMemo(() => {
+    return [1, 2, 3]
+  }, [])
+  return (
+    <div className="App">
+      count: {count}
+      <button onClick={() => setCount(count + 1)}>count + 1</button>
+      {/* 子组件 prop 发生变化（count累加），执行重新渲染 */}
+      {/* <MemoSon count={count} /> */}
+      
+      {/* 子组件 prop 无变化（传递的 count 是固定的），不执行重新渲染 */}
+      {/* <MemoSon count={index} /> */}
+      
+      {/* count 累加变化时，父组件重新渲染，list 也会重新执行声明（即子组件 prop 参数的引用发生了变化，执行重新渲染） */}
+      {/* <MemoSon list={list} /> */}
+      
+      {/* memo 保持引用稳定 */}
+      <MemoSon list={memoList} />
+    </div>
+  )
+}
+
+export default App
+
+```
+
