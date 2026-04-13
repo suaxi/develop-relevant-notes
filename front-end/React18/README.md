@@ -1627,3 +1627,283 @@ export default App
 
 ```
 
+
+
+### 二十二、类组件
+
+#### 1. 概念
+
+通过 js 中的类来组织代码
+
+
+
+#### 2. 实现方式
+
+（1）通过类属性 state 定义状态数据
+
+（2）通过 setState 方法修改状态数据
+
+（3）通过 render 函数返回要渲染的 UI
+
+
+
+#### 3. 示例
+
+```jsx
+import { Component } from 'react'
+
+class Counter extends Component {
+  state = {
+    count: 0
+  }
+
+  setCount = () => {
+    this.setState({
+      count: this.state.count + 1
+    })
+  }
+
+  render() {
+    return <button onClick={this.setCount}>{this.state.count}</button>
+  }
+}
+
+function App() {
+  return (
+    <div className="App">
+      <Counter />
+    </div>
+  )
+}
+
+export default App
+
+```
+
+
+
+#### 4. 生命周期函数
+
+![4.生命周期函数](static/21.类组件/4.生命周期函数.png)
+
+示例（以 `componentDidMount`, `componentWillUnmount` 为例）：
+
+```jsx
+import { Component, useState } from 'react'
+
+class Son extends Component {
+  // 组件渲染完毕执行一次
+  componentDidMount() {
+    console.log('组件渲染完毕')
+    this.timer = setInterval(() => {
+      console.log('执行定时器')
+    }, 1000)
+  }
+
+  // 组件卸载之后执行（常用于清除副作用）
+  componentWillUnmount() {
+    console.log('子组件被卸载')
+    clearInterval(this.timer)
+  }
+
+  render() {
+    return <div>Son Component</div>
+  }
+}
+
+function App() {
+  const [show, setShow] = useState(true)
+  return (
+    <div className="App">
+      {show && <Son />}
+      <button onClick={() => setShow(false)}>unmount son component</button>
+    </div>
+  )
+}
+
+export default App
+
+```
+
+
+
+#### 5. 组件通信
+
+概念：与常规的组件通信思路一致（父传子、子传父、兄弟组件间通信）
+
+##### （1）父传子
+
+```jsx
+import { Component } from 'react'
+
+class Parent extends Component {
+  state = {
+    msg: '父组件的数据'
+  }
+  render() {
+    return (
+      <div>
+        <p>Parent Component</p>
+        <Son msg={this.state.msg} />
+      </div>
+    )
+  }
+}
+
+class Son extends Component {
+  render() {
+    return (
+      <div>
+        Son Component
+        <p>{this.props.msg}</p>
+      </div>
+    )
+  }
+}
+
+function App() {
+  return (
+    <div className="App">
+      <Parent />
+    </div>
+  )
+}
+
+export default App
+
+```
+
+
+
+##### （2）子传父
+
+```jsx
+import { Component } from 'react'
+
+class Parent extends Component {
+  state = {
+    msg: '父组件的数据'
+  }
+
+  getSonMsg = (sonMsg) => {
+    console.log('子组件传递的数据：', sonMsg)
+  }
+
+  render() {
+    return (
+      <div>
+        <p>Parent Component</p>
+        <Son msg={this.state.msg} getSonMsg={this.getSonMsg} />
+      </div>
+    )
+  }
+}
+
+class Son extends Component {
+  render() {
+    return (
+      <div>
+        Son Component
+        <p>{this.props.msg}</p>
+        <button onClick={() => this.props.getSonMsg('孙笑川')}>
+          传递数据给父组件
+        </button>
+      </div>
+    )
+  }
+}
+
+function App() {
+  return (
+    <div className="App">
+      <Parent />
+    </div>
+  )
+}
+
+export default App
+
+```
+
+
+
+##### （3）兄弟组件通信
+
+```jsx
+import { Component } from 'react'
+
+class Parent extends Component {
+  state = {
+    msg: '父组件的数据',
+    msg1: ''
+  }
+
+  setMsg1 = (val) => {
+    this.setState({
+      msg1: val
+    })
+  }
+
+  getSonMsg = (sonMsg) => {
+    console.log('子组件传递的数据：', sonMsg)
+  }
+
+  render() {
+    return (
+      <div>
+        <p>Parent Component</p>
+        <hr />
+        <Son
+          msg={this.state.msg}
+          getSonMsg={this.getSonMsg}
+          setMsg={this.setMsg1}
+        />
+        <hr />
+        <Daughter msg={this.state.msg} brotherMsg={this.state.msg1} />
+      </div>
+    )
+  }
+}
+
+class Son extends Component {
+  render() {
+    return (
+      <div>
+        Son Component
+        <p>{this.props.msg}</p>
+        <button onClick={() => this.props.getSonMsg('孙笑川')}>
+          传递数据给父组件
+        </button>
+        <br />
+        <button onClick={() => this.props.setMsg('药水哥')}>
+          传递数据给兄弟组件
+        </button>
+      </div>
+    )
+  }
+}
+
+class Daughter extends Component {
+  render() {
+    return (
+      <div>
+        Daughter Component
+        <p>父组件传递的数据：{this.props.msg}</p>
+        <p>兄弟组件传递的数据：{this.props.brotherMsg}</p>
+      </div>
+    )
+  }
+}
+
+function App() {
+  return (
+    <div className="App">
+      <Parent />
+    </div>
+  )
+}
+
+export default App
+
+```
+
