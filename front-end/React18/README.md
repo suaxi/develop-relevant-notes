@@ -1517,3 +1517,113 @@ export default App
 
 ```
 
+
+
+### 十九、useCallback
+
+作用：在组件多次重新渲染时缓存函数
+
+```jsx
+import { memo, useCallback, useState } from 'react'
+
+const MemoInput = memo(function Input({ onChange }) {
+  console.log('执行子组件重新渲染')
+  return <input type="text" onChange={(e) => onChange(e.target.value)} />
+})
+
+function App() {
+  const changeHandle = useCallback((val) => {
+    console.log(val)
+  }, [])
+
+  const [count, setCount] = useState(0)
+  return (
+    <div className="App">
+      <MemoInput onChange={changeHandle} />
+      <button onClick={() => setCount(count + 1)}>{count}</button>
+    </div>
+  )
+}
+
+export default App
+
+```
+
+
+
+### 二十、forwardRef
+
+作用：使用 ref 暴露组件给父节点
+
+```jsx
+import { forwardRef, useRef } from 'react'
+
+// function Son() {
+//   return <input type="text" />
+// }
+
+const Son = forwardRef((props, ref) => {
+  return <input type="text" ref={ref} />
+})
+
+function App() {
+  const sonRef = useRef(null)
+  const sonInputFocus = () => {
+    console.log(sonRef)
+    sonRef.current.focus()
+  }
+
+  return (
+    <div className="App">
+      <Son ref={sonRef} />
+      <button onClick={sonInputFocus}>focus</button>
+    </div>
+  )
+}
+
+export default App
+
+```
+
+
+
+### 二十一、useImperativeHandle
+
+作用：通过 ref 讲子组件的方法暴露给父组件
+
+```jsx
+import { forwardRef, useImperativeHandle, useRef } from 'react'
+
+const Son = forwardRef((props, ref) => {
+  const inputRef = useRef(null)
+  const inputHandle = () => {
+    inputRef.current.focus()
+  }
+
+  useImperativeHandle(ref, () => {
+    return {
+      inputHandle
+    }
+  })
+  return <input type="text" ref={inputRef} />
+})
+
+function App() {
+  const sonRef = useRef(null)
+  const sonInputFocusHandle = () => {
+    console.log(sonRef)
+    sonRef.current.inputHandle()
+  }
+
+  return (
+    <div className="App">
+      <Son ref={sonRef} />
+      <button onClick={sonInputFocusHandle}>focus</button>
+    </div>
+  )
+}
+
+export default App
+
+```
+
