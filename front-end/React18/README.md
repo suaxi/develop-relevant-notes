@@ -1907,3 +1907,167 @@ export default App
 
 ```
 
+
+
+### 二十三、zustand
+
+更轻量级的集中式状态管理工具
+
+
+
+#### 1. 示例
+
+```jsx
+import { create } from 'zustand'
+
+const useStore = create((set) => {
+  return {
+    // 状态数据
+    count: 0,
+    // 修改状态数据的方法
+    inc: () => {
+      // 修改原数据
+      set((state) => ({
+        count: state.count + 1
+      }))
+
+      // 直接修改
+      // set({ count: 100 })
+    }
+  }
+})
+
+function App() {
+  const { count, inc } = useStore()
+  return (
+    <div className="App">
+      <p>{count}</p>
+      <button onClick={inc}>+ 1</button>
+    </div>
+  )
+}
+
+export default App
+
+```
+
+
+
+#### 2. 异步方法
+
+```jsx
+import { useEffect } from 'react'
+import { create } from 'zustand'
+
+const useStore = create((set) => {
+  return {
+    // 状态数据
+    count: 0,
+    channelList: [],
+    // 修改状态数据的方法
+    inc: () => {
+      // 修改原数据
+      set((state) => ({
+        count: state.count + 1
+      }))
+
+      // 直接修改
+      // set({ count: 100 })
+    },
+    getChannelList: async () => {
+      const res = await fetch('http://geek.itheima.net/v1_0/channels')
+      const resJson = await res.json()
+      console.log(resJson)
+      set({
+        channelList: resJson.data.channels
+      })
+    }
+  }
+})
+
+function App() {
+  const { count, inc, channelList, getChannelList } = useStore()
+  useEffect(() => {
+    getChannelList()
+  }, [getChannelList])
+  return (
+    <div className="App">
+      <p>{count}</p>
+      <button onClick={inc}>+ 1</button>
+      <ul>
+        {channelList.map((item) => (
+          <li key={item.id}>{item.name}</li>
+        ))}
+      </ul>
+    </div>
+  )
+}
+
+export default App
+
+```
+
+
+
+#### 3. 切片模式
+
+当单个 store 较大时，可以用**切片模式**进行模块的拆分组合
+
+```jsx
+import { useEffect } from 'react'
+import { create } from 'zustand'
+
+const createCountStore = (set) => {
+  return {
+    count: 0,
+    inc: () => {
+      set((state) => ({
+        count: state.count + 1
+      }))
+    }
+  }
+}
+
+const createChannelStore = (set) => {
+  return {
+    channelList: [],
+    getChannelList: async () => {
+      const res = await fetch('http://geek.itheima.net/v1_0/channels')
+      const resJson = await res.json()
+      console.log(resJson)
+      set({
+        channelList: resJson.data.channels
+      })
+    }
+  }
+}
+
+const useStore = create((...a) => {
+  return {
+    ...createCountStore(...a),
+    ...createChannelStore(...a)
+  }
+})
+
+function App() {
+  const { count, inc, channelList, getChannelList } = useStore()
+  useEffect(() => {
+    getChannelList()
+  }, [getChannelList])
+  return (
+    <div className="App">
+      <p>{count}</p>
+      <button onClick={inc}>+ 1</button>
+      <ul>
+        {channelList.map((item) => (
+          <li key={item.id}>{item.name}</li>
+        ))}
+      </ul>
+    </div>
+  )
+}
+
+export default App
+
+```
+
