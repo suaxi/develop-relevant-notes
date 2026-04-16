@@ -1,4 +1,4 @@
-import { Image, List } from 'antd-mobile'
+import { Image, InfiniteScroll, List } from 'antd-mobile'
 import { useEffect, useState } from 'react'
 import { list, type ArticleRes } from '@/api/article'
 
@@ -23,6 +23,27 @@ const HomeList = (props: Props) => {
     }
     getArticles()
   }, [channelId])
+
+  // 瀑布流加载
+  const loadMore = async () => {
+    const res = await list({
+      channel_id: channelId,
+      timestamp: articles.pre_timestamp
+    })
+
+    if (res.data.data.results.length === 0) {
+      setHasMore(false)
+    }
+
+    setArticles({
+      // 拼接新旧数据
+      results: [...articles.results, ...res.data.data.results],
+      pre_timestamp: res.data.data.pre_timestamp
+    })
+  }
+
+  // 瀑布流开关
+  const [hasMore, setHasMore] = useState(true)
   return (
     <>
       <List>
@@ -44,6 +65,7 @@ const HomeList = (props: Props) => {
           </List.Item>
         ))}
       </List>
+      <InfiniteScroll loadMore={loadMore} hasMore={hasMore} threshold={10} />
     </>
   )
 }
