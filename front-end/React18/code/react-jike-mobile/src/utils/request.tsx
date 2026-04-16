@@ -1,7 +1,7 @@
 import axios from 'axios'
 
 const request = axios.create({
-  baseURL: 'http://geek.ithema.net',
+  baseURL: 'https://geek.itheima.net/v1_0',
   timeout: 5000
 })
 
@@ -15,8 +15,8 @@ request.interceptors.request.use(
 )
 
 request.interceptors.response.use(
-  (config) => {
-    return config
+  (res) => {
+    return res
   },
   (error) => {
     return Promise.reject(error)
