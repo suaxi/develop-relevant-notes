@@ -1,12 +1,14 @@
 import { Image, InfiniteScroll, List } from 'antd-mobile'
 import { useEffect, useState } from 'react'
 import { list, type ArticleRes } from '@/api/article'
+import { useNavigate } from 'react-router-dom'
 
 type Props = {
   channelId: string
 }
 
 const HomeList = (props: Props) => {
+  const navigate = useNavigate()
   const { channelId } = props
   // 文章列表
   const [articles, setArticles] = useState<ArticleRes>({
@@ -60,6 +62,7 @@ const HomeList = (props: Props) => {
               />
             }
             description={item.pubdate}
+            onClick={() => navigate(`/detail?id=${item.art_id}`)}
           >
             {item.title}
           </List.Item>
