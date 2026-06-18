@@ -91,3 +91,71 @@ public class ByteBufferTest {
 
 ```
 
+执行流程：
+
+1. 向 buffer 写入数据, channel.read(buffer)
+2. 调用 flip() 切换至读模式
+3. 从 buffer 读数据，buffer.get()
+4. 调用 clear() 或 compact() 切换至写模式
+5. 重复步骤 1 - 4
+
+
+
+##### 2.2 结构
+
+buffer 包含的属性有：capacity、position、limit
+
+开始：
+
+![2.2.1开始](static/2.Buffer/2.2.1开始.png)
+
+写模式下，position 表示写入位置，limit 表示容量，写入4个字节
+
+![2.2.2写入4个字节](static/2.Buffer/2.2.2写入4个字节.png)
+
+调用 flip 后，position 切换为读取位置， limit切换为读取限制
+
+![2.2.3flip](static/2.Buffer/2.2.3flip.png)
+
+读取4个字节后的状态
+
+![2.2.4读取4个字节后](static/2.Buffer/2.2.4读取4个字节后.png)
+
+调用 clear 后
+
+![2.2.5调用clear](static/2.Buffer/2.2.5调用clear.png)
+
+调用 compact 方法，它的作用是把未读完的部分向前压缩，然后切换至写模式
+
+![2.2.6Compact](static/2.Buffer/2.2.6Compact.png)
+
+##### 2.3 方法演示
+
+ByteBufferReadWriteTest
+
+```java
+package com.sw.netty._01;
+
+import java.nio.ByteBuffer;
+
+import static utils.ByteBufferUtil.debugAll;
+
+public class ByteBufferReadWriteTest {
+    public static void main(String[] args) {
+        ByteBuffer bf = ByteBuffer.allocate(10);
+        bf.put((byte) 0x16);
+        debugAll(bf);
+        bf.put(new byte[]{0x17, 0x18, 0x19});
+        debugAll(bf);
+        bf.flip();
+        System.out.println(bf.get());
+        debugAll(bf);
+        bf.compact();
+        debugAll(bf);
+        bf.put(new byte[]{0x20, 0x21, 0x22});
+        debugAll(bf);
+    }
+}
+
+```
+
