@@ -129,17 +129,9 @@ buffer 包含的属性有：capacity、position、limit
 
 ![2.2.6Compact](static/2.Buffer/2.2.6Compact.png)
 
-##### 2.3 方法演示
-
 ByteBufferReadWriteTest
 
 ```java
-package com.sw.netty._01;
-
-import java.nio.ByteBuffer;
-
-import static utils.ByteBufferUtil.debugAll;
-
 public class ByteBufferReadWriteTest {
     public static void main(String[] args) {
         ByteBuffer bf = ByteBuffer.allocate(10);
@@ -191,6 +183,183 @@ public class ByteBufferReadWriteTest {
         // +--------+-------------------------------------------------+----------------+
         //         |00000000| 17 18 19 20 21 22 00 00 00 00                   |... !"....      |
         //         +--------+-------------------------------------------------+----------------+
+    }
+}
+
+```
+
+
+
+##### 2.3 常见方法
+
+（1）分配空间
+
+```java
+// 使用堆内存，会受 gc 的影响
+ByteBuffer.allocate(10);
+
+// 使用直接（物理）内存，读写效率高，但分配效率低
+ByteBuffer.allocateDirect(10);
+```
+
+
+
+（2）向 buffer 写入数据
+
+调用 channel 的 read 方法
+
+```java
+int len = channel.read(bf);
+```
+
+
+
+调用 buffer 的 put 方法
+
+```java
+bf.put((byte) 0x16)
+```
+
+
+
+（3）从 buffer 读取数据
+
+调用 channel 的 write 方法
+
+```java
+int len = channel.write(bf);
+```
+
+
+
+调用 buffer 的 get 方法
+
+```java
+// get 方法会让 position 读指针向后走
+// rewind 方法可以将 position 重新置为 0
+// get(index) 方法获取指定索引下标的内容时，不会移动读指针
+byte b = bf.get();
+```
+
+
+
+ByteBufferReadTest
+
+```java
+package com.sw.netty._01;
+
+import java.nio.ByteBuffer;
+
+import static utils.ByteBufferUtil.debugAll;
+
+public class ByteBufferReadTest {
+    public static void main(String[] args) {
+        ByteBuffer bf = ByteBuffer.allocate(10);
+        bf.put(new byte[]{'a', 'b', 'c', 'd'});
+        bf.flip();
+
+        // 读全部
+        bf.get(new byte[4]);
+        debugAll(bf);
+
+        // 从头重新开始读取一个字节
+        bf.rewind();
+        System.out.println((char) bf.get());
+
+        // +--------+-------------------- all ------------------------+----------------+
+        //         position: [4], limit: [4]
+        // +-------------------------------------------------+
+        //         |  0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f |
+        // +--------+-------------------------------------------------+----------------+
+        //         |00000000| 61 62 63 64 00 00 00 00 00 00                   |abcd......      |
+        // +--------+-------------------------------------------------+----------------+
+        // a
+
+        // mark 标记 position 位置，reset 将 position 位置重置到 mark 标记的位置
+        System.out.println((char) bf.get()); // b
+        bf.mark();
+        System.out.println((char) bf.get()); // c
+        System.out.println((char) bf.get()); // d
+        bf.reset();
+        System.out.println((char) bf.get()); // c
+
+        // get(index) 不会改变读索引的位置
+        System.out.println((char) bf.get(3));
+        debugAll(bf);
+
+        // d
+        // +--------+-------------------- all ------------------------+----------------+
+        //         position: [1], limit: [4]
+        // +-------------------------------------------------+
+        //         |  0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f |
+        // +--------+-------------------------------------------------+----------------+
+        //         |00000000| 61 62 63 64 00 00 00 00 00 00                   |abcd......      |
+        // +--------+-------------------------------------------------+----------------+
+    }
+}
+
+```
+
+
+
+（4）字符串与 ByteBuffer 互转
+
+```java
+package com.sw.netty._01;
+
+import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
+
+import static utils.ByteBufferUtil.debugAll;
+
+public class ByteBuffer2StringTest {
+    public static void main(String[] args) {
+        ByteBuffer bf = ByteBuffer.allocate(10);
+
+        // 字符串转 ByteBuffer
+        // 1. 字符串 getBytes()
+        bf.put("sxc".getBytes());
+        debugAll(bf);
+
+        // +--------+-------------------- all ------------------------+----------------+
+        //         position: [3], limit: [16]
+        // +-------------------------------------------------+
+        //         |  0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f |
+        // +--------+-------------------------------------------------+----------------+
+        //         |00000000| 73 78 63 00 00 00 00 00 00 00 00 00 00 00 00 00 |sxc.............|
+        // +--------+-------------------------------------------------+----------------+
+
+        // 2. Charset encode之后自动切换为读模式
+        ByteBuffer bf1 = StandardCharsets.UTF_8.encode("sxc");
+        debugAll(bf1);
+
+        // +--------+-------------------- all ------------------------+----------------+
+        //         position: [0], limit: [3]
+        // +-------------------------------------------------+
+        //         |  0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f |
+        // +--------+-------------------------------------------------+----------------+
+        //         |00000000| 73 78 63                                        |sxc             |
+        // +--------+-------------------------------------------------+----------------+
+
+        // 3. wrap 同理方法2，自动切换为读模式
+        ByteBuffer bf2 = ByteBuffer.wrap("sxc".getBytes());
+        debugAll(bf2);
+
+        // +--------+-------------------- all ------------------------+----------------+
+        //         position: [0], limit: [3]
+        // +-------------------------------------------------+
+        //         |  0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f |
+        // +--------+-------------------------------------------------+----------------+
+        //         |00000000| 73 78 63                                        |sxc             |
+        // +--------+-------------------------------------------------+----------------+
+
+        // ByteBuffer 转字符串
+        bf.flip();
+        System.out.println(StandardCharsets.UTF_8.decode(bf)); //sxc
+
+        // Charset、wrap 方法生成的 ByteBuffer 对象不需要再手动显示切换为读模式
+        System.out.println(StandardCharsets.UTF_8.decode(bf1)); //sxc
+        System.out.println(StandardCharsets.UTF_8.decode(bf2)); //sxc
     }
 }
 
