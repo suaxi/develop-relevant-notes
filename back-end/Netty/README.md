@@ -365,3 +365,178 @@ public class ByteBuffer2StringTest {
 
 ```
 
+
+
+##### 2.4 Scattering Reads 分散读
+
+ScatteringReadsTest
+
+```java
+package com.sw.netty._01;
+
+import java.net.URL;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
+import java.nio.file.Paths;
+
+import static utils.ByteBufferUtil.debugAll;
+
+public class ScatteringReadsTest {
+    public static void main(String[] args) {
+        URL resource = ScatteringReadsTest.class.getClassLoader().getResource("ScatteringReadsTest.txt");
+        if (resource == null) {
+            throw new IllegalArgumentException("resource not found: ScatteringReadsTest.txt");
+        }
+
+        try (FileChannel channel = FileChannel.open(Paths.get(resource.toURI()))) {
+            ByteBuffer bf1 = ByteBuffer.allocate(3);
+            ByteBuffer bf2 = ByteBuffer.allocate(3);
+            ByteBuffer bf3 = ByteBuffer.allocate(3);
+            channel.read(new ByteBuffer[]{bf1, bf2, bf3});
+            bf1.flip();
+            bf2.flip();
+            bf3.flip();
+            debugAll(bf1);
+            debugAll(bf2);
+            debugAll(bf3);
+
+            // +--------+-------------------- all ------------------------+----------------+
+            //         position: [0], limit: [3]
+            // +-------------------------------------------------+
+            //         |  0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f |
+            // +--------+-------------------------------------------------+----------------+
+            // |00000000| 31 32 33                                        |123             |
+            // +--------+-------------------------------------------------+----------------+
+            // +--------+-------------------- all ------------------------+----------------+
+            // position: [0], limit: [3]
+            // +-------------------------------------------------+
+            //         |  0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f |
+            // +--------+-------------------------------------------------+----------------+
+            // |00000000| 34 35 36                                        |456             |
+            // +--------+-------------------------------------------------+----------------+
+            // +--------+-------------------- all ------------------------+----------------+
+            // position: [0], limit: [3]
+            // +-------------------------------------------------+
+            //         |  0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f |
+            // +--------+-------------------------------------------------+----------------+
+            // |00000000| 37 38 39                                        |789             |
+            // +--------+-------------------------------------------------+----------------+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+}
+
+```
+
+
+
+##### 2.5 GatheringWrites 集中写
+
+GatheringWritesTest
+
+```java
+package com.sw.netty._01;
+
+import java.io.IOException;
+import java.io.RandomAccessFile;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
+import java.nio.charset.StandardCharsets;
+
+public class GatheringWritesTest {
+    public static void main(String[] args) {
+        ByteBuffer bf1 = StandardCharsets.UTF_8.encode("sun");
+        ByteBuffer bf2 = StandardCharsets.UTF_8.encode("xiao");
+        ByteBuffer bf3 = StandardCharsets.UTF_8.encode("chuan");
+
+        try (FileChannel channel = new RandomAccessFile("GatheringWritesTest.txt", "rw").getChannel()) {
+            channel.write(new ByteBuffer[]{bf1, bf2, bf3});
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+}
+
+```
+
+
+
+##### 2.6 黏包、半包
+
+ByteBufferExamTest
+
+```java
+package com.sw.netty._01;
+
+import java.nio.ByteBuffer;
+
+import static utils.ByteBufferUtil.debugAll;
+
+public class ByteBufferExamTest {
+    public static void main(String[] args) {
+        /**
+         * 例：通过网络发送给服务器的多条数据如下：
+         * Yao Shui Ge,\n
+         * Jin Se Wei Ye Na,\n
+         * Zhi Bo Jian.
+         * 由于各种原因，变成了如下的形式（黏包、半包）
+         * Yao Shui Ge,\nJin S
+         * e Wei Ye Na,\nZ
+         * hi Bo Jian.
+         * 现要求将黏包、半包的数据恢复为正确的按 \n 分隔的数据
+         */
+
+        ByteBuffer originBf = ByteBuffer.allocate(45);
+        originBf.put("Yao Shui Ge,\nJin S".getBytes());
+        split(originBf);
+        originBf.put("e Wei Ye Na,\nZ".getBytes());
+        split(originBf);
+        originBf.put("hi Bo Jian.\n".getBytes());
+        split(originBf);
+    }
+
+    private static void split(ByteBuffer source) {
+        source.flip();
+        for (int i = 0; i < source.limit(); i++) {
+            if ('\n' == source.get(i)) {
+                int length = i + 1 - source.position();
+                ByteBuffer target = ByteBuffer.allocate(length);
+                // 从 source 读，向 target 写
+                for (int j = 0; j < length; j++) {
+                    target.put(source.get());
+                }
+                debugAll(target);
+            }
+        }
+
+        // 此处不使用 clear，需使用 compact 将剩余未读的部分向前移动
+        source.compact();
+    }
+
+    // +--------+-------------------- all ------------------------+----------------+
+    // position: [13], limit: [13]
+    //         +-------------------------------------------------+
+    //         |  0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f |
+    // +--------+-------------------------------------------------+----------------+
+    // |00000000| 59 61 6f 20 53 68 75 69 20 47 65 2c 0a          |Yao Shui Ge,.   |
+    // +--------+-------------------------------------------------+----------------+
+    // +--------+-------------------- all ------------------------+----------------+
+    // position: [18], limit: [18]
+    //         +-------------------------------------------------+
+    //         |  0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f |
+    // +--------+-------------------------------------------------+----------------+
+    // |00000000| 4a 69 6e 20 53 65 20 57 65 69 20 59 65 20 4e 61 |Jin Se Wei Ye Na|
+    // |00000010| 2c 0a                                           |,.              |
+    // +--------+-------------------------------------------------+----------------+
+    // +--------+-------------------- all ------------------------+----------------+
+    // position: [13], limit: [13]
+    //         +-------------------------------------------------+
+    //         |  0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f |
+    // +--------+-------------------------------------------------+----------------+
+    // |00000000| 5a 68 69 20 42 6f 20 4a 69 61 6e 2e 0a          |Zhi Bo Jian..   |
+    // +--------+-------------------------------------------------+----------------+
+}
+
+```
+
