@@ -540,3 +540,119 @@ public class ByteBufferExamTest {
 
 ```
 
+
+
+#### 3. 文件编程
+
+##### 3.1 FileChannel
+
+*FileChannel 只能工作在阻塞模式下*
+
+（1）获取
+
+通过 FileInputStream（读）、FileOutputStream（写）、RandomAccessFile（根据指定的模式决定读或写） 的 getChannel() 方法获取
+
+
+
+（2）读取
+
+```java
+// 返回值表示读取的字节，-1 表示读取到了文件的末尾
+int readBytes = channel.read(bf);
+```
+
+
+
+（3）写入
+
+```java
+ByteBuffer bf = ByteBuffer.allcate(16);
+bf.put(...);
+bf.flip();
+
+// 后续还有值则继续写入，channel.write() 方法不一定能一次写完全部内容
+while (bf.hasRemaining()) {
+    channel.write(bf);
+}
+```
+
+
+
+（4）关闭
+
+channel 使用完后必须关闭，可以使用 try-with-resources 语法糖或手动关闭 channel.close()
+
+
+
+（5）获取当前位置
+
+```java
+// 获取位置
+long position = channel.position();
+
+// 设置指定下标索引位置
+channel.position(123);
+```
+
+如果设置为文件末尾：
+
+- 这时进行读取，返回值为 -1
+- 执行写入时，会进行追加，如果 position 超过了文件末尾，新内容和原末尾之间会产生空洞(00)
+
+
+
+（6）大小
+
+```java
+channel.size();
+```
+
+
+
+（7）强制写入
+
+写入的数据在操作系统的管理下并不是立刻写入磁盘，而是先到缓存中，可以通过 channel.force(true) 方法将文件内容和元数据进行立即写入
+
+
+
+##### 3.2 两个 Channel 传输数据
+
+```java
+package com.sw.netty._01;
+
+import java.io.FileOutputStream;
+import java.net.URL;
+import java.nio.channels.FileChannel;
+import java.nio.file.Paths;
+
+public class FileChannelTransferToTest {
+    public static void main(String[] args) {
+        URL resource = ScatteringReadsTest.class.getClassLoader().getResource("ByteBufferTest.txt");
+        if (resource == null) {
+            throw new IllegalArgumentException("resource not found: ScatteringReadsTest.txt");
+        }
+
+        // try (FileChannel from = FileChannel.open(Paths.get(resource.toURI()));
+        //      FileChannel to = new FileOutputStream("FileChannelTransferTo.txt").getChannel()) {
+        //     // transferTo 一次最多传输 2G 的数据
+        //     from.transferTo(0, from.size(), to);
+        // } catch (Exception e) {
+        //     e.printStackTrace();
+        // }
+
+        try (FileChannel from = FileChannel.open(Paths.get(resource.toURI()));
+             FileChannel to = new FileOutputStream("FileChannelTransferTo.txt").getChannel()) {
+
+            // 传输大于 2G 的文件
+            long size = from.size();
+            for (long left = size; left > 0; ) {
+                left -= from.transferTo((size - left), left, to);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+}
+
+```
+
