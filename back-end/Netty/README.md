@@ -656,3 +656,154 @@ public class FileChannelTransferToTest {
 
 ```
 
+
+
+
+
+#### 4. 网络编程
+
+##### 4.1 阻塞模式
+
+Sever
+
+```java
+package com.sw.netty._04.block;
+
+import lombok.extern.slf4j.Slf4j;
+
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.nio.ByteBuffer;
+import java.nio.channels.ServerSocketChannel;
+import java.nio.channels.SocketChannel;
+import java.util.ArrayList;
+import java.util.List;
+
+import static utils.ByteBufferUtil.debugAll;
+
+@Slf4j
+public class Server {
+    public static void main(String[] args) throws IOException {
+        ByteBuffer bf = ByteBuffer.allocate(16);
+        ServerSocketChannel ssc = ServerSocketChannel.open();
+        ssc.bind(new InetSocketAddress(8088));
+        List<SocketChannel> channelList = new ArrayList<>();
+        while (true) {
+            log.info("connecting...");
+            SocketChannel channel = ssc.accept();
+            log.info("connected - [{}]", channel);
+            channelList.add(channel);
+            for (SocketChannel sc : channelList) {
+                log.info("before read - [{}]", channel);
+                sc.read(bf);
+                bf.flip();
+                debugAll(bf);
+                bf.clear();
+                log.info("after read - [{}]", channel);
+            }
+        }
+    }
+}
+
+```
+
+
+
+Client
+
+```java
+package com.sw.netty._04.block;
+
+import lombok.extern.slf4j.Slf4j;
+
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.nio.channels.SocketChannel;
+
+@Slf4j
+public class Client {
+    public static void main(String[] args) throws IOException {
+        SocketChannel sc = SocketChannel.open();
+        sc.connect(new InetSocketAddress("localhost", 8088));
+        log.info("waiting...");
+    }
+}
+
+```
+
+
+
+##### 4.2 非阻塞模式
+
+Sever
+
+```java
+package com.sw.netty._04.nonBlock;
+
+import lombok.extern.slf4j.Slf4j;
+
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.nio.ByteBuffer;
+import java.nio.channels.ServerSocketChannel;
+import java.nio.channels.SocketChannel;
+import java.util.ArrayList;
+import java.util.List;
+
+import static utils.ByteBufferUtil.debugAll;
+
+@Slf4j
+public class Server {
+    public static void main(String[] args) throws IOException {
+        ByteBuffer bf = ByteBuffer.allocate(16);
+        ServerSocketChannel ssc = ServerSocketChannel.open();
+        // 切换为非阻塞模式
+        ssc.configureBlocking(false);
+        ssc.bind(new InetSocketAddress(8088));
+        List<SocketChannel> channelList = new ArrayList<>();
+        while (true) {
+            SocketChannel channel = ssc.accept();
+            if (channel != null) {
+                log.info("connected - [{}]", channel);
+                // 切换为非阻塞模式
+                channel.configureBlocking(false);
+                channelList.add(channel);
+            }
+            for (SocketChannel sc : channelList) {
+                if (sc.read(bf) > 0) {
+                    bf.flip();
+                    debugAll(bf);
+                    bf.clear();
+                    log.info("after read - [{}]", channel);
+                }
+            }
+        }
+    }
+}
+
+```
+
+
+
+Client
+
+```java
+package com.sw.netty._04.nonBlock;
+
+import lombok.extern.slf4j.Slf4j;
+
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.nio.channels.SocketChannel;
+
+@Slf4j
+public class Client {
+    public static void main(String[] args) throws IOException {
+        SocketChannel sc = SocketChannel.open();
+        sc.connect(new InetSocketAddress("localhost", 8088));
+        log.info("waiting...");
+    }
+}
+
+```
+
