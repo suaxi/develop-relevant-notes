@@ -1134,3 +1134,209 @@ public class Client {
 
 ```
 
+
+
+##### 4.4 ByteBuffer 大小分配
+
+- 每个 Channel 都需要记录可能被切分的消息，因为 ByteBuffer 不能被多个 Channel 共享，需要独立维护
+- ByteBuffer 不能太大，需要可变：
+  - 思路一：先分配一个小的 buffer，不够的时候再进行扩容，优点是消息连续存储，缺点是数据拷贝存在一定的性能损耗
+  - 思路二：用数组维护 buffer，可以避免数据拷贝产生的性能损耗，但消息存储不连续
+
+
+
+（1）写入内容过多问题（一次性发送数据）
+
+Server
+
+```java
+package com.sw.netty._04.writeableEvents;
+
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.nio.ByteBuffer;
+import java.nio.channels.SelectionKey;
+import java.nio.channels.Selector;
+import java.nio.channels.ServerSocketChannel;
+import java.nio.channels.SocketChannel;
+import java.nio.charset.Charset;
+import java.util.Iterator;
+import java.util.UUID;
+
+public class Server {
+    public static void main(String[] args) throws IOException {
+        ServerSocketChannel ssc = ServerSocketChannel.open();
+        ssc.configureBlocking(false);
+
+        Selector selector = Selector.open();
+        ssc.register(selector, SelectionKey.OP_ACCEPT);
+
+        ssc.bind(new InetSocketAddress(8088));
+        while (true) {
+            selector.select();
+            Iterator<SelectionKey> iterator = selector.selectedKeys().iterator();
+            while (iterator.hasNext()) {
+                SelectionKey key = iterator.next();
+                iterator.remove();
+
+                if (key.isAcceptable()) {
+                    SocketChannel sc = ssc.accept();
+                    sc.configureBlocking(false);
+
+                    // 1. 向客户端发送大量数据
+                    StringBuilder sb = new StringBuilder();
+                    for (int i = 0; i < 999999; i++) {
+                        sb.append(UUID.randomUUID().toString().replace("-", ""));
+                    }
+
+                    ByteBuffer bf = Charset.defaultCharset().encode(sb.toString());
+                    while (bf.hasRemaining()) {
+                        int write = sc.write(bf);
+                        System.out.println("发送：" + write + " 字节数据");
+                    }
+                }
+            }
+        }
+    }
+}
+
+```
+
+
+
+Client
+
+```java
+package com.sw.netty._04.writeableEvents;
+
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.nio.ByteBuffer;
+import java.nio.channels.SocketChannel;
+
+public class Client {
+    public static void main(String[] args) throws IOException {
+        SocketChannel sc = SocketChannel.open();
+        sc.connect(new InetSocketAddress("localhost", 8088));
+
+        int count = 0;
+        while (true) {
+            ByteBuffer bf = ByteBuffer.allocate(1024 * 1024);
+            count += sc.read(bf);
+            System.out.println("接收到：" + count + " 字节数据");
+        }
+    }
+}
+
+```
+
+
+
+（2）处理可写事件
+
+```java
+package com.sw.netty._04.writeableEvents;
+
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.nio.ByteBuffer;
+import java.nio.channels.SelectionKey;
+import java.nio.channels.Selector;
+import java.nio.channels.ServerSocketChannel;
+import java.nio.channels.SocketChannel;
+import java.nio.charset.Charset;
+import java.util.Iterator;
+import java.util.UUID;
+
+public class Server {
+    public static void main(String[] args) throws IOException {
+        ServerSocketChannel ssc = ServerSocketChannel.open();
+        ssc.configureBlocking(false);
+
+        Selector selector = Selector.open();
+        ssc.register(selector, SelectionKey.OP_ACCEPT);
+
+        ssc.bind(new InetSocketAddress(8088));
+        while (true) {
+            selector.select();
+            Iterator<SelectionKey> iterator = selector.selectedKeys().iterator();
+            while (iterator.hasNext()) {
+                SelectionKey key = iterator.next();
+                iterator.remove();
+
+                if (key.isAcceptable()) {
+                    SocketChannel sc = ssc.accept();
+                    sc.configureBlocking(false);
+                    SelectionKey scKey = sc.register(selector, 0, null);
+                    scKey.interestOps(SelectionKey.OP_READ);
+
+                    // 1. 向客户端发送大量数据
+                    StringBuilder sb = new StringBuilder();
+                    for (int i = 0; i < 999999; i++) {
+                        sb.append(UUID.randomUUID().toString().replace("-", ""));
+                    }
+
+                    ByteBuffer bf = Charset.defaultCharset().encode(sb.toString());
+                    int write = sc.write(bf);
+                    System.out.println("OP_READ - 发送：" + write + " 字节数据");
+
+                    // 2. 判断是否有剩余内容
+                    if (bf.hasRemaining()) {
+                        // 3. 关注可写事件
+                        scKey.interestOps(scKey.interestOps() + SelectionKey.OP_WRITE);
+                        // scKey.interestOps(scKey.interestOps() | SelectionKey.OP_WRITE);
+                        // 4. 将未写完的数据挂载到 scKey 上
+                        scKey.attach(bf);
+                    }
+                }
+
+                if (key.isWritable()) {
+                    ByteBuffer bf = (ByteBuffer) key.attachment();
+                    SocketChannel sc = (SocketChannel) key.channel();
+                    int write = sc.write(bf);
+                    System.out.println("OP_WRITE - 发送：" + write + " 字节数据");
+
+                    // 5. 关闭资源
+                    if (!bf.hasRemaining()) {
+                        // 清除挂载的 buffer
+                        key.attach(null);
+
+                        // 清除关注的事件
+                        key.interestOps(key.interestOps() - SelectionKey.OP_WRITE);
+                    }
+                }
+            }
+        }
+    }
+}
+
+```
+
+
+
+Client
+
+```java
+package com.sw.netty._04.writeableEvents;
+
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.nio.ByteBuffer;
+import java.nio.channels.SocketChannel;
+
+public class Client {
+    public static void main(String[] args) throws IOException {
+        SocketChannel sc = SocketChannel.open();
+        sc.connect(new InetSocketAddress("localhost", 8088));
+
+        int count = 0;
+        while (true) {
+            ByteBuffer bf = ByteBuffer.allocate(1024 * 1024);
+            count += sc.read(bf);
+            System.out.println("接收到：" + count + " 字节数据");
+        }
+    }
+}
+
+```
+
