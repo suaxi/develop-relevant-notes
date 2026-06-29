@@ -49,7 +49,7 @@ public class Server {
 
                     // 2. 判断是否有剩余内容
                     if (bf.hasRemaining()) {
-                        // 3. 关注可写事件
+                        // 3. 关注可写事件（在原关注事件的基础上，需额外关注写事件）
                         scKey.interestOps(scKey.interestOps() + SelectionKey.OP_WRITE);
                         // scKey.interestOps(scKey.interestOps() | SelectionKey.OP_WRITE);
                         // 4. 将未写完的数据挂载到 scKey 上

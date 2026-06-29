@@ -658,11 +658,16 @@ public class FileChannelTransferToTest {
 
 
 
-
-
 #### 4. 网络编程
 
 ##### 4.1 阻塞模式
+
+单线程模式下，阻塞方法之间存在互相影响
+
+- ServerSocketChannel.accept() 方法会在没有连接建立时阻塞
+- SocketChannel.read() 在没有可读数据时阻塞
+
+
 
 Sever
 
@@ -734,6 +739,16 @@ public class Client {
 
 
 ##### 4.2 非阻塞模式
+
+非阻塞模式下，相关方法的线程不会阻塞
+
+- ServerSocketChannel.accept() 方法会在没有连接建立时返回 null，继续运行
+- SocketChannel.read() 在没有可读数据时返回 0
+- 写数据时，数据写入 Channel 后，线程即可继续运行，无需等待 Channel 通过网络把数据发送出去或发送完
+
+但非阻塞模式下，即使没有新的连接建立、可读数据，线程仍在运行；**且数据复的制过程线程是阻塞的**
+
+
 
 Sever
 
@@ -809,9 +824,87 @@ public class Client {
 
 
 
-##### 4.3 Selector
+##### 4.3 多路复用
 
-（1）处理 accept 事件
+概念：单线程配合 Selector 完成对多个 Channel 可读、可写事件的监听
+
+- 仅针对网络 IO、文件 IO 操作无法使用多路复用
+- Selector 的作用：
+  - 有可连接事件时建立连接
+  - 有可读事件时执行读取操作
+  - 有可写事件时执行写入操作
+
+注：Channel 不一定时时可写，当 Channel 可写时，则会触发 Selector 的可写事件
+
+
+
+##### 4.4 Selector
+
+![4.4Selector](static/4.网络编程/4.4Selector.png)
+
+与 Selector 协作的线程可以监听多个 Channel，当事件发生时才去处理对应的事件，此时的线程可被充分利用，同时也节约的线程的数量，减少了线程间的上下文切换
+
+
+
+（1）创建
+
+```java
+Selector selector = Selector.open();
+```
+
+
+
+（2）绑定 Channel 事件（注册）
+
+```java
+Selector selector = Selector.open();
+ServerSocketChannel ssc = ServerSocketChannel.open();
+// 切换为非阻塞模式
+ssc.configureBlocking(false);
+
+// 注册 Channel
+SelectionKey sscKey = ssc.register(selector, 0, null);
+```
+
+注：
+
+- Channel 必须以非阻塞模式运行
+- 绑定的事件类型如下：
+  - accept：有连接请求时触发
+  - connection：（客户端）连接建立后触发
+  - read：读事件
+  - write：写事件
+
+
+
+（3）监听 Channel 事件
+
+```java
+// 方式一：阻塞直到绑定事件发生
+int count = selector.select();
+
+// 方式二：阻塞到超时时间（ms）或绑定事件发生
+int count = selector.select(long timeout);
+
+// 方式三：selector 立即返回，后续流程根据返回值检查是否有事件发生
+int count = selector.selectNow();
+```
+
+
+
+（4）selector 何时不阻塞
+
+- 发生对应事件时：
+  - accept 事件 - 客户端发起连接请求
+  - read 事件 - 客户端发送数据、正常/异常关闭（当客户端发送的数据过大，服务端无法一次处理完时，会触发多次读取事件）
+  - write 事件 - channel 当前状态可写出数据
+- 调用 selector.wakeup()
+- 调用 selector.close()
+- selector 所在的线程中断
+
+
+
+##### 4.5 处理 accept 事件
 
 ```java
 package com.sw.netty._04.selector;
@@ -881,9 +974,13 @@ public class Server {
 
 ```
 
+注：当事件发生后，要么处理，要么取消，如果什么都不做，下次该事件还会触发
 
 
-（2）处理 read 事件
+
+##### 4.6 处理 read 事件
+
+（1）演示 Demo
 
 ```java
 package com.sw.netty._04.selector;
@@ -976,7 +1073,19 @@ public class Server {
 
 
 
-处理消息边界
+（2）iterator.remove() 解释
+
+当 selector 事件发生后，会将对应的 key 存入 selectedKeys 集合，但在事件处理完后并不会删除对应的 key，需要显式删除处理，如：第一次触发 accept 事件，处理完后，下一次循环再进来，key.isAcceptable() 判断为真，进入对应的判断后 channel.accept() 值为空（此时并不是 accept 事件），触发空指针异常
+
+
+
+（3）cancel 的作用
+
+取消注册在 selector 上的 channel，并从 SelectionKeys 集合中删除对应的事件 key
+
+
+
+##### 4.7 处理消息边界
 
 - 固定消息长度（数据包大小一样），但是在一定程度上会浪费带宽
 - 按分隔符拆分，效率低
@@ -986,7 +1095,7 @@ public class Server {
 
 
 
-以方式二为例：
+（1）此处以按分隔符拆分为例：
 
 Server
 
@@ -1136,7 +1245,7 @@ public class Client {
 
 
 
-##### 4.4 ByteBuffer 大小分配
+##### 4.8 ByteBuffer 大小分配
 
 - 每个 Channel 都需要记录可能被切分的消息，因为 ByteBuffer 不能被多个 Channel 共享，需要独立维护
 - ByteBuffer 不能太大，需要可变：
@@ -1145,7 +1254,9 @@ public class Client {
 
 
 
-（1）写入内容过多问题（一次性发送数据）
+##### 4.9 处理 write 事件
+
+此处以写入内容过多问题（一次性发送数据）为例：
 
 Server
 
@@ -1232,7 +1343,9 @@ public class Client {
 
 
 
-（2）处理可写事件
+改进优化：
+
+Server
 
 ```java
 package com.sw.netty._04.writeableEvents;
@@ -1282,7 +1395,7 @@ public class Server {
 
                     // 2. 判断是否有剩余内容
                     if (bf.hasRemaining()) {
-                        // 3. 关注可写事件
+                        // 3. 关注可写事件（在原关注事件的基础上，需额外关注写事件）
                         scKey.interestOps(scKey.interestOps() + SelectionKey.OP_WRITE);
                         // scKey.interestOps(scKey.interestOps() | SelectionKey.OP_WRITE);
                         // 4. 将未写完的数据挂载到 scKey 上
@@ -1312,6 +1425,8 @@ public class Server {
 
 ```
 
+注：当 channel 发送数据，且 socket 缓冲区可写时，对应的事件会频繁发生，**故需要在 socket 缓冲区写不下时再关注写事件**，写完之后需要取消关注
+
 
 
 Client
@@ -1319,21 +1434,45 @@ Client
 ```java
 package com.sw.netty._04.writeableEvents;
 
+import lombok.extern.slf4j.Slf4j;
+
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
+import java.nio.channels.SelectionKey;
+import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
+import java.util.Iterator;
 
+@Slf4j
 public class Client {
     public static void main(String[] args) throws IOException {
+        Selector selector = Selector.open();
         SocketChannel sc = SocketChannel.open();
+        sc.configureBlocking(false);
+        sc.register(selector, SelectionKey.OP_CONNECT | SelectionKey.OP_READ);
         sc.connect(new InetSocketAddress("localhost", 8088));
 
         int count = 0;
         while (true) {
-            ByteBuffer bf = ByteBuffer.allocate(1024 * 1024);
-            count += sc.read(bf);
-            System.out.println("接收到：" + count + " 字节数据");
+            selector.select();
+            Iterator<SelectionKey> iterator = selector.selectedKeys().iterator();
+            while (iterator.hasNext()) {
+                SelectionKey key = iterator.next();
+                iterator.remove();
+
+                if (key.isConnectable()) {
+                    log.info("key [{}] connected", key);
+                    sc.finishConnect();
+                }
+
+                if (key.isReadable()) {
+                    ByteBuffer bf = ByteBuffer.allocate(1024 * 1024);
+                    count += sc.read(bf);
+                    bf.clear();
+                    System.out.println("接收到：" + count + " 字节数据");
+                }
+            }
         }
     }
 }
