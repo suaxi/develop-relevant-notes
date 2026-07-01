@@ -1483,7 +1483,7 @@ public class Client {
 
 #### 5. 多线程优化
 
-以分组选择器为例：
+##### 5.1 以分组选择器为例：
 
 - 专门用一个线程配合 Selector，只负责 Accept 事件（boss）
 - 其他线程配合各自对应的 Selector，只负责 Read、Write 事件（worker）
@@ -1572,7 +1572,7 @@ public class MultiThreadServer {
                 }
             });
 
-            // 显示唤醒 worker 的 selector.select() 阻塞，注册后续的读写事件
+            // 显式唤醒 worker 的 selector.select() 阻塞，注册后续的读写事件
             selector.wakeup();
         }
 
@@ -1627,6 +1627,144 @@ public class Client {
         sc.connect(new InetSocketAddress("localhost", 8088));
         sc.write(Charset.defaultCharset().encode("0123456789abcdefsunxiaochuan"));
         System.in.read();
+    }
+}
+
+```
+
+
+
+##### 5.2 selector.wakeup() 补充
+
+selector.wakeup() 方法与 selector.select() 书写的前后顺序不影响运行时的阻塞唤醒， 如：wakeup 在前，select 在后，wakeup 执行时先颁发凭证，select 执行时检测到有之前颁发的凭证，此时不会阻塞，而是继续向下运行
+
+
+
+##### 5.3 多 worker
+
+Server
+
+```java
+package com.sw.netty._05;
+
+import lombok.extern.slf4j.Slf4j;
+
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.nio.ByteBuffer;
+import java.nio.channels.*;
+import java.util.Iterator;
+import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import static utils.ByteBufferUtil.debugAll;
+
+@Slf4j
+public class MultiThreadServer {
+    public static void main(String[] args) throws IOException {
+        Thread.currentThread().setName("boss");
+
+        ServerSocketChannel ssc = ServerSocketChannel.open();
+        ssc.configureBlocking(false);
+
+        Selector selector = Selector.open();
+        SelectionKey sscKey = ssc.register(selector, 0, null);
+        sscKey.interestOps(SelectionKey.OP_ACCEPT);
+        ssc.bind(new InetSocketAddress(8088));
+
+        // 1. 创建 worker
+        Worker[] workers = new Worker[Runtime.getRuntime().availableProcessors()];
+        for (int i = 0; i < workers.length; i++) {
+            workers[i] = new Worker("worker-" + i);
+        }
+
+        AtomicInteger index = new AtomicInteger();
+        while (true) {
+            selector.select();
+            Iterator<SelectionKey> iterator = selector.selectedKeys().iterator();
+            while (iterator.hasNext()) {
+                SelectionKey key = iterator.next();
+                iterator.remove();
+                if (key.isAcceptable()) {
+                    SocketChannel sc = ssc.accept();
+                    sc.configureBlocking(false);
+                    log.info("connected - [{}]", sc.getLocalAddress());
+
+                    // 2. 关联读写事件的 selector
+                    log.info("before register - [{}]", sc.getLocalAddress());
+                    // 轮询
+                    workers[index.getAndIncrement() % workers.length].register(sc);
+                    log.info("after register - [{}]", sc.getLocalAddress());
+                }
+            }
+        }
+    }
+
+    static class Worker implements Runnable {
+
+        private Thread thread;
+
+        private Selector selector;
+
+        private String name;
+
+        private volatile boolean start = false;
+
+        private ConcurrentLinkedDeque<Runnable> queue = new ConcurrentLinkedDeque<>();
+
+        public Worker(String name) {
+            this.name = name;
+        }
+
+        // 初始化线程、Selector
+        public void register(SocketChannel sc) throws IOException {
+            if (!start) {
+                selector = Selector.open();
+                thread = new Thread(this, name);
+                thread.start();
+                start = true;
+            }
+
+            queue.add(() -> {
+                try {
+                    sc.register(selector, SelectionKey.OP_READ);
+                } catch (ClosedChannelException e) {
+                    throw new RuntimeException(e);
+                }
+            });
+
+            // 显式唤醒 worker 的 selector.select() 阻塞，注册后续的读写事件
+            selector.wakeup();
+        }
+
+        @Override
+        public void run() {
+            while (true) {
+                try {
+                    selector.select(); // 阻塞
+                    Runnable task = queue.poll();
+                    if (task != null) {
+                        task.run();
+                    }
+
+                    Iterator<SelectionKey> iterator = selector.selectedKeys().iterator();
+                    while (iterator.hasNext()) {
+                        SelectionKey key = iterator.next();
+                        iterator.remove();
+                        if (key.isReadable()) {
+                            ByteBuffer bf = ByteBuffer.allocate(16);
+                            SocketChannel channel = (SocketChannel) key.channel();
+                            log.info("read client data - [{}]", channel.getLocalAddress());
+                            channel.read(bf);
+                            bf.flip();
+                            debugAll(bf);
+                        }
+                    }
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        }
     }
 }
 

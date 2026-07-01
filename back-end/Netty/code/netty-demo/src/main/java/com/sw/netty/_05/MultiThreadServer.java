@@ -8,6 +8,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.*;
 import java.util.Iterator;
 import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static utils.ByteBufferUtil.debugAll;
 
@@ -29,7 +30,12 @@ public class MultiThreadServer {
         ssc.bind(new InetSocketAddress(8088));
 
         // 1. 创建 worker
-        Worker worker = new Worker("worker-0");
+        Worker[] workers = new Worker[Runtime.getRuntime().availableProcessors()];
+        for (int i = 0; i < workers.length; i++) {
+            workers[i] = new Worker("worker-" + i);
+        }
+
+        AtomicInteger index = new AtomicInteger();
         while (true) {
             selector.select();
             Iterator<SelectionKey> iterator = selector.selectedKeys().iterator();
@@ -43,7 +49,8 @@ public class MultiThreadServer {
 
                     // 2. 关联读写事件的 selector
                     log.info("before register - [{}]", sc.getLocalAddress());
-                    worker.register(sc);
+                    // 轮询
+                    workers[index.getAndIncrement() % workers.length].register(sc);
                     log.info("after register - [{}]", sc.getLocalAddress());
                 }
             }
@@ -83,7 +90,7 @@ public class MultiThreadServer {
                 }
             });
 
-            // 显示唤醒 worker 的 selector.select() 阻塞，注册后续的读写事件
+            // 显式唤醒 worker 的 selector.select() 阻塞，注册后续的读写事件
             selector.wakeup();
         }
 
