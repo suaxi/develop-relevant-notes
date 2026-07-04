@@ -1770,3 +1770,126 @@ public class MultiThreadServer {
 
 ```
 
+
+
+### 二、Netty
+
+#### 1. 概念
+
+Netty 是一个异步，基于事件驱动的网络应用框架
+
+
+
+#### 2. 快速开始
+
+pom 依赖
+
+```xml
+<dependency>
+    <groupId>io.netty</groupId>
+    <artifactId>netty-all</artifactId>
+    <version>4.1.39.Final</version>
+</dependency>
+```
+
+
+
+##### 2.1 Server
+
+```java
+package com.sw.netty._01;
+
+import io.netty.bootstrap.ServerBootstrap;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelInboundHandlerAdapter;
+import io.netty.channel.ChannelInitializer;
+import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.socket.nio.NioServerSocketChannel;
+import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.handler.codec.string.StringDecoder;
+
+public class Server {
+    public static void main(String[] args) {
+        // 1. 启动器，负责组装 netty 组件
+        new ServerBootstrap()
+                // 2. 事件组
+                .group(new NioEventLoopGroup())
+                // 3. channel 实现
+                .channel(NioServerSocketChannel.class)
+                // 4. 声明不同的 worker 负责的工作（处理哪些事件）
+                .childHandler(// 5. 与客户端进行数据读写的通道（初始化工作）
+                        new ChannelInitializer<NioSocketChannel>() {
+                            @Override
+                            protected void initChannel(NioSocketChannel ch) throws Exception {
+                                // 6. 添加具体 handler
+                                ch.pipeline().addLast(new StringDecoder());
+                                ch.pipeline().addLast(new ChannelInboundHandlerAdapter() {
+                                    @Override
+                                    public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+                                        System.out.println(msg);
+                                    }
+                                });
+                            }
+                        })
+                // 7. 监听端口
+                .bind(8088);
+    }
+}
+
+```
+
+注：注释 6，在 pipeline 中，下一个 handler 会使用上一个 handler 的处理结果
+
+
+
+##### 2.2 Client
+
+```java
+package com.sw.netty._01;
+
+import io.netty.bootstrap.Bootstrap;
+import io.netty.channel.ChannelInitializer;
+import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.handler.codec.string.StringEncoder;
+
+import java.net.InetSocketAddress;
+
+public class Client {
+    public static void main(String[] args) throws InterruptedException {
+        // 1.启动器
+        new Bootstrap()
+                // 2. EventLoop
+                .group(new NioEventLoopGroup())
+                // 3. channel 实现
+                .channel(NioSocketChannel.class)
+                // 4. 添加 handler
+                .handler(new ChannelInitializer<NioSocketChannel>() {
+                    @Override
+                    protected void initChannel(NioSocketChannel ch) throws Exception {
+                        // 在连接建立之后被调用
+                        ch.pipeline().addLast(new StringEncoder());
+                    }
+                })
+                .connect(new InetSocketAddress("localhost", 8088))
+                // 显式声明使用同步方法，等待 server 端连接建立完毕
+                .sync()
+                .channel()
+                .writeAndFlush("sunxiaochuan");
+    }
+}
+
+```
+
+
+
+##### 2.3 补充
+
+（1）channel 可以看作是处理数据的通道
+
+（2）输入 ByteBuffer，经 pipeline 后会处理为具体类型的对象，最终又输出 ByteBuffer
+
+（3）handler 处理数据，pipeline 负责分发具体的事件（读、写）给 handler，分为 Inbound 和 Outbound
+
+（4）eventLoop 可以看作数据处理者，并且与 channel 的生命周期绑定，每位处理者有对应的任务队列（普通任务、定时任务），根据 pipeline 流水线的顺序进行处理
+
