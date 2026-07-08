@@ -2340,3 +2340,185 @@ public class PipelineTest {
 
 ```
 
+
+
+##### 3.4 ByteBuf
+
+（1）创建
+
+```java
+// 创建一个池化基于直接内存的 ByteBuf（指定初始容量为16）
+ByteBuf bf = ByteBufAllocator.DEFAULT.buffer(16);
+```
+
+
+
+（2）直接内存、堆内存
+
+```java
+// 创建池化基于堆内存的 ByteBuf
+ByteBuf bf = ByteBufAllocator.DEFAULT.heapBuffer(16);
+
+// 创建池化基于直接内存的 ByteBuf
+ByteBuf bf = ByteBufAllocator.DEFAULT.directBuffer(16);
+```
+
+堆内存：创建和销毁的成本很高，但读写性能好（少一次内存复制）
+
+直接内存：不在 jvm 管辖范围内，GC 压力小
+
+
+
+（3）池化、非池化
+
+池化：可以重用 ByteBuf，高并发场景下更节约内存，能较少内存溢出的可能
+
+非池化：每次使用时都得创建新的 ByteBuf 实例，且在堆内存、直接内存不同的场景下影响不同
+
+**Netty 4.1 后非 Android 平台默认开启池化**
+
+
+
+（4）组成
+
+![3.4ByteBuf组成](static/5.netty/3.4ByteBuf组成.png)
+
+
+
+（5）写入
+
+| 方法                                                         | 参数说明               | 备注                                                         |
+| ------------------------------------------------------------ | ---------------------- | ------------------------------------------------------------ |
+| writeBoolean(boolean value)                                  | 写入 boolean 值        | 用一字节 01\|00 代表 true\|false                             |
+| writeByte(int value)                                         | 写入 byte 值           |                                                              |
+| writeShort(int value)                                        | 写入 short 值          |                                                              |
+| writeInt(int value)                                          | 写入 int 值            | Big Endian，即 0x250，写入后 00 00 02 50（网络编程一般情况下默认使用大端写入） |
+| writeIntLE(int value)                                        | 写入 int 值            | Little Endian，即 0x250，写入后 50 02 00 00                  |
+| writeLong(long value)                                        | 写入 long 值           |                                                              |
+| writeChar(int value)                                         | 写入 char 值           |                                                              |
+| writeFloat(float value)                                      | 写入 float 值          |                                                              |
+| writeDouble(double value)                                    | 写入 double 值         |                                                              |
+| writeBytes(ByteBuf src)                                      | 写入 netty 的 ByteBuf  |                                                              |
+| writeBytes(byte[] src)                                       | 写入 byte[]            |                                                              |
+| writeBytes(ByteBuffer src)                                   | 写入 nio 的 ByteBuffer |                                                              |
+| int writeCharSequence(CharSequence sequence, Charset charset) | 写入字符串             |                                                              |
+
+
+
+演示：
+
+```java
+package com.sw.netty._04;
+
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufAllocator;
+
+import static io.netty.buffer.ByteBufUtil.appendPrettyHexDump;
+import static io.netty.util.internal.StringUtil.NEWLINE;
+
+public class ByteBufTest {
+    public static void main(String[] args) {
+        ByteBuf bf = ByteBufAllocator.DEFAULT.buffer(10);
+        bf.writeBytes(new byte[]{1, 2, 3, 4});
+        log(bf);
+        // read index:0 write index:4 capacity:10
+        //         +-------------------------------------------------+
+        //         |  0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f |
+        // +--------+-------------------------------------------------+----------------+
+        //         |00000000| 01 02 03 04                                     |....            |
+        // +--------+-------------------------------------------------+----------------+
+
+        // 写入整型 10（4字节）
+        bf.writeInt(10);
+        log(bf);
+        // read index:0 write index:8 capacity:10
+        //         +-------------------------------------------------+
+        //         |  0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f |
+        // +--------+-------------------------------------------------+----------------+
+        //         |00000000| 01 02 03 04 00 00 00 0a                         |........        |
+        // +--------+-------------------------------------------------+----------------+
+    }
+
+    private static void log(ByteBuf buffer) {
+        int length = buffer.readableBytes();
+        int rows = length / 16 + (length % 15 == 0 ? 0 : 1) + 4;
+        StringBuilder buf = new StringBuilder(rows * 80 * 2)
+                .append("read index:").append(buffer.readerIndex())
+                .append(" write index:").append(buffer.writerIndex())
+                .append(" capacity:").append(buffer.capacity())
+                .append(NEWLINE);
+        appendPrettyHexDump(buf, buffer);
+        System.out.println(buf);
+    }
+}
+
+```
+
+
+
+（6）扩容
+
+写入过程中，当 ByteBuf 容量不够时会进行扩容：
+
+- 如何写入后数据大小未超过 512，则选择下一个 16 的整数倍进行扩容，如：写入后大小为 12 ，则扩容后 capacity 是 16
+- 如果写入后数据大小超过 512，则选择下一个 2^n 进行扩容，如：写入后大小为 513，则扩容后 capacity 是 2^10=1024（2^9=512 已经不够了）
+- 扩容不能超过 max capacity 最大容量
+
+```java
+package com.sw.netty._04;
+
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufAllocator;
+
+import static io.netty.buffer.ByteBufUtil.appendPrettyHexDump;
+import static io.netty.util.internal.StringUtil.NEWLINE;
+
+public class ByteBufTest {
+    public static void main(String[] args) {
+        ByteBuf bf = ByteBufAllocator.DEFAULT.buffer(16);
+        bf.writeBytes(new byte[]{1, 2, 3, 4});
+        log(bf);
+        // read index:0 write index:4 capacity:10
+        //         +-------------------------------------------------+
+        //         |  0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f |
+        // +--------+-------------------------------------------------+----------------+
+        // |00000000| 01 02 03 04                                     |....            |
+        // +--------+-------------------------------------------------+----------------+
+
+        // 写入整型 10（4字节）
+        bf.writeInt(10);
+        log(bf);
+        // read index:0 write index:8 capacity:10
+        //         +-------------------------------------------------+
+        //         |  0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f |
+        // +--------+-------------------------------------------------+----------------+
+        // |00000000| 01 02 03 04 00 00 00 0a                         |........        |
+        // +--------+-------------------------------------------------+----------------+
+
+        // 继续写入（触发扩容）
+        bf.writeBytes(new byte[]{1, 2, 3, 4, 5, 6, 7, 8, 9});
+        log(bf);
+        // read index:0 write index:17 capacity:64
+        //         +-------------------------------------------------+
+        //         |  0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f |
+        // +--------+-------------------------------------------------+----------------+
+        // |00000000| 01 02 03 04 00 00 00 0a 01 02 03 04 05 06 07 08 |................|
+        // |00000010| 09                                              |.               |
+        // +--------+-------------------------------------------------+----------------+
+    }
+
+    private static void log(ByteBuf buffer) {
+        int length = buffer.readableBytes();
+        int rows = length / 16 + (length % 15 == 0 ? 0 : 1) + 4;
+        StringBuilder buf = new StringBuilder(rows * 80 * 2)
+                .append("read index:").append(buffer.readerIndex())
+                .append(" write index:").append(buffer.writerIndex())
+                .append(" capacity:").append(buffer.capacity())
+                .append(NEWLINE);
+        appendPrettyHexDump(buf, buffer);
+        System.out.println(buf);
+    }
+}
+
+```
+
