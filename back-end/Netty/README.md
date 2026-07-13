@@ -2744,3 +2744,415 @@ public class ByteBufUnpooledTest {
 - 自动扩容
 - 支持链式调用
 - slice、duplicate、CompositeByteBuf 等使用零拷贝，减少内存的复制
+
+#### 4. 粘包、半包
+
+##### 4.1 粘包
+
+FullPackHalfPackServer
+
+```java
+package com.sw.netty._05;
+
+import io.netty.bootstrap.ServerBootstrap;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelInboundHandlerAdapter;
+import io.netty.channel.ChannelInitializer;
+import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.socket.SocketChannel;
+import io.netty.channel.socket.nio.NioServerSocketChannel;
+import io.netty.handler.logging.LogLevel;
+import io.netty.handler.logging.LoggingHandler;
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
+public class FullPackServer {
+    public static void main(String[] args) {
+        new FullPackServer().start();
+        // 23:08:22.078 [nioEventLoopGroup-3-1] INFO io.netty.handler.logging.LoggingHandler - [id: 0x2615b37f, L:/127.0.0.1:8088 - R:/127.0.0.1:62128] READ: 360B
+        //         +-------------------------------------------------+
+        //         |  0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f |
+        // +--------+-------------------------------------------------+----------------+
+        // |00000000| 64 35 33 64 34 38 37 33 2d 38 65 31 64 2d 34 62 |d53d4873-8e1d-4b|
+        // |00000010| 31 31 2d 39 65 65 31 2d 31 33 34 36 30 35 62 38 |11-9ee1-134605b8|
+        // |00000020| 37 34 32 63 34 35 38 64 30 66 63 62 2d 34 31 61 |742c458d0fcb-41a|
+        // |00000030| 34 2d 34 62 61 33 2d 62 33 30 61 2d 66 38 66 65 |4-4ba3-b30a-f8fe|
+        // |00000040| 65 36 31 65 64 65 34 61 31 38 33 39 37 61 34 37 |e61ede4a18397a47|
+        // |00000050| 2d 61 35 36 34 2d 34 62 37 38 2d 61 62 37 39 2d |-a564-4b78-ab79-|
+        // |00000060| 66 35 39 32 36 61 32 64 62 65 38 33 62 38 31 31 |f5926a2dbe83b811|
+        // |00000070| 31 37 37 66 2d 66 36 63 62 2d 34 66 36 63 2d 38 |177f-f6cb-4f6c-8|
+        // |00000080| 31 32 63 2d 38 61 38 64 61 62 34 32 62 66 32 38 |12c-8a8dab42bf28|
+        // |00000090| 39 62 63 35 64 33 32 31 2d 35 36 64 63 2d 34 33 |9bc5d321-56dc-43|
+        // |000000a0| 31 34 2d 62 30 61 39 2d 34 62 65 64 65 39 66 63 |14-b0a9-4bede9fc|
+        // |000000b0| 35 33 35 66 66 38 61 32 33 65 37 63 2d 35 36 30 |535ff8a23e7c-560|
+        // |000000c0| 33 2d 34 62 66 30 2d 62 34 66 33 2d 35 30 37 32 |3-4bf0-b4f3-5072|
+        // |000000d0| 30 33 35 37 66 37 64 62 63 39 31 39 66 32 32 39 |0357f7dbc919f229|
+        // |000000e0| 2d 30 32 63 34 2d 34 65 35 31 2d 62 63 30 36 2d |-02c4-4e51-bc06-|
+        // |000000f0| 63 33 65 63 33 66 34 35 65 61 34 30 62 32 38 35 |c3ec3f45ea40b285|
+        // |00000100| 38 65 30 36 2d 33 64 36 30 2d 34 35 64 32 2d 61 |8e06-3d60-45d2-a|
+        // |00000110| 64 65 63 2d 35 36 35 62 35 61 35 31 30 61 37 35 |dec-565b5a510a75|
+        // |00000120| 62 62 64 65 35 65 63 31 2d 63 62 62 62 2d 34 62 |bbde5ec1-cbbb-4b|
+        // |00000130| 31 61 2d 61 39 36 35 2d 63 38 32 65 37 61 30 34 |1a-a965-c82e7a04|
+        // |00000140| 34 32 33 32 35 39 32 65 61 33 38 34 2d 33 32 34 |4232592ea384-324|
+        // |00000150| 30 2d 34 31 63 63 2d 39 66 35 65 2d 35 65 33 63 |0-41cc-9f5e-5e3c|
+        // |00000160| 33 66 62 66 37 31 34 33                         |3fbf7143        |
+        // +--------+-------------------------------------------------+----------------+
+    }
+
+    private void start() {
+        NioEventLoopGroup main = new NioEventLoopGroup(1);
+        NioEventLoopGroup worker = new NioEventLoopGroup();
+        try {
+            ServerBootstrap serverBootstrap = new ServerBootstrap();
+            serverBootstrap.channel(NioServerSocketChannel.class);
+            serverBootstrap.group(main, worker);
+            serverBootstrap.childHandler(new ChannelInitializer<SocketChannel>() {
+                @Override
+                protected void initChannel(SocketChannel ch) throws Exception {
+                    ch.pipeline().addLast(new LoggingHandler(LogLevel.INFO));
+                    ch.pipeline().addLast(new ChannelInboundHandlerAdapter() {
+                        @Override
+                        public void channelActive(ChannelHandlerContext ctx) throws Exception {
+                            log.info("connected {}", ctx.channel());
+                            super.channelActive(ctx);
+                        }
+
+                        @Override
+                        public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+                            log.info("disconnected {}", ctx.channel());
+                            super.channelInactive(ctx);
+                        }
+                    });
+                }
+            });
+
+            ChannelFuture channelFuture = serverBootstrap.bind(8088);
+            log.info("{} binding...", channelFuture.channel());
+            channelFuture.sync();
+            log.info("{} bound...", channelFuture.channel());
+            channelFuture.channel().closeFuture().sync();
+        } catch (Exception e) {
+            log.error("server error {}", e.getMessage());
+        } finally {
+            main.shutdownGracefully();
+            worker.shutdownGracefully();
+            log.info("server stoped");
+        }
+    }
+}
+
+```
+
+FullPackClient
+
+```java
+package com.sw.netty._05;
+
+import io.netty.bootstrap.Bootstrap;
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelInboundHandlerAdapter;
+import io.netty.channel.ChannelInitializer;
+import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.socket.SocketChannel;
+import io.netty.channel.socket.nio.NioSocketChannel;
+import lombok.extern.slf4j.Slf4j;
+
+import java.util.UUID;
+
+@Slf4j
+public class FullPackClient {
+    public static void main(String[] args) {
+        NioEventLoopGroup worker = new NioEventLoopGroup();
+        try {
+            Bootstrap bootstrap = new Bootstrap();
+            bootstrap.channel(NioSocketChannel.class);
+            bootstrap.group(worker);
+            bootstrap.handler(new ChannelInitializer<SocketChannel>() {
+                @Override
+                protected void initChannel(SocketChannel ch) throws Exception {
+                    log.info("connected...");
+                    ch.pipeline().addLast(new ChannelInboundHandlerAdapter() {
+                        @Override
+                        public void channelActive(ChannelHandlerContext ctx) throws Exception {
+                            log.info("sending data...");
+                            for (int i = 0; i < 10; i++) {
+                                String data = UUID.randomUUID().toString();
+                                ByteBuf bf = ctx.alloc().buffer();
+                                bf.writeBytes(data.getBytes());
+                                ctx.writeAndFlush(bf);
+                            }
+                        }
+                    });
+                }
+            });
+            ChannelFuture channelFuture = bootstrap.connect("localhost", 8088);
+            channelFuture.channel().closeFuture().sync();
+        } catch (Exception e) {
+            log.error("client error {}", e.getMessage());
+        } finally {
+            worker.shutdownGracefully();
+        }
+    }
+}
+
+```
+
+如上 demo 所示，服务端期望分10次接收客户端发过来的数据，但实际情况是一次就收到了 360B 的数据（粘包现象）
+
+
+
+##### 4.2 半包
+
+HalfPackServer
+
+```java
+package com.sw.netty._05;
+
+import io.netty.bootstrap.ServerBootstrap;
+import io.netty.channel.*;
+import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.socket.SocketChannel;
+import io.netty.channel.socket.nio.NioServerSocketChannel;
+import io.netty.handler.logging.LogLevel;
+import io.netty.handler.logging.LoggingHandler;
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
+public class HalfPackServer {
+    public static void main(String[] args) {
+        new HalfPackServer().start();
+    }
+
+    private void start() {
+        NioEventLoopGroup main = new NioEventLoopGroup(1);
+        NioEventLoopGroup worker = new NioEventLoopGroup();
+        try {
+            ServerBootstrap serverBootstrap = new ServerBootstrap();
+            serverBootstrap.channel(NioServerSocketChannel.class);
+            serverBootstrap.group(main, worker);
+            // 服务端指定接收缓冲区大小为 16 字节
+            serverBootstrap.option(ChannelOption.SO_RCVBUF, 16);
+            serverBootstrap.childHandler(new ChannelInitializer<SocketChannel>() {
+                @Override
+                protected void initChannel(SocketChannel ch) throws Exception {
+                    ch.pipeline().addLast(new LoggingHandler(LogLevel.INFO));
+                    ch.pipeline().addLast(new ChannelInboundHandlerAdapter() {
+                        @Override
+                        public void channelActive(ChannelHandlerContext ctx) throws Exception {
+                            log.info("connected {}", ctx.channel());
+                            super.channelActive(ctx);
+                        }
+
+                        @Override
+                        public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+                            log.info("disconnected {}", ctx.channel());
+                            super.channelInactive(ctx);
+                        }
+                    });
+                }
+            });
+
+            ChannelFuture channelFuture = serverBootstrap.bind(8088);
+            log.info("{} binding...", channelFuture.channel());
+            channelFuture.sync();
+            log.info("{} bound...", channelFuture.channel());
+            channelFuture.channel().closeFuture().sync();
+        } catch (Exception e) {
+            log.error("server error {}", e.getMessage());
+        } finally {
+            main.shutdownGracefully();
+            worker.shutdownGracefully();
+            log.info("server stoped");
+        }
+    }
+}
+
+```
+
+HalfPackClient
+
+```java
+package com.sw.netty._05;
+
+import io.netty.bootstrap.Bootstrap;
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelInboundHandlerAdapter;
+import io.netty.channel.ChannelInitializer;
+import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.socket.SocketChannel;
+import io.netty.channel.socket.nio.NioSocketChannel;
+import lombok.extern.slf4j.Slf4j;
+
+import java.util.UUID;
+
+@Slf4j
+public class HalfPackClient {
+    public static void main(String[] args) {
+        NioEventLoopGroup worker = new NioEventLoopGroup();
+        try {
+            Bootstrap bootstrap = new Bootstrap();
+            bootstrap.channel(NioSocketChannel.class);
+            bootstrap.group(worker);
+            bootstrap.handler(new ChannelInitializer<SocketChannel>() {
+                @Override
+                protected void initChannel(SocketChannel ch) throws Exception {
+                    log.info("connected...");
+                    ch.pipeline().addLast(new ChannelInboundHandlerAdapter() {
+                        @Override
+                        public void channelActive(ChannelHandlerContext ctx) throws Exception {
+                            log.info("sending data...");
+                            for (int i = 0; i < 10; i++) {
+                                String data = UUID.randomUUID().toString();
+                                ByteBuf bf = ctx.alloc().buffer();
+                                bf.writeBytes(data.getBytes());
+                                ctx.writeAndFlush(bf);
+                            }
+                        }
+                    });
+                }
+            });
+            ChannelFuture channelFuture = bootstrap.connect("localhost", 8088);
+            channelFuture.channel().closeFuture().sync();
+        } catch (Exception e) {
+            log.error("client error {}", e.getMessage());
+        } finally {
+            worker.shutdownGracefully();
+        }
+    }
+}
+
+```
+
+Server Log
+
+```text
+23:17:26.613 [nioEventLoopGroup-3-1] INFO io.netty.handler.logging.LoggingHandler - [id: 0x2b332ddd, L:/127.0.0.1:8088 - R:/127.0.0.1:62753] READ: 80B
+         +-------------------------------------------------+
+         |  0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f |
++--------+-------------------------------------------------+----------------+
+|00000000| 35 38 37 65 66 34 33 33 2d 30 34 35 34 2d 34 62 |587ef433-0454-4b|
+|00000010| 66 61 2d 61 63 62 61 2d 34 32 63 32 66 61 32 30 |fa-acba-42c2fa20|
+|00000020| 62 31 36 32 62 32 31 39 61 32 35 31 2d 33 35 63 |b162b219a251-35c|
+|00000030| 65 2d 34 61 37 63 2d 62 66 65 34 2d 30 39 63 39 |e-4a7c-bfe4-09c9|
+|00000040| 31 35 33 63 34 36 62 38 66 31 30 32 36 34 35 33 |153c46b8f1026453|
++--------+-------------------------------------------------+----------------+
+23:17:26.613 [nioEventLoopGroup-3-1] DEBUG io.netty.channel.DefaultChannelPipeline - Discarded inbound message PooledUnsafeDirectByteBuf(ridx: 0, widx: 80, cap: 1024) that reached at the tail of the pipeline. Please check your pipeline configuration.
+23:17:26.613 [nioEventLoopGroup-3-1] DEBUG io.netty.channel.DefaultChannelPipeline - Discarded message pipeline : [LoggingHandler#0, HalfPackServer$1$1#0, DefaultChannelPipeline$TailContext#0]. Channel : [id: 0x2b332ddd, L:/127.0.0.1:8088 - R:/127.0.0.1:62753].
+23:17:26.613 [nioEventLoopGroup-3-1] INFO io.netty.handler.logging.LoggingHandler - [id: 0x2b332ddd, L:/127.0.0.1:8088 - R:/127.0.0.1:62753] READ COMPLETE
+23:17:26.613 [nioEventLoopGroup-3-1] INFO io.netty.handler.logging.LoggingHandler - [id: 0x2b332ddd, L:/127.0.0.1:8088 - R:/127.0.0.1:62753] READ: 64B
+         +-------------------------------------------------+
+         |  0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f |
++--------+-------------------------------------------------+----------------+
+|00000000| 2d 35 63 63 31 2d 34 39 65 34 2d 61 61 32 38 2d |-5cc1-49e4-aa28-|
+|00000010| 65 33 36 61 65 64 38 37 64 66 35 36 65 35 35 62 |e36aed87df56e55b|
+|00000020| 37 61 31 62 2d 64 35 33 38 2d 34 37 66 62 2d 62 |7a1b-d538-47fb-b|
+|00000030| 36 61 64 2d 33 65 66 34 66 34 34 64 62 62 36 66 |6ad-3ef4f44dbb6f|
++--------+-------------------------------------------------+----------------+
+23:17:26.613 [nioEventLoopGroup-3-1] DEBUG io.netty.channel.DefaultChannelPipeline - Discarded inbound message PooledUnsafeDirectByteBuf(ridx: 0, widx: 64, cap: 1024) that reached at the tail of the pipeline. Please check your pipeline configuration.
+23:17:26.613 [nioEventLoopGroup-3-1] DEBUG io.netty.channel.DefaultChannelPipeline - Discarded message pipeline : [LoggingHandler#0, HalfPackServer$1$1#0, DefaultChannelPipeline$TailContext#0]. Channel : [id: 0x2b332ddd, L:/127.0.0.1:8088 - R:/127.0.0.1:62753].
+23:17:26.613 [nioEventLoopGroup-3-1] INFO io.netty.handler.logging.LoggingHandler - [id: 0x2b332ddd, L:/127.0.0.1:8088 - R:/127.0.0.1:62753] READ COMPLETE
+23:17:26.614 [nioEventLoopGroup-3-1] INFO io.netty.handler.logging.LoggingHandler - [id: 0x2b332ddd, L:/127.0.0.1:8088 - R:/127.0.0.1:62753] READ: 80B
+         +-------------------------------------------------+
+         |  0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f |
++--------+-------------------------------------------------+----------------+
+|00000000| 65 30 39 64 66 35 64 62 2d 66 31 37 31 2d 34 39 |e09df5db-f171-49|
+|00000010| 66 36 2d 61 64 64 35 2d 64 33 64 33 39 31 33 66 |f6-add5-d3d3913f|
+|00000020| 37 39 35 30 65 37 62 39 35 35 34 62 2d 64 39 63 |7950e7b9554b-d9c|
+|00000030| 63 2d 34 33 63 63 2d 62 36 38 38 2d 31 35 65 66 |c-43cc-b688-15ef|
+|00000040| 62 62 61 66 34 37 63 39 61 64 32 65 35 38 35 35 |bbaf47c9ad2e5855|
++--------+-------------------------------------------------+----------------+
+23:17:26.614 [nioEventLoopGroup-3-1] DEBUG io.netty.channel.DefaultChannelPipeline - Discarded inbound message PooledUnsafeDirectByteBuf(ridx: 0, widx: 80, cap: 512) that reached at the tail of the pipeline. Please check your pipeline configuration.
+23:17:26.614 [nioEventLoopGroup-3-1] DEBUG io.netty.channel.DefaultChannelPipeline - Discarded message pipeline : [LoggingHandler#0, HalfPackServer$1$1#0, DefaultChannelPipeline$TailContext#0]. Channel : [id: 0x2b332ddd, L:/127.0.0.1:8088 - R:/127.0.0.1:62753].
+23:17:26.614 [nioEventLoopGroup-3-1] INFO io.netty.handler.logging.LoggingHandler - [id: 0x2b332ddd, L:/127.0.0.1:8088 - R:/127.0.0.1:62753] READ COMPLETE
+23:17:26.614 [nioEventLoopGroup-3-1] INFO io.netty.handler.logging.LoggingHandler - [id: 0x2b332ddd, L:/127.0.0.1:8088 - R:/127.0.0.1:62753] READ: 64B
+         +-------------------------------------------------+
+         |  0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f |
++--------+-------------------------------------------------+----------------+
+|00000000| 2d 35 39 33 34 2d 34 62 38 36 2d 62 39 33 62 2d |-5934-4b86-b93b-|
+|00000010| 36 66 31 34 62 35 33 66 35 39 36 30 30 32 32 31 |6f14b53f59600221|
+|00000020| 64 64 64 61 2d 39 39 65 31 2d 34 38 62 32 2d 39 |ddda-99e1-48b2-9|
+|00000030| 66 62 65 2d 39 39 37 30 35 66 66 66 64 65 37 64 |fbe-99705fffde7d|
++--------+-------------------------------------------------+----------------+
+23:17:26.614 [nioEventLoopGroup-3-1] DEBUG io.netty.channel.DefaultChannelPipeline - Discarded inbound message PooledUnsafeDirectByteBuf(ridx: 0, widx: 64, cap: 512) that reached at the tail of the pipeline. Please check your pipeline configuration.
+23:17:26.614 [nioEventLoopGroup-3-1] DEBUG io.netty.channel.DefaultChannelPipeline - Discarded message pipeline : [LoggingHandler#0, HalfPackServer$1$1#0, DefaultChannelPipeline$TailContext#0]. Channel : [id: 0x2b332ddd, L:/127.0.0.1:8088 - R:/127.0.0.1:62753].
+23:17:26.614 [nioEventLoopGroup-3-1] INFO io.netty.handler.logging.LoggingHandler - [id: 0x2b332ddd, L:/127.0.0.1:8088 - R:/127.0.0.1:62753] READ COMPLETE
+23:17:26.614 [nioEventLoopGroup-3-1] INFO io.netty.handler.logging.LoggingHandler - [id: 0x2b332ddd, L:/127.0.0.1:8088 - R:/127.0.0.1:62753] READ: 72B
+         +-------------------------------------------------+
+         |  0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f |
++--------+-------------------------------------------------+----------------+
+|00000000| 37 32 62 61 38 64 31 62 2d 62 34 33 34 2d 34 63 |72ba8d1b-b434-4c|
+|00000010| 38 35 2d 62 63 39 64 2d 63 35 61 38 61 37 31 32 |85-bc9d-c5a8a712|
+|00000020| 66 38 38 34 34 39 61 37 34 33 32 66 2d 31 37 34 |f88449a7432f-174|
+|00000030| 64 2d 34 30 34 63 2d 61 33 65 33 2d 62 64 63 34 |d-404c-a3e3-bdc4|
+|00000040| 32 30 31 31 33 30 32 35                         |20113025        |
++--------+-------------------------------------------------+----------------+
+23:17:26.614 [nioEventLoopGroup-3-1] DEBUG io.netty.channel.DefaultChannelPipeline - Discarded inbound message PooledUnsafeDirectByteBuf(ridx: 0, widx: 72, cap: 496) that reached at the tail of the pipeline. Please check your pipeline configuration.
+23:17:26.614 [nioEventLoopGroup-3-1] DEBUG io.netty.channel.DefaultChannelPipeline - Discarded message pipeline : [LoggingHandler#0, HalfPackServer$1$1#0, DefaultChannelPipeline$TailContext#0]. Channel : [id: 0x2b332ddd, L:/127.0.0.1:8088 - R:/127.0.0.1:62753].
+23:17:26.614 [nioEventLoopGroup-3-1] INFO io.netty.handler.logging.LoggingHandler - [id: 0x2b332ddd, L:/127.0.0.1:8088 - R:/127.0.0.1:62753] READ COMPLETE
+```
+
+从服务端打印的日志可以看出，接收到的消息被分为了不同字节大小，且分为多次接收，serverBootstrap.option(ChannelOption.SO_RCVBUF, 16) 方法仅设置接收缓冲区的大小（滑动窗口），实际 netty 读取时是这个参数的整数倍（由日志中的 64B、80B 可见）
+
+
+
+##### 4.3 粘包、半包产生原因
+
+（1）粘包
+
+- 现象：发送方依次发送 123，456，接收方接收到的数据为 123456
+- 原因：
+  - 应用层：接收方 ByteBuf 初始容量大小不同（Netty 默认 1024）
+  - 滑动窗口：发送方的一个完整报文为 256 字节，由于接收方处理不及时或滑动窗口足够大，这时发送方的发送的数据就会累积在接收方的滑动窗口中，窗口中的多个报文就会发生粘包
+  - Nagle 算法也会产生粘包
+
+
+
+（2）半包
+
+- 现象：发送方发送 123456，接收方收到的数据为 1，23，456
+- 原因：
+  - 应用层：接收方 ByteBuf 初始容量大小**小于**发送方此次发送的数据量
+  - 滑动窗口：接收方此时的滑动窗口仅剩 256 字节，但发送方发过来的数据是 512 字节，这时接收方收到数据后到达此次滑动窗口的处理阈值，窗口开始处理之前的数据和此次 512 字节中的 256 字节，剩余的 256 字节只能等 ack 后才能继续接收处理，就产生了半包
+  - MSS 限制：发送的数据超过 MSS 限制后，就会产生半包（如：超过 MTU 大小）
+
+
+
+（3）补充
+
+- 滑动窗口：
+
+  TCP 以段（segment）为单位，每发送一个段就需要一次 ack，当包的往返时间越长时，性能越差
+
+  ![4.3.3.1TCP段](static/5.netty/4.3.3.1TCP段.png)
+
+  为了解决这个问题，引入了窗口的概念，窗口的大小表示无需等待应答可以继续发送的数据最大值
+
+  ![4.3.3.2滑动窗口](static/5.netty/4.3.3.2滑动窗口.png)
+
+  - 窗口具有缓冲区和流控的作用
+  - 窗口内的数据才允许被发送，应答未到达前，必须停止滑动
+  - 接收方同样也会维护一个滑动窗口，与发送方的职责一致
+
+- MSS 限制
+
+  - 链路层对一次能够发送的最大数据有限制（MTU maximum transmission unit）
+  - 以太网 1500、FDDI 光纤 4352、本地回环不走网卡（MTU为65535）
+  - MSS 最大段长度（maximum segment size），即刨除 tcp 头和 ip 头后剩余能够作为传输数据的字节数
+    - IPv4 tcp头 20 字节，ip 头 20 字节，MTU 为 1500 - 20 - 20 = 1460
+    - 服务端、客户端在 tcp 三次握手时，交换（互相通知）各自的 MTU，然后取双方值最小的那个
+
+- Nagle 算法
+
+  当发送一个字节的数据时，也需要加入 tcp 头和 ip 头（即总字节数为 41），为了提高网络利用率，产生了 Nagle 算法（发送端还有数据未发送，但数据量很少，则延迟发送）：
+
+  - 如果 SO_SNDBUF 的数据达到 MSS，则需要发送
+  - 如果 SO_SNDBUF 中含有 FIN（表示需要连接关闭），这时将剩余数据发送完执行关闭
+  - 如果 TCP_NODELAY = true，则发送
+  - 已发送的数据都收到 ack 时，则需要发送
+  - 上述条件不满足，但达到超时阈值（一般为 200ms）则需要发送
+  - 除上述情况外，执行延迟发送
