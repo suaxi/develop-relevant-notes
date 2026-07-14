@@ -2749,7 +2749,7 @@ public class ByteBufUnpooledTest {
 
 ##### 4.1 粘包
 
-FullPackHalfPackServer
+FullPackServer
 
 ```java
 package com.sw.netty._05;
@@ -3156,3 +3156,299 @@ Server Log
   - 已发送的数据都收到 ack 时，则需要发送
   - 上述条件不满足，但达到超时阈值（一般为 200ms）则需要发送
   - 除上述情况外，执行延迟发送
+
+
+
+##### 4.4 解决方案
+
+（1）短链接
+
+发一个包建立一次连接，以连接建立到连接断开作为消息边界，效率较低
+
+```java
+package com.sw.netty._05;
+
+import io.netty.bootstrap.Bootstrap;
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelInboundHandlerAdapter;
+import io.netty.channel.ChannelInitializer;
+import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.socket.SocketChannel;
+import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.handler.logging.LogLevel;
+import io.netty.handler.logging.LoggingHandler;
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
+public class ShortConnClientTest {
+    public static void main(String[] args) {
+        for (int i = 0; i < 10; i++) {
+            send();
+        }
+    }
+
+    private static void send() {
+        NioEventLoopGroup worker = new NioEventLoopGroup();
+        try {
+            Bootstrap bootstrap = new Bootstrap();
+            bootstrap.channel(NioSocketChannel.class);
+            bootstrap.group(worker);
+            bootstrap.handler(new ChannelInitializer<SocketChannel>() {
+                @Override
+                protected void initChannel(SocketChannel ch) throws Exception {
+                    log.info("connected...");
+                    ch.pipeline().addLast(new LoggingHandler(LogLevel.INFO));
+                    ch.pipeline().addLast(new ChannelInboundHandlerAdapter() {
+                        @Override
+                        public void channelActive(ChannelHandlerContext ctx) throws Exception {
+                            log.info("send data...");
+                            ByteBuf bf = ctx.alloc().buffer();
+                            bf.writeBytes(new byte[]{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12});
+                            ctx.writeAndFlush(bf);
+                            ctx.close();
+                        }
+                    });
+                }
+            });
+            ChannelFuture channelFuture = bootstrap.connect("localhost", 8088);
+            channelFuture.channel().closeFuture().sync();
+        } catch (Exception e) {
+            log.error("ShortConnClient error: {}", e.getMessage());
+        } finally {
+            worker.shutdownGracefully();
+        }
+    }
+}
+
+```
+
+短连接不能解决半包问题，因为不同接收方的缓冲区大小不同且有限
+
+
+
+（2）固定长度
+
+每条消息采用固定的长度，内存空间使用效率不高
+
+服务端 decoder 自定义长度
+
+```java
+ch.pipeline().addLast(new FixedLengthFrameDecoder(8));
+```
+
+客户端
+
+```java
+package com.sw.netty._05;
+
+import io.netty.bootstrap.Bootstrap;
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelInboundHandlerAdapter;
+import io.netty.channel.ChannelInitializer;
+import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.socket.SocketChannel;
+import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.handler.logging.LogLevel;
+import io.netty.handler.logging.LoggingHandler;
+import lombok.extern.slf4j.Slf4j;
+
+import java.util.Random;
+import java.util.UUID;
+
+@Slf4j
+public class FixedLengthClientTest {
+    public static void main(String[] args) {
+        NioEventLoopGroup worker = new NioEventLoopGroup();
+        try {
+            Bootstrap bootstrap = new Bootstrap();
+            bootstrap.channel(NioSocketChannel.class);
+            bootstrap.group(worker);
+            bootstrap.handler(new ChannelInitializer<SocketChannel>() {
+                @Override
+                protected void initChannel(SocketChannel ch) throws Exception {
+                    log.info("connected...");
+                    ch.pipeline().addLast(new LoggingHandler(LogLevel.INFO));
+                    ch.pipeline().addLast(new ChannelInboundHandlerAdapter() {
+                        @Override
+                        public void channelActive(ChannelHandlerContext ctx) throws Exception {
+                            log.info("send data...");
+                            Random random = new Random();
+                            ByteBuf bf = ctx.alloc().buffer();
+                            for (int i = 0; i < 10; i++) {
+                                String data = UUID.randomUUID().toString().replace("-", "").substring(random.nextInt(i + 1));
+                                bf.writeBytes(data.getBytes());
+                            }
+                            ctx.writeAndFlush(bf);
+                        }
+                    });
+                }
+            });
+            ChannelFuture channelFuture = bootstrap.connect("localhost", 8088);
+            channelFuture.channel().closeFuture().sync();
+        } catch (Exception e) {
+            log.error("FixedLengthClient error: {}", e.getMessage());
+        } finally {
+            worker.shutdownGracefully();
+        }
+    }
+}
+
+```
+
+服务端每次处理 8 个字节的消息，如果长度太长，会造成浪费，太短会产生半包问题
+
+
+
+（3）固定分隔符
+
+如以 \n 作为消息的分隔符，每次对消息的处理都需要先进行转义
+
+服务端加入分隔符 decoder（如果超出指定长度仍未找到目标分隔符，则报错）
+
+```java
+ch.pipeline().addLast(new LineBasedFrameDecoder(1024));
+```
+
+客户端
+
+```java
+package com.sw.netty._05;
+
+import io.netty.bootstrap.Bootstrap;
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelInboundHandlerAdapter;
+import io.netty.channel.ChannelInitializer;
+import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.socket.SocketChannel;
+import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.handler.logging.LogLevel;
+import io.netty.handler.logging.LoggingHandler;
+import lombok.extern.slf4j.Slf4j;
+
+import java.util.Random;
+import java.util.UUID;
+
+@Slf4j
+public class LineBasedClientTest {
+    public static void main(String[] args) {
+        NioEventLoopGroup worker = new NioEventLoopGroup();
+        try {
+            Bootstrap bootstrap = new Bootstrap();
+            bootstrap.channel(NioSocketChannel.class);
+            bootstrap.group(worker);
+            bootstrap.handler(new ChannelInitializer<SocketChannel>() {
+                @Override
+                protected void initChannel(SocketChannel ch) throws Exception {
+                    log.info("connected...");
+                    ch.pipeline().addLast(new LoggingHandler(LogLevel.INFO));
+                    ch.pipeline().addLast(new ChannelInboundHandlerAdapter() {
+                        @Override
+                        public void channelActive(ChannelHandlerContext ctx) throws Exception {
+                            log.info("send data...");
+                            Random random = new Random();
+                            ByteBuf bf = ctx.alloc().buffer();
+                            for (int i = 0; i < 10; i++) {
+                                String data = UUID.randomUUID().toString().replace("-", "").substring(random.nextInt(i + 1));
+                                bf.writeBytes(data.getBytes());
+                            }
+                            ctx.writeAndFlush(bf);
+                        }
+                    });
+                }
+            });
+            ChannelFuture channelFuture = bootstrap.connect("localhost", 8088);
+            channelFuture.channel().closeFuture().sync();
+        } catch (Exception e) {
+            log.error("LineBasedClient error: {}", e.getMessage());
+        } finally {
+            worker.shutdownGracefully();
+        }
+    }
+}
+
+```
+
+适合处理纯字符数据，如果消息中包含分隔符，则解析会存在问题
+
+
+
+（4）预设长度
+
+每条消息分 head 和 body，head 中包含 body 的长度
+
+服务端、客户端发送消息前用定长字节约定数据的长度
+
+````java
+// 最大长度，长度偏移量，长度占用字节，剥离字节
+ch.pipeline().addLast(new LengthFieldBasedFrameDecoder(1024, 0, 1, 0, 1));
+````
+
+客户端
+
+```java
+package com.sw.netty._05;
+
+import io.netty.bootstrap.Bootstrap;
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelInboundHandlerAdapter;
+import io.netty.channel.ChannelInitializer;
+import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.socket.SocketChannel;
+import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.handler.logging.LogLevel;
+import io.netty.handler.logging.LoggingHandler;
+import lombok.extern.slf4j.Slf4j;
+
+import java.util.Random;
+import java.util.UUID;
+
+@Slf4j
+public class LengthFieldBasedClientTest {
+    public static void main(String[] args) {
+        NioEventLoopGroup worker = new NioEventLoopGroup();
+        try {
+            Bootstrap bootstrap = new Bootstrap();
+            bootstrap.channel(NioSocketChannel.class);
+            bootstrap.group(worker);
+            bootstrap.handler(new ChannelInitializer<SocketChannel>() {
+                @Override
+                protected void initChannel(SocketChannel ch) throws Exception {
+                    log.info("connected...");
+                    ch.pipeline().addLast(new LoggingHandler(LogLevel.INFO));
+                    ch.pipeline().addLast(new ChannelInboundHandlerAdapter() {
+                        @Override
+                        public void channelActive(ChannelHandlerContext ctx) throws Exception {
+                            log.info("send data...");
+                            Random random = new Random();
+                            ByteBuf bf = ctx.alloc().buffer();
+                            for (int i = 0; i < 10; i++) {
+                                String data = UUID.randomUUID().toString().replace("-", "").substring(random.nextInt(i + 1));
+                                // 先写入长度
+                                bf.writeByte(random.nextInt(i + 1) + 1);
+                                bf.writeBytes(data.getBytes());
+                            }
+                            ctx.writeAndFlush(bf);
+                        }
+                    });
+                }
+            });
+            ChannelFuture channelFuture = bootstrap.connect("localhost", 8088);
+            channelFuture.channel().closeFuture().sync();
+        } catch (Exception e) {
+            log.error("LengthFieldBasedClient error: {}", e.getMessage());
+        } finally {
+            worker.shutdownGracefully();
+        }
+    }
+}
+
+```
+
