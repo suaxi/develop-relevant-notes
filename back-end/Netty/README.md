@@ -3635,7 +3635,7 @@ public class HttpProtocolTest {
             ChannelFuture channelFuture = serverBootstrap.bind(8088).sync();
             channelFuture.channel().closeFuture().sync();
         } catch (InterruptedException e) {
-            log.error("RedisProtocolTest error", e);
+            log.error("HttpProtocolTest error", e);
         } finally {
             main.shutdownGracefully();
             worker.shutdownGracefully();
