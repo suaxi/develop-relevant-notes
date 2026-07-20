@@ -10,21 +10,19 @@ import io.netty.channel.SimpleChannelInboundHandler;
 
 /**
  * @author suaxi
- * @date 2026/07/19 22:56
+ * @date 2026/07/20 23:15
  */
 @ChannelHandler.Sharable
 public class ChatRequestMessageHandler extends SimpleChannelInboundHandler<ChatRequestMessage> {
+
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, ChatRequestMessage msg) throws Exception {
-        String to = msg.getTo();
-        Channel channel = SessionFactory.getSession().getChannel(to);
-        // 在线
+        String msgTo = msg.getTo();
+        Channel channel = SessionFactory.getSession().getChannel(msgTo);
         if (channel != null) {
             channel.writeAndFlush(new ChatResponseMessage(msg.getFrom(), msg.getContent()));
-        }
-        // 不在线
-        else {
-            ctx.writeAndFlush(new ChatResponseMessage(false, "对方用户不存在或者不在线"));
+        } else {
+            ctx.writeAndFlush(new ChatResponseMessage(false, "用户[" + msgTo + "]不在线"));
         }
     }
 }

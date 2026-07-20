@@ -1,15 +1,12 @@
 package com.sw.chat.server;
 
-import com.sw.chat.message.LoginRequestMessage;
-import com.sw.chat.message.LoginResponseMessage;
 import com.sw.chat.protocol.MessageCodecSharable;
 import com.sw.chat.protocol.ProcotolFrameDecoder;
-import com.sw.chat.server.service.UserServiceFactory;
+import com.sw.chat.server.handler.ChatRequestMessageHandler;
+import com.sw.chat.server.handler.LoginRequestMessageHandler;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
-import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInitializer;
-import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
@@ -28,6 +25,8 @@ public class ChatServer {
         NioEventLoopGroup worker = new NioEventLoopGroup();
         LoggingHandler LOGGING_HANDLER = new LoggingHandler(LogLevel.DEBUG);
         MessageCodecSharable MESSAGE_CODEC = new MessageCodecSharable();
+        LoginRequestMessageHandler LOGIN_HANDLER = new LoginRequestMessageHandler();
+        ChatRequestMessageHandler CHAT_HANDLER = new ChatRequestMessageHandler();
         try {
             ServerBootstrap serverBootstrap = new ServerBootstrap();
             serverBootstrap.channel(NioServerSocketChannel.class);
@@ -38,22 +37,8 @@ public class ChatServer {
                     ch.pipeline().addLast(new ProcotolFrameDecoder());
                     ch.pipeline().addLast(LOGGING_HANDLER);
                     ch.pipeline().addLast(MESSAGE_CODEC);
-                    ch.pipeline().addLast(new SimpleChannelInboundHandler<LoginRequestMessage>() {
-                        @Override
-                        protected void channelRead0(ChannelHandlerContext ctx, LoginRequestMessage msg) throws Exception {
-                            String username = msg.getUsername();
-                            String password = msg.getPassword();
-                            LoginResponseMessage loginResponseMessage;
-                            if (UserServiceFactory.getUserService().login(username, password)) {
-                                // 登录成功
-                                loginResponseMessage = new LoginResponseMessage(true, "登录成功");
-                            } else {
-                                // 登录失败
-                                loginResponseMessage = new LoginResponseMessage(false, "用户名或密码不正确");
-                            }
-                            ctx.writeAndFlush(loginResponseMessage);
-                        }
-                    });
+                    ch.pipeline().addLast(LOGIN_HANDLER);
+                    ch.pipeline().addLast(CHAT_HANDLER);
                 }
             });
             Channel channel = serverBootstrap.bind(8088).sync().channel();

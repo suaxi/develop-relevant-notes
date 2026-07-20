@@ -10,22 +10,24 @@ import io.netty.channel.SimpleChannelInboundHandler;
 
 /**
  * @author suaxi
- * @date 2026/07/19 22:56
+ * @date 2026/07/20 23:14
  */
 @ChannelHandler.Sharable
 public class LoginRequestMessageHandler extends SimpleChannelInboundHandler<LoginRequestMessage> {
+
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, LoginRequestMessage msg) throws Exception {
         String username = msg.getUsername();
         String password = msg.getPassword();
-        boolean login = UserServiceFactory.getUserService().login(username, password);
-        LoginResponseMessage message;
-        if (login) {
+        LoginResponseMessage loginResponseMessage;
+        if (UserServiceFactory.getUserService().login(username, password)) {
             SessionFactory.getSession().bind(ctx.channel(), username);
-            message = new LoginResponseMessage(true, "登录成功");
+            // 登录成功
+            loginResponseMessage = new LoginResponseMessage(true, "登录成功");
         } else {
-            message = new LoginResponseMessage(false, "用户名或密码不正确");
+            // 登录失败
+            loginResponseMessage = new LoginResponseMessage(false, "用户名或密码不正确");
         }
-        ctx.writeAndFlush(message);
+        ctx.writeAndFlush(loginResponseMessage);
     }
 }
