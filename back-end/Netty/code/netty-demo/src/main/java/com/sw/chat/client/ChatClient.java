@@ -16,7 +16,9 @@ import io.netty.handler.logging.LoggingHandler;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Scanner;
+import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -101,7 +103,9 @@ public class ChatClient {
                                             ctx.writeAndFlush(new GroupChatRequestMessage(username, command[1], command[2]));
                                             break;
                                         case "gcreate":
-                                            ctx.writeAndFlush(new GroupCreateRequestMessage(command[1], Collections.singleton(command[2])));
+                                            Set<String> members = new HashSet<>(Collections.singleton(command[2]));
+                                            members.add(username);
+                                            ctx.writeAndFlush(new GroupCreateRequestMessage(command[1], members));
                                             break;
                                         case "gmembers":
                                             ctx.writeAndFlush(new GroupMembersRequestMessage(command[1]));
