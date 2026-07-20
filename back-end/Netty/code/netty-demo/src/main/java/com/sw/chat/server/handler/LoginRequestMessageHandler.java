@@ -9,6 +9,8 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 
 /**
+ * 登录请求消息处理器
+ *
  * @author suaxi
  * @date 2026/07/20 23:14
  */
