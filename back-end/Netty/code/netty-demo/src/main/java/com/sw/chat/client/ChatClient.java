@@ -1,7 +1,6 @@
 package com.sw.chat.client;
 
-import com.sw.chat.message.LoginRequestMessage;
-import com.sw.chat.message.LoginResponseMessage;
+import com.sw.chat.message.*;
 import com.sw.chat.protocol.MessageCodecSharable;
 import com.sw.chat.protocol.ProcotolFrameDecoder;
 import io.netty.bootstrap.Bootstrap;
@@ -16,6 +15,7 @@ import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.Collections;
 import java.util.Scanner;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -92,6 +92,33 @@ public class ChatClient {
                                     System.out.println("gquit [group name]");
                                     System.out.println("quit");
                                     System.out.println("==================================");
+                                    String[] command = sc.nextLine().split(" ");
+                                    switch (command[0]) {
+                                        case "send":
+                                            ctx.writeAndFlush(new ChatRequestMessage(username, command[1], command[2]));
+                                            break;
+                                        case "gsend":
+                                            ctx.writeAndFlush(new GroupChatRequestMessage(username, command[1], command[2]));
+                                            break;
+                                        case "gcreate":
+                                            ctx.writeAndFlush(new GroupCreateRequestMessage(command[1], Collections.singleton(command[2])));
+                                            break;
+                                        case "gmembers":
+                                            ctx.writeAndFlush(new GroupMembersRequestMessage(command[1]));
+                                            break;
+                                        case "gjoin":
+                                            ctx.writeAndFlush(new GroupJoinRequestMessage(username, command[1]));
+                                            break;
+                                        case "gquit":
+                                            ctx.writeAndFlush(new GroupQuitRequestMessage(username, command[1]));
+                                            break;
+                                        case "quit":
+                                            ctx.channel().close();
+                                            return;
+                                        default:
+                                            break;
+                                    }
+
                                 }
                             }, "system.in").start();
                         }
