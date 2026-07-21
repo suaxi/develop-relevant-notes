@@ -29,6 +29,7 @@ public class ChatServer {
         GroupCreateRequestMessageHandler GROUP_CREATE_HANDLER = new GroupCreateRequestMessageHandler();
         GroupChatRequestMessageHandler GROUP_CHAT_HANDLER = new GroupChatRequestMessageHandler();
         GroupMembersRequestMessageHandler GROUP_MEMBERS_HANDLER = new GroupMembersRequestMessageHandler();
+        GroupJoinRequestMessageHandler GROUP_JOIN_HANDLER = new GroupJoinRequestMessageHandler();
         try {
             ServerBootstrap serverBootstrap = new ServerBootstrap();
             serverBootstrap.channel(NioServerSocketChannel.class);
@@ -44,6 +45,7 @@ public class ChatServer {
                     ch.pipeline().addLast(GROUP_CREATE_HANDLER);
                     ch.pipeline().addLast(GROUP_CHAT_HANDLER);
                     ch.pipeline().addLast(GROUP_MEMBERS_HANDLER);
+                    ch.pipeline().addLast(GROUP_JOIN_HANDLER);
                 }
             });
             Channel channel = serverBootstrap.bind(8088).sync().channel();

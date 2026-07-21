@@ -1,18 +1,13 @@
 package com.sw.chat.server.handler;
 
-import com.sw.chat.message.GroupCreateRequestMessage;
-import com.sw.chat.message.GroupCreateResponseMessage;
 import com.sw.chat.message.GroupMembersRequestMessage;
 import com.sw.chat.message.GroupMembersResponseMessage;
-import com.sw.chat.server.session.Group;
 import com.sw.chat.server.session.GroupSession;
 import com.sw.chat.server.session.GroupSessionFactory;
-import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 
-import java.util.List;
 import java.util.Set;
 
 /**

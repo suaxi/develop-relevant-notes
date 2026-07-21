@@ -2,7 +2,6 @@ package com.sw.chat.server.handler;
 
 import com.sw.chat.message.GroupChatRequestMessage;
 import com.sw.chat.message.GroupChatResponseMessage;
-import com.sw.chat.server.session.GroupSession;
 import com.sw.chat.server.session.GroupSessionFactory;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandler;
