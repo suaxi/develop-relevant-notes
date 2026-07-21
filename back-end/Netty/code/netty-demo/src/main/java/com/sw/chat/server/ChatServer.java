@@ -2,10 +2,7 @@ package com.sw.chat.server;
 
 import com.sw.chat.protocol.MessageCodecSharable;
 import com.sw.chat.protocol.ProcotolFrameDecoder;
-import com.sw.chat.server.handler.ChatRequestMessageHandler;
-import com.sw.chat.server.handler.GroupChatRequestMessageHandler;
-import com.sw.chat.server.handler.GroupCreateRequestMessageHandler;
-import com.sw.chat.server.handler.LoginRequestMessageHandler;
+import com.sw.chat.server.handler.*;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelInitializer;
@@ -31,6 +28,7 @@ public class ChatServer {
         ChatRequestMessageHandler CHAT_HANDLER = new ChatRequestMessageHandler();
         GroupCreateRequestMessageHandler GROUP_CREATE_HANDLER = new GroupCreateRequestMessageHandler();
         GroupChatRequestMessageHandler GROUP_CHAT_HANDLER = new GroupChatRequestMessageHandler();
+        GroupMembersRequestMessageHandler GROUP_MEMBERS_HANDLER = new GroupMembersRequestMessageHandler();
         try {
             ServerBootstrap serverBootstrap = new ServerBootstrap();
             serverBootstrap.channel(NioServerSocketChannel.class);
@@ -45,6 +43,7 @@ public class ChatServer {
                     ch.pipeline().addLast(CHAT_HANDLER);
                     ch.pipeline().addLast(GROUP_CREATE_HANDLER);
                     ch.pipeline().addLast(GROUP_CHAT_HANDLER);
+                    ch.pipeline().addLast(GROUP_MEMBERS_HANDLER);
                 }
             });
             Channel channel = serverBootstrap.bind(8088).sync().channel();
