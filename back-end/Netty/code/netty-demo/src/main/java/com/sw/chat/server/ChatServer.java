@@ -5,12 +5,17 @@ import com.sw.chat.protocol.ProcotolFrameDecoder;
 import com.sw.chat.server.handler.*;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelDuplexHandler;
+import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
+import io.netty.handler.timeout.IdleState;
+import io.netty.handler.timeout.IdleStateEvent;
+import io.netty.handler.timeout.IdleStateHandler;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -42,6 +47,20 @@ public class ChatServer {
                     ch.pipeline().addLast(new ProcotolFrameDecoder());
                     ch.pipeline().addLast(LOGGING_HANDLER);
                     ch.pipeline().addLast(MESSAGE_CODEC);
+                    // 5s 内未收到 channel 的数据（读），则会触发 IdleState READER_IDLE 读空闲事件
+                    ch.pipeline().addLast(new IdleStateHandler(5, 0, 0));
+                    // ChannelDuplexHandler 双工的，可以同时处理读写（出站/入站）处理器
+                    ch.pipeline().addLast(new ChannelDuplexHandler() {
+                        @Override
+                        public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
+                            if (evt instanceof IdleStateEvent) {
+                                IdleStateEvent event =(IdleStateEvent) evt;
+                                if (IdleState.READER_IDLE == event.state()) {
+                                    log.info("已经 5S 未收到数据了...");
+                                }
+                            }
+                        }
+                    });
                     ch.pipeline().addLast(LOGIN_HANDLER);
                     ch.pipeline().addLast(CHAT_HANDLER);
                     ch.pipeline().addLast(GROUP_CREATE_HANDLER);
