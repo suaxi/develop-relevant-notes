@@ -4,15 +4,15 @@ import com.sw.chat.message.*;
 import com.sw.chat.protocol.MessageCodecSharable;
 import com.sw.chat.protocol.ProcotolFrameDecoder;
 import io.netty.bootstrap.Bootstrap;
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelInboundHandlerAdapter;
-import io.netty.channel.ChannelInitializer;
+import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
+import io.netty.handler.timeout.IdleState;
+import io.netty.handler.timeout.IdleStateEvent;
+import io.netty.handler.timeout.IdleStateHandler;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.Collections;
@@ -34,6 +34,7 @@ public class ChatClient {
         MessageCodecSharable MESSAGE_CODEC = new MessageCodecSharable();
         CountDownLatch WAIT_FOR_LOGIN = new CountDownLatch(1);
         AtomicBoolean LOGIN = new AtomicBoolean(false);
+        AtomicBoolean EXIT = new AtomicBoolean(false);
         try {
             Bootstrap bootstrap = new Bootstrap();
             bootstrap.channel(NioSocketChannel.class);
@@ -44,6 +45,21 @@ public class ChatClient {
                     ch.pipeline().addLast(new ProcotolFrameDecoder());
                     ch.pipeline().addLast(LOGGING_HANDLER);
                     ch.pipeline().addLast(MESSAGE_CODEC);
+                    // 3s 内未向 server 写数据，则会触发 IdleState WRITER_IDLE 写空闲事件
+                    ch.pipeline().addLast(new IdleStateHandler(0, 3, 0));
+                    // ChannelDuplexHandler 双工的，可以同时处理读写（出站/入站）处理器
+                    ch.pipeline().addLast(new ChannelDuplexHandler() {
+                        @Override
+                        public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
+                            if (evt instanceof IdleStateEvent) {
+                                IdleStateEvent event =(IdleStateEvent) evt;
+                                if (IdleState.WRITER_IDLE == event.state()) {
+                                    // 3s 未写数据，发送心跳包
+                                    // ctx.writeAndFlush(new PingMessage());
+                                }
+                            }
+                        }
+                    });
                     ch.pipeline().addLast("chat client", new ChannelInboundHandlerAdapter() {
                         // 接收响应消息
                         @Override
@@ -66,8 +82,14 @@ public class ChatClient {
                             new Thread(() -> {
                                 Scanner sc = new Scanner(System.in);
                                 System.out.println("请输入用户名：");
+                                if (EXIT.get()) {
+                                    return;
+                                }
                                 String username = sc.nextLine();
                                 System.out.println("请输入密码：");
+                                if (EXIT.get()) {
+                                    return;
+                                }
                                 String password = sc.nextLine();
 
                                 // 构建登录消息对象
@@ -94,6 +116,9 @@ public class ChatClient {
                                     System.out.println("gquit [group name]");
                                     System.out.println("quit");
                                     System.out.println("==================================");
+                                    if (EXIT.get()) {
+                                        return;
+                                    }
                                     String[] command = sc.nextLine().split(" ");
                                     switch (command[0]) {
                                         case "send":
@@ -125,6 +150,18 @@ public class ChatClient {
 
                                 }
                             }, "system.in").start();
+                        }
+
+                        @Override
+                        public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+                            log.info("服务器超时断开连接，按任意键退出...");
+                            EXIT.set(true);
+                        }
+
+                        @Override
+                        public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+                            log.error("服务器异常断开连接：{}", cause.getMessage());
+                            EXIT.set(true);
                         }
                     });
                 }

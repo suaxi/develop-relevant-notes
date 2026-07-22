@@ -57,6 +57,7 @@ public class ChatServer {
                                 IdleStateEvent event =(IdleStateEvent) evt;
                                 if (IdleState.READER_IDLE == event.state()) {
                                     log.info("已经 5S 未收到数据了...");
+                                    ctx.channel().close();
                                 }
                             }
                         }
