@@ -3703,3 +3703,443 @@ public class HttpProtocolTest {
 
 ```
 
+
+
+### 三、优化
+
+#### 1. 自定义序列化算法
+
+Config
+
+```java
+package com.sw.chat.config;
+
+
+import com.sw.chat.protocol.Serializer;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Properties;
+
+public abstract class Config {
+
+    static Properties properties;
+
+    static {
+        try (InputStream in = Config.class.getResourceAsStream("/application.properties")) {
+            properties = new Properties();
+            properties.load(in);
+        } catch (IOException e) {
+            throw new ExceptionInInitializerError(e);
+        }
+    }
+
+    public static int getServerPort() {
+        String value = properties.getProperty("server.port");
+        if (value == null) {
+            return 8088;
+        } else {
+            return Integer.parseInt(value);
+        }
+    }
+
+    public static Serializer.Algorithm getSerializerAlgorithm() {
+        String value = properties.getProperty("serializer.algorithm");
+        if (value == null) {
+            return Serializer.Algorithm.Java;
+        } else {
+            return Serializer.Algorithm.valueOf(value);
+        }
+    }
+}
+```
+
+
+
+application.properties
+
+```java
+serializer.algorithm=Json
+```
+
+
+
+Message
+
+```java
+package com.sw.chat.message;
+
+import lombok.Data;
+
+import java.io.Serializable;
+import java.util.HashMap;
+import java.util.Map;
+
+@Data
+public abstract class Message implements Serializable {
+
+    /**
+     * 根据消息类型字节，获得对应的消息 class
+     *
+     * @param messageType 消息类型字节
+     * @return 消息 class
+     */
+    public static Class<? extends Message> getMessageClass(int messageType) {
+        return messageClasses.get(messageType);
+    }
+
+    private int sequenceId;
+
+    private int messageType;
+
+    public abstract int getMessageType();
+
+    public static final int LoginRequestMessage = 0;
+    public static final int LoginResponseMessage = 1;
+    public static final int ChatRequestMessage = 2;
+    public static final int ChatResponseMessage = 3;
+    public static final int GroupCreateRequestMessage = 4;
+    public static final int GroupCreateResponseMessage = 5;
+    public static final int GroupJoinRequestMessage = 6;
+    public static final int GroupJoinResponseMessage = 7;
+    public static final int GroupQuitRequestMessage = 8;
+    public static final int GroupQuitResponseMessage = 9;
+    public static final int GroupChatRequestMessage = 10;
+    public static final int GroupChatResponseMessage = 11;
+    public static final int GroupMembersRequestMessage = 12;
+    public static final int GroupMembersResponseMessage = 13;
+    public static final int PingMessage = 14;
+    public static final int PongMessage = 15;
+    /**
+     * 请求类型 byte 值
+     */
+    public static final int RPC_MESSAGE_TYPE_REQUEST = 101;
+    /**
+     * 响应类型 byte 值
+     */
+    public static final int RPC_MESSAGE_TYPE_RESPONSE = 102;
+
+    private static final Map<Integer, Class<? extends Message>> messageClasses = new HashMap<>();
+
+    static {
+        messageClasses.put(LoginRequestMessage, LoginRequestMessage.class);
+        messageClasses.put(LoginResponseMessage, LoginResponseMessage.class);
+        messageClasses.put(ChatRequestMessage, ChatRequestMessage.class);
+        messageClasses.put(ChatResponseMessage, ChatResponseMessage.class);
+        messageClasses.put(GroupCreateRequestMessage, GroupCreateRequestMessage.class);
+        messageClasses.put(GroupCreateResponseMessage, GroupCreateResponseMessage.class);
+        messageClasses.put(GroupJoinRequestMessage, GroupJoinRequestMessage.class);
+        messageClasses.put(GroupJoinResponseMessage, GroupJoinResponseMessage.class);
+        messageClasses.put(GroupQuitRequestMessage, GroupQuitRequestMessage.class);
+        messageClasses.put(GroupQuitResponseMessage, GroupQuitResponseMessage.class);
+        messageClasses.put(GroupChatRequestMessage, GroupChatRequestMessage.class);
+        messageClasses.put(GroupChatResponseMessage, GroupChatResponseMessage.class);
+        messageClasses.put(GroupMembersRequestMessage, GroupMembersRequestMessage.class);
+        messageClasses.put(GroupMembersResponseMessage, GroupMembersResponseMessage.class);
+        messageClasses.put(RPC_MESSAGE_TYPE_REQUEST, RpcRequestMessage.class);
+        messageClasses.put(RPC_MESSAGE_TYPE_RESPONSE, RpcResponseMessage.class);
+    }
+
+}
+
+```
+
+
+
+MessageCodecSharable
+
+```java
+package com.sw.chat.protocol;
+
+import com.sw.chat.config.Config;
+import com.sw.chat.message.Message;
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.ChannelHandler;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.handler.codec.MessageToMessageCodec;
+import lombok.extern.slf4j.Slf4j;
+
+import java.util.List;
+
+@Slf4j
+@ChannelHandler.Sharable
+public class MessageCodecSharable extends MessageToMessageCodec<ByteBuf, Message> {
+    @Override
+    public void encode(ChannelHandlerContext ctx, Message msg, List<Object> outList) throws Exception {
+        ByteBuf out = ctx.alloc().buffer();
+        // 1. 4 字节的魔数
+        out.writeBytes(new byte[]{1, 2, 3, 4});
+        // 2. 1 字节的版本,
+        out.writeByte(1);
+        // 3. 1 字节的序列化方式 jdk 0 , json 1
+        out.writeByte(Config.getSerializerAlgorithm().ordinal());
+        // 4. 1 字节的指令类型
+        out.writeByte(msg.getMessageType());
+        // 5. 4 个字节
+        out.writeInt(msg.getSequenceId());
+        // 无意义，对齐填充
+        out.writeByte(0xff);
+        // 6. 获取内容的字节数组
+        byte[] bytes = Config.getSerializerAlgorithm().serialize(msg);
+        // 7. 长度
+        out.writeInt(bytes.length);
+        // 8. 写入内容
+        out.writeBytes(bytes);
+        outList.add(out);
+    }
+
+    @Override
+    protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) throws Exception {
+        int magicNum = in.readInt();
+        byte version = in.readByte();
+        byte serializerAlgorithm = in.readByte(); // 0 或 1
+        byte messageType = in.readByte(); // 0,1,2...
+        int sequenceId = in.readInt();
+        in.readByte();
+        int length = in.readInt();
+        byte[] bytes = new byte[length];
+        in.readBytes(bytes, 0, length);
+
+        // 获取反序列化算法
+        Serializer.Algorithm algorithm = Serializer.Algorithm.values()[serializerAlgorithm];
+        // 消息类型
+        Class<? extends Message> messageClass = Message.getMessageClass(messageType);
+        Message message = algorithm.deserialize(messageClass, bytes);
+        out.add(message);
+    }
+
+}
+
+```
+
+
+
+LoginRequestMessage
+
+```java
+package com.sw.chat.message;
+
+import lombok.Data;
+import lombok.ToString;
+
+@Data
+@ToString(callSuper = true)
+public class LoginRequestMessage extends Message {
+    private String username;
+    private String password;
+
+    public LoginRequestMessage() {
+    }
+
+    public LoginRequestMessage(String username, String password) {
+        this.username = username;
+        this.password = password;
+    }
+
+    @Override
+    public int getMessageType() {
+        return LoginRequestMessage;
+    }
+}
+
+```
+
+
+
+Serializer
+
+```java
+package com.sw.chat.protocol;
+
+import com.google.gson.*;
+
+import java.io.*;
+import java.lang.reflect.Type;
+import java.nio.charset.StandardCharsets;
+
+public interface Serializer {
+
+    // 反序列化方法
+    <T> T deserialize(Class<T> clazz, byte[] bytes);
+
+    // 序列化方法
+    <T> byte[] serialize(T object);
+
+    enum Algorithm implements Serializer {
+
+        Java {
+            @Override
+            public <T> T deserialize(Class<T> clazz, byte[] bytes) {
+                try (ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(bytes))) {
+                    return clazz.cast(ois.readObject());
+                } catch (IOException | ClassNotFoundException e) {
+                    throw new RuntimeException("反序列化异常：", e);
+                }
+            }
+
+            @Override
+            public <T> byte[] serialize(T object) {
+                try (ByteArrayOutputStream bos = new ByteArrayOutputStream(); ObjectOutputStream oos = new ObjectOutputStream(bos)) {
+                    oos.writeObject(object);
+                    return bos.toByteArray();
+                } catch (IOException e) {
+                    throw new RuntimeException("序列化异常：", e);
+                }
+            }
+        },
+
+        Json {
+            @Override
+            public <T> T deserialize(Class<T> clazz, byte[] bytes) {
+                Gson gson = new GsonBuilder().registerTypeAdapter(Class.class, new ClassCodec()).create();
+                String json = new String(bytes, StandardCharsets.UTF_8);
+                return gson.fromJson(json, clazz);
+            }
+
+            @Override
+            public <T> byte[] serialize(T object) {
+                Gson gson = new GsonBuilder().registerTypeAdapter(Class.class, new ClassCodec()).create();
+                String json = new Gson().toJson(object);
+                return json.getBytes(StandardCharsets.UTF_8);
+            }
+        }
+    }
+
+    class ClassCodec implements JsonSerializer<Class<?>>, JsonDeserializer<Class<?>> {
+
+        @Override
+        public Class<?> deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
+            try {
+                String str = json.getAsString();
+                return Class.forName(str);
+            } catch (ClassNotFoundException e) {
+                throw new JsonParseException(e);
+            }
+        }
+
+        @Override
+        public JsonElement serialize(Class<?> src, Type typeOfSrc, JsonSerializationContext context) {
+            // class -> json
+            return new JsonPrimitive(src.getName());
+        }
+    }
+}
+```
+
+
+
+演示
+
+```java
+package com.sw.chat.protocol;
+
+import com.sw.chat.config.Config;
+import com.sw.chat.message.LoginRequestMessage;
+import com.sw.chat.message.Message;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufAllocator;
+import io.netty.channel.embedded.EmbeddedChannel;
+import io.netty.handler.logging.LoggingHandler;
+
+
+public class SerializerTest {
+    public static void main(String[] args) {
+        MessageCodecSharable MESSAGE_CODEC = new MessageCodecSharable();
+        LoggingHandler LOGGING_HANDLER = new LoggingHandler();
+        EmbeddedChannel channel = new EmbeddedChannel(LOGGING_HANDLER, MESSAGE_CODEC, LOGGING_HANDLER);
+        LoginRequestMessage loginRequestMessage = new LoginRequestMessage("liubo", "123");
+        // object ---> byte
+        // channel.writeOutbound(loginRequestMessage);
+
+        // JDK Serializer
+        // 22:58:21.511 [main] DEBUG io.netty.handler.logging.LoggingHandler - [id: 0xembedded, L:embedded - R:embedded] WRITE: 215B
+        //         +-------------------------------------------------+
+        //         |  0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f |
+        // +--------+-------------------------------------------------+----------------+
+        // |00000000| 01 02 03 04 01 00 00 00 00 00 00 ff 00 00 00 c7 |................|
+        // |00000010| ac ed 00 05 73 72 00 27 63 6f 6d 2e 73 77 2e 63 |....sr.'com.sw.c|
+        // |00000020| 68 61 74 2e 6d 65 73 73 61 67 65 2e 4c 6f 67 69 |hat.message.Logi|
+        // |00000030| 6e 52 65 71 75 65 73 74 4d 65 73 73 61 67 65 81 |nRequestMessage.|
+        // |00000040| 67 c8 60 bd c6 4b b2 02 00 02 4c 00 08 70 61 73 |g.`..K....L..pas|
+        // |00000050| 73 77 6f 72 64 74 00 12 4c 6a 61 76 61 2f 6c 61 |swordt..Ljava/la|
+        // |00000060| 6e 67 2f 53 74 72 69 6e 67 3b 4c 00 08 75 73 65 |ng/String;L..use|
+        // |00000070| 72 6e 61 6d 65 71 00 7e 00 01 78 72 00 1b 63 6f |rnameq.~..xr..co|
+        // |00000080| 6d 2e 73 77 2e 63 68 61 74 2e 6d 65 73 73 61 67 |m.sw.chat.messag|
+        // |00000090| 65 2e 4d 65 73 73 61 67 65 72 9b f3 82 41 12 0e |e.Messager...A..|
+        // |000000a0| 4d 02 00 02 49 00 0b 6d 65 73 73 61 67 65 54 79 |M...I..messageTy|
+        // |000000b0| 70 65 49 00 0a 73 65 71 75 65 6e 63 65 49 64 78 |peI..sequenceIdx|
+        // |000000c0| 70 00 00 00 00 00 00 00 00 74 00 03 31 32 33 74 |p........t..123t|
+        // |000000d0| 00 05 6c 69 75 62 6f                            |..liubo         |
+        // +--------+-------------------------------------------------+----------------+
+
+        // Json
+        // 23:05:04.978 [main] DEBUG io.netty.handler.logging.LoggingHandler - [id: 0xembedded, L:embedded - R:embedded] WRITE: 84B
+        //         +-------------------------------------------------+
+        //         |  0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f |
+        // +--------+-------------------------------------------------+----------------+
+        // |00000000| 01 02 03 04 01 01 00 00 00 00 00 ff 00 00 00 44 |...............D|
+        // |00000010| 7b 22 75 73 65 72 6e 61 6d 65 22 3a 22 6c 69 75 |{"username":"liu|
+        // |00000020| 62 6f 22 2c 22 70 61 73 73 77 6f 72 64 22 3a 22 |bo","password":"|
+        // |00000030| 31 32 33 22 2c 22 73 65 71 75 65 6e 63 65 49 64 |123","sequenceId|
+        // |00000040| 22 3a 30 2c 22 6d 65 73 73 61 67 65 54 79 70 65 |":0,"messageType|
+        // |00000050| 22 3a 30 7d                                     |":0}            |
+        // +--------+-------------------------------------------------+----------------+
+
+        // byte ---> object
+        ByteBuf bf = msgToByteBuf(loginRequestMessage);
+        channel.writeInbound(bf);
+
+        // JDK Serializer
+        // 23:07:25.305 [main] DEBUG io.netty.handler.logging.LoggingHandler - [id: 0xembedded, L:embedded - R:embedded] READ: 215B
+        //         +-------------------------------------------------+
+        //         |  0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f |
+        // +--------+-------------------------------------------------+----------------+
+        // |00000000| 01 02 03 04 01 00 00 00 00 00 00 ff 00 00 00 c7 |................|
+        // |00000010| ac ed 00 05 73 72 00 27 63 6f 6d 2e 73 77 2e 63 |....sr.'com.sw.c|
+        // |00000020| 68 61 74 2e 6d 65 73 73 61 67 65 2e 4c 6f 67 69 |hat.message.Logi|
+        // |00000030| 6e 52 65 71 75 65 73 74 4d 65 73 73 61 67 65 81 |nRequestMessage.|
+        // |00000040| 67 c8 60 bd c6 4b b2 02 00 02 4c 00 08 70 61 73 |g.`..K....L..pas|
+        // |00000050| 73 77 6f 72 64 74 00 12 4c 6a 61 76 61 2f 6c 61 |swordt..Ljava/la|
+        // |00000060| 6e 67 2f 53 74 72 69 6e 67 3b 4c 00 08 75 73 65 |ng/String;L..use|
+        // |00000070| 72 6e 61 6d 65 71 00 7e 00 01 78 72 00 1b 63 6f |rnameq.~..xr..co|
+        // |00000080| 6d 2e 73 77 2e 63 68 61 74 2e 6d 65 73 73 61 67 |m.sw.chat.messag|
+        // |00000090| 65 2e 4d 65 73 73 61 67 65 72 9b f3 82 41 12 0e |e.Messager...A..|
+        // |000000a0| 4d 02 00 02 49 00 0b 6d 65 73 73 61 67 65 54 79 |M...I..messageTy|
+        // |000000b0| 70 65 49 00 0a 73 65 71 75 65 6e 63 65 49 64 78 |peI..sequenceIdx|
+        // |000000c0| 70 00 00 00 00 00 00 00 00 74 00 03 31 32 33 74 |p........t..123t|
+        // |000000d0| 00 05 6c 69 75 62 6f                            |..liubo         |
+        // +--------+-------------------------------------------------+----------------+
+        // 23:07:25.309 [main] DEBUG io.netty.handler.logging.LoggingHandler - [id: 0xembedded, L:embedded - R:embedded] READ: LoginRequestMessage(super=Message(sequenceId=0, messageType=0), username=liubo, password=123)
+
+        // Json
+        // 23:08:47.272 [main] DEBUG io.netty.handler.logging.LoggingHandler - [id: 0xembedded, L:embedded - R:embedded] READ: 84B
+        //         +-------------------------------------------------+
+        //         |  0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f |
+        // +--------+-------------------------------------------------+----------------+
+        // |00000000| 01 02 03 04 01 01 00 00 00 00 00 ff 00 00 00 44 |...............D|
+        // |00000010| 7b 22 75 73 65 72 6e 61 6d 65 22 3a 22 6c 69 75 |{"username":"liu|
+        // |00000020| 62 6f 22 2c 22 70 61 73 73 77 6f 72 64 22 3a 22 |bo","password":"|
+        // |00000030| 31 32 33 22 2c 22 73 65 71 75 65 6e 63 65 49 64 |123","sequenceId|
+        // |00000040| 22 3a 30 2c 22 6d 65 73 73 61 67 65 54 79 70 65 |":0,"messageType|
+        // |00000050| 22 3a 30 7d                                     |":0}            |
+        // +--------+-------------------------------------------------+----------------+
+        // 23:08:47.275 [main] DEBUG io.netty.handler.logging.LoggingHandler - [id: 0xembedded, L:embedded - R:embedded] READ: LoginRequestMessage(super=Message(sequenceId=0, messageType=0), username=liubo, password=123)
+    }
+
+    public static ByteBuf msgToByteBuf(Message msg) {
+        int algorithm = Config.getSerializerAlgorithm().ordinal();
+        ByteBuf bf = ByteBufAllocator.DEFAULT.buffer();
+        bf.writeBytes(new byte[]{1, 2, 3, 4});
+        bf.writeByte(1);
+        bf.writeByte(algorithm);
+        bf.writeByte(msg.getMessageType());
+        bf.writeInt(msg.getSequenceId());
+        bf.writeByte(0xff);
+        byte[] bytes = Serializer.Algorithm.values()[algorithm].serialize(msg);
+        bf.writeInt(bytes.length);
+        bf.writeBytes(bytes);
+        return bf;
+    }
+}
+
+```

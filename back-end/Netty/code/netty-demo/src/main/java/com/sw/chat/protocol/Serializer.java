@@ -23,23 +23,20 @@ public interface Serializer {
         Java {
             @Override
             public <T> T deserialize(Class<T> clazz, byte[] bytes) {
-                try {
-                    ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(bytes));
-                    return (T) ois.readObject();
+                try (ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(bytes))) {
+                    return clazz.cast(ois.readObject());
                 } catch (IOException | ClassNotFoundException e) {
-                    throw new RuntimeException("反序列化失败", e);
+                    throw new RuntimeException("反序列化异常：", e);
                 }
             }
 
             @Override
             public <T> byte[] serialize(T object) {
-                try {
-                    ByteArrayOutputStream bos = new ByteArrayOutputStream();
-                    ObjectOutputStream oos = new ObjectOutputStream(bos);
+                try (ByteArrayOutputStream bos = new ByteArrayOutputStream(); ObjectOutputStream oos = new ObjectOutputStream(bos)) {
                     oos.writeObject(object);
                     return bos.toByteArray();
                 } catch (IOException e) {
-                    throw new RuntimeException("序列化失败", e);
+                    throw new RuntimeException("序列化异常：", e);
                 }
             }
         },
@@ -55,7 +52,7 @@ public interface Serializer {
             @Override
             public <T> byte[] serialize(T object) {
                 Gson gson = new GsonBuilder().registerTypeAdapter(Class.class, new ClassCodec()).create();
-                String json = gson.toJson(object);
+                String json = new Gson().toJson(object);
                 return json.getBytes(StandardCharsets.UTF_8);
             }
         }
