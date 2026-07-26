@@ -4143,3 +4143,137 @@ public class SerializerTest {
 }
 
 ```
+
+
+
+#### 2. 参数调优
+
+##### 2.1 CONNECT_TIMEOUT_MILLIS
+
+在客户端建立连接时，如果在指定毫秒内无法连接，则抛出 timeout 异常
+
+```java
+package com.sw.netty._07;
+
+import io.netty.bootstrap.Bootstrap;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelOption;
+import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.handler.logging.LogLevel;
+import io.netty.handler.logging.LoggingHandler;
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
+public class ConnTimeoutTest {
+    public static void main(String[] args) {
+        NioEventLoopGroup worker = new NioEventLoopGroup();
+        try {
+            Bootstrap bootstrap = new Bootstrap()
+                    .group(worker)
+                    .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 300)
+                    .channel(NioSocketChannel.class)
+                    .handler(new LoggingHandler(LogLevel.DEBUG));
+            ChannelFuture channelFuture = bootstrap.connect("127.0.0.1", 8088);
+            channelFuture.sync().channel().closeFuture().sync();
+        } catch (Exception e) {
+            log.error("ConnTimeoutTestClient error: ", e);
+        } finally {
+            worker.shutdownGracefully();
+        }
+    }
+}
+
+```
+
+
+
+##### 2.2 SO_BACKLOG
+
+tcp 完成三次握手后，服务端会将客户端的请求从 sync queue（半连接队列）放入 accept queue（全连接队列）
+
+在 linux 2.2 之前，backlog 参数同时包括了两个队列的大小，2.2 之后：
+
+- sync queue
+  - 通过 /proc/sys/net/ipv4/tcp_max_syn_backlog 指定 
+- accept queue
+  - 通过 /proc/sys/net/core/somaxconn 指定，同时内核会根据用户态传入的 backlog 参数与系统参数作比较，取二者中较小的值
+  - 当队列满了时，会拒绝连接客户端的请求
+
+
+
+BacklogServerTest
+
+```java
+package com.sw.netty._07;
+
+import io.netty.bootstrap.ServerBootstrap;
+import io.netty.channel.ChannelInitializer;
+import io.netty.channel.ChannelOption;
+import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.socket.SocketChannel;
+import io.netty.channel.socket.nio.NioServerSocketChannel;
+import io.netty.handler.logging.LogLevel;
+import io.netty.handler.logging.LoggingHandler;
+
+public class BacklogServerTest {
+    public static void main(String[] args) {
+        new ServerBootstrap()
+                .group(new NioEventLoopGroup())
+                // 以 windows idea 环境演示为例，指定全连接队列大小为 2
+                .option(ChannelOption.SO_BACKLOG, 2)
+                .channel(NioServerSocketChannel.class)
+                .childHandler(new ChannelInitializer<SocketChannel>() {
+                    @Override
+                    protected void initChannel(SocketChannel ch) throws Exception {
+                        ch.pipeline().addLast(new LoggingHandler(LogLevel.DEBUG));
+                    }
+                }).bind(8088);
+    }
+}
+
+```
+
+注：netty 对客户端的连接是来一个处理一个，所以需要在 NioEventLoop 源码中通过断点阻塞住 ACCEPT 事件，即：io.netty.channel.nio.NioEventLoop#processSelectedKey 方法
+
+![2.2.1backlog阻塞演示](static/6.优化/2.2.1backlog阻塞演示.png)
+
+
+
+BacklogClientTest
+
+```java
+package com.sw.netty._07;
+
+import io.netty.bootstrap.Bootstrap;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.handler.logging.LogLevel;
+import io.netty.handler.logging.LoggingHandler;
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
+public class BacklogClientTest {
+    public static void main(String[] args) {
+        NioEventLoopGroup worker = new NioEventLoopGroup();
+        try {
+            Bootstrap bootstrap = new Bootstrap()
+                    .group(worker)
+                    .channel(NioSocketChannel.class)
+                    .handler(new LoggingHandler(LogLevel.DEBUG));
+            ChannelFuture channelFuture = bootstrap.connect("127.0.0.1", 8088);
+            channelFuture.sync().channel().closeFuture().sync();
+        } catch (Exception e) {
+            log.error("BacklogClientTest error: ", e);
+        } finally {
+            worker.shutdownGracefully();
+        }
+    }
+}
+
+```
+
+建立第三个连接时，服务端全连接队列已满
+
+![2.2.2backlog阻塞演示-拒绝连接](static/6.优化/2.2.2backlog阻塞演示-拒绝连接.png)
