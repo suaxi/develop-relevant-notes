@@ -52,8 +52,7 @@ public interface Serializer {
             @Override
             public <T> byte[] serialize(T object) {
                 Gson gson = new GsonBuilder().registerTypeAdapter(Class.class, new ClassCodec()).create();
-                String json = new Gson().toJson(object);
-                return json.getBytes(StandardCharsets.UTF_8);
+                return gson.toJson(object).getBytes(StandardCharsets.UTF_8);
             }
         }
     }
@@ -63,8 +62,7 @@ public interface Serializer {
         @Override
         public Class<?> deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
             try {
-                String str = json.getAsString();
-                return Class.forName(str);
+                return Class.forName(json.getAsString());
             } catch (ClassNotFoundException e) {
                 throw new JsonParseException(e);
             }

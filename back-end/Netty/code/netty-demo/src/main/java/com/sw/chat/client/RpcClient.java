@@ -41,17 +41,16 @@ public class RpcClient {
             });
             Channel channel = bootstrap.connect("localhost", 8088).sync().channel();
 
-            ChannelFuture future = channel.writeAndFlush(new RpcRequestMessage(
+            channel.writeAndFlush(new RpcRequestMessage(
                     1,
-                    "com.sw.server.service.HelloService",
+                    "com.sw.chat.server.service.HelloService",
                     "sayHello",
                     String.class,
                     new Class[]{String.class},
                     new Object[]{"孙笑川"}
             )).addListener(promise -> {
                 if (!promise.isSuccess()) {
-                    Throwable cause = promise.cause();
-                    log.error("promise error", cause);
+                    log.error("promise error", promise.cause());
                 }
             });
 
