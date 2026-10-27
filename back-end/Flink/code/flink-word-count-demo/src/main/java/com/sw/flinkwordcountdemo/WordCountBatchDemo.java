@@ -10,6 +10,8 @@ import org.apache.flink.api.java.operators.UnsortedGrouping;
 import org.apache.flink.api.java.tuple.Tuple2;
 
 /**
+ * DataSet API demo
+ *
  * @author：suaxi
  * @date：2026/10/26 22:39
  */
