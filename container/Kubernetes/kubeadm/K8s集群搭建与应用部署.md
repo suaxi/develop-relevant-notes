@@ -119,12 +119,12 @@ systemctl restart docker
 
 ```bash
 # 以阿里源为例
-cat <<EOF | tee /etc/yum.repos.d/kubernetes.repo
-[kubernetes]
-name=Kubernetes
-baseurl=https://mirrors.aliyun.com/kubernetes/yum/repos/kubernetes-el7-x86_64/
-enabled=1
-gpgcheck=0
+apt update && apt install -y apt-transport-https
+
+curl https://mirrors.aliyun.com/kubernetes/apt/doc/apt-key.gpg | apt-key add - 
+
+cat <<EOF >/etc/apt/sources.list.d/kubernetes.list
+deb https://mirrors.aliyun.com/kubernetes/apt/ kubernetes-xenial main
 EOF
 ```
 
@@ -263,12 +263,12 @@ systemctl restart container
 
 ```bash
 # 以阿里源为例
-cat <<EOF | tee /etc/yum.repos.d/kubernetes.repo
-[kubernetes]
-name=Kubernetes
-baseurl=https://mirrors.aliyun.com/kubernetes/yum/repos/kubernetes-el7-x86_64/
-enabled=1
-gpgcheck=0
+apt update && apt install -y apt-transport-https
+
+curl https://mirrors.aliyun.com/kubernetes/apt/doc/apt-key.gpg | apt-key add - 
+
+cat <<EOF >/etc/apt/sources.list.d/kubernetes.list
+deb https://mirrors.aliyun.com/kubernetes/apt/ kubernetes-xenial main
 EOF
 ```
 
@@ -683,12 +683,12 @@ spec:
             - name: USERNAME
               valueFrom:
                 secretKeyRef:
-                  name: mysql-secret
+                  name: project-mysql-secret
                   key: username
             - name: PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: mysql-secret
+                  name: project-mysql-secret
                   key: password
           ports:
             - containerPort: 8080
