@@ -55,3 +55,56 @@ Flink 的 Standalone 集群不支持单作业模式部署，需借助外部平�
 #### 2. YARN
 
 客户端将 Flink 应用提交给 Yarn 的 ResourceManager，ResourceManager 会向 Yarn 的 NodeManager 申请容器，Flink 会在申请到的容器上部署 JobManager 和 TaskManager 实例，从而启动集群，同时 Flink 会根据运行在 JobManager 上的作业所需要的 Slot 数量动态分配 TaskManager 资源。
+
+
+
+##### （1）环境准备
+
+Yarn 模式需要 Hadoop 和 HDFS，配置 Hadoop 环境变量
+
+```bash
+nano /etc/profile
+
+HADOOP_HOME=/home/workspace/hadoop-3.3.4
+export PATH=$PATH:$HADOOP_HOME/bin:$HADOOP_HOME/sbin
+export HADOOP_CONF_DIR=${HADOOP_HOME}/etc/hadoop
+export HADOOP_CLASSPATH=`hadoop classpath`
+```
+
+
+
+##### （2）会话模式
+
+执行 `bin/yarn-session.sh -nm [jobName]` 启动，该模式下 Yarn 会动态分配集群资源
+
+脚本参数说明：
+
+- -d：分离模式，即后台运行，与 docker run -d 类似
+- -jm（--jobManagerMemory）：指定 JobManager 使用的内容，单位默认 MB
+- -nm（--name）：指定 job name
+- -qu（--queue）：指定 Yarn 队列名
+- -tm（--taskManager）：指定 TaskManager 使用的内容
+
+
+
+##### （3）单作业模式
+
+执行 `bin/flink run -d -t yarn-per-job -c [fullyQualifiedClassName] xxx.jar` 启动，启动过程遇到类加载器报错是，可通过修改配置文件解决
+
+```bash
+nano conf/flink-conf.yaml
+
+classloader.check-leaked-classloader: false
+```
+
+
+
+##### （4）应用模式
+
+与单作业模式类似，执行 `bin/flink run-application -t yarn-application -c [fullyQualifiedClassName] xxx.jar` 启动
+
+
+
+#### 3. K8s 集群部署
+
+部署原理与 Yarn 类似，可参照官网 Operator 文档：https://nightlies.apache.org/flink/flink-kubernetes-operator-docs-stable/
