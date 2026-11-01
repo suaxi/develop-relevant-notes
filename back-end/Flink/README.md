@@ -108,3 +108,37 @@ classloader.check-leaked-classloader: false
 #### 3. K8s 集群部署
 
 部署原理与 Yarn 类似，可参照官网 Operator 文档：https://nightlies.apache.org/flink/flink-kubernetes-operator-docs-stable/
+
+
+
+### 三、运行时架构
+
+#### 1. 系统架构
+
+![3.1系统架构](static/3.运行时架构/3.1系统架构.png)
+
+
+
+##### （1）JobManager 作业管理器
+
+概念：Flink 集群中任务管理、调度的核心，控制应用执行的主进程，即：每个任务都应该被唯一的 JobManager 控制执行。
+
+包含以下3个组件：
+
+- JobMaster
+
+  负责处理单独的作业（Job），它与具体的作业是一一对应的。当作业提交时，JobMaster 会先接收要执行的应用，将其转换为 StreamGraph 后，再转换为 JobGraph（ExecutionGraph 执行图），其包含了所有所有可以并发执行的任务，之后 JobMaster 向资源管理器（ResourceManager）申请执行任务所需的资源（Slot），并将执行图分发到执行具体任务的 TaskManager
+
+- ResourceManager（资源管理器）
+
+  主要负责资源分配和管理，资源指 TaskManager 的任务槽（Task Slots），Flink 集群中的资源调配单元，包含用于执行计算的一组 CPU 和内存资源，一个任务对应一个 Slot
+
+- Dispatcher（分发器）
+
+  提供 REST 接口和 Web UI 管理界面，用于提交应用，并且为每一个新提交的作业启动一个新的 JobMaster 组件，该组件随部署模式的不同而不同
+
+
+
+##### （2）TaskManager 任务管理器
+
+任务管理器是 Flink 的工作进程，负责计算数据流（执行具体的作业），每个任务管理器都包含一定数量的 Task Slot，Slot 是资源调度的最小单位，其数量决定了任务管理器能并行处理的任务数。不同 TaskManager 之间可以进行数据交换。
