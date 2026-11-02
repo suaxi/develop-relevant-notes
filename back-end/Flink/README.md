@@ -226,3 +226,45 @@ classloader.check-leaked-classloader: false
 
 注：Flink 顶层会自动优化可合并的算子链，在业务场景需要禁用某些算子的合并操作时，可在具体的算子后通过 `.disableChaining()` 方法禁用
 
+
+
+##### 2.3 任务槽（Task Slots）
+
+（1）任务槽
+
+Flink 中每一个 TaskManager 都是一个 JVM 进程，在对 TaskManager 上运行任务占用的资源做出明确的划分，就称为任务槽，表示 TaskManager 拥有的计算资源的一个固定大小子集，这些资源用于独立执行一个子任务
+
+
+
+（2）设置任务槽的数量
+
+```bash
+nano flink-conf.yaml
+
+# 默认值为1（每个 TaskManager 的任务槽数为 1）
+taskManager.numberOfStackSlots: 1
+```
+
+注：slot 仅用于隔离内存，不涉及 cpu 资源的隔离
+
+
+
+（3）任务对任务槽的共享
+
+在同一个作业（Job）中，不同任务节点（算子）的并行子任务，才可以放到同一个 slot 上执行，注：同一个算子的子任务必须分到不同的 slot 上，如：将资源密集型和非密集型的任务放到同一个 slot 中，它们会自行分配对资源的占用比例，从而让最重的活平均分配给所有的 TaskManager
+
+slot 共享可以保持完整的作业管道，当某个 TaskManager 出故障时，其他节点可以不受影响，可以通过 `.slotSharingGroup([groupName])` 方法手动指定共享组，只有共享组名称相同的子任务，才会开启 slot 共享，反之不同组之间的任务互相隔离，必须分配到不同的 slot 上
+
+
+
+##### 2.4 任务槽和并行度的关系
+
+任务槽指 TaskManager 的并发执行能力，并行度指 TaskManager 运行程序时实际使用的并发能力
+
+以3个 TaskManager，每个 TaskManager 有3个 slot （集群最多能并行执行9个同一算子的子任务），有3个子任务为例：
+
+- 使用系统默认的并行度 1，不同算子的子任务共享槽，则占用1个 slot
+- 并行度设置为2，则共有6个子任务，共享任务槽后占用2个 slot
+- 并行度设置为9，则共有27个子任务，共享任务槽后占用9个 slot
+
+注：standalone 单机模式下，只有当 slot 数量 >= 算子最大并行度（job 并行度）时，job 才会执行
