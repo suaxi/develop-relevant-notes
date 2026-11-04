@@ -268,3 +268,41 @@ slot 共享可以保持完整的作业管道，当某个 TaskManager 出故障�
 - 并行度设置为9，则共有27个子任务，共享任务槽后占用9个 slot
 
 注：standalone 单机模式下，只有当 slot 数量 >= 算子最大并行度（job 并行度）时，job 才会执行
+
+
+
+##### 2.5 作业提交流程
+
+（1）Standalone 会话模式作业提交流程
+
+![3.2.5.1Standalone会话模式提交作业流程](static/3.运行时架构/3.2.5.1Standalone会话模式提交作业流程.png)
+
+
+
+（2）逻辑流图/作业图/执行图/物理图
+
+- 逻辑流图（StreamGraph）
+
+  根据用户通过 DataStream API 所写的代码生成的最初的 DAG 图，表示应用程序的拓扑结构（一般在客户端完成）
+
+- 作业图（JobGraph）
+
+  StreamGraph 经过优化后生成作业图（JobGraph），它是提交给 JobManager 的数据结构，确定了当前作业中所有任务的划分；主要优化为：将多个符合条件的节点链接在一起合并成一个任务节点（即算子链），以减少数据交换的消耗（一般在客户端生成，在提交作业时传递给 JobMaster）
+
+- 执行图（ExecutionGraph）
+
+  JobMaster 收到 JobGraph 后，会根据它来生成执行图（ExecutionGraph），其是 JobGraph 的并行优化版本，作为调度层最核心的数据结构，它会按照并行度对并行子任务进行拆分，并明确任务间数据传输的方式（Redistribute、Forward等）
+
+- 物理图（PhysicalGraph）
+
+  JobMaster 生成执行图后，会将它分发给 TaskManager，各 TaskManager 根据执行图部署任务，最终的物理执行过程也会形成一张“图”，即物理图（PhysicalGraph），它在执行图的基础上进一步确定数据存放的位置和收发的具体方式
+
+  ![3.2.5.2.1作业提交流程图](static/3.运行时架构/3.2.5.2.1作业提交流程图.png)
+
+  ![3.2.5.2.2作业提交流程图](static/3.运行时架构/3.2.5.2.2作业提交流程图.png)
+
+
+
+（3）Yarn应用模式作业提交流程
+
+![3.2.5.3Yarn应用模式作业提交流程](static/3.运行时架构/3.2.5.3Yarn应用模式作业提交流程.png)
