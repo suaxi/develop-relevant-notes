@@ -666,10 +666,50 @@ public class FromDataGenerator {
                 RateLimiterStrategy.perSecond(2),
                 Types.STRING
         );
-        env.fromSource(data, WatermarkStrategy.noWatermarks(), "data-generator");
+        env.fromSource(data, WatermarkStrategy.noWatermarks(), "data-generator").print();
         env.execute();
     }
 }
 
+```
+
+
+
+##### 2.7 Flink 数据类型
+
+Flink 使用“类型信息“（TypeInformation）来统一表示数据类型，TypeInformation 是 Flink 中所有类型描述符的基类
+
+（1）支持的数据类型：
+
+- **基本类型：**所有 Java 基本类型和包装类，还有 Void、String、Date、BigDecimal、BigInteger
+- **数组：**基本类型数组、对象数组
+- **复合数据**
+- **TUPLE 元组：**Flink 内置的元组类型，从 Tuple0 - Tuple25，最多25个，不支持空字段
+- **Scala 样例类及 Scala 元组：**不支持空字段
+- **行类型（ROW）：**具有任意个字段的元组，可以为空
+- **POJO：**Flink 自定义的类似于 Java Bean 的类
+- **辅助类型：**Option、Either、List、Map
+- **GENERIC 泛型：**
+  - 如果未遵循 Flink POJO 类型的规范，会被当作泛型处理（存在类型擦除问题），且由 Kryo 序列化
+  - POJO 规范：
+    - 公共类
+    - 有无参构造
+    - 所有属性声明为 public
+    - 所有属性的类型都是可以序列化的
+
+
+
+（2）Type Hints 类型提示
+
+Flink 拥有类型提取系统，可以分析函数的输入、返回类型，自动获取类型信息，从而获取对应的序列化/反序列化器，当遇到 Java 类型擦除时，Flink 提供了以下方法显示声明返回类型：
+
+```java
+.map(word -> Tuple2.of(word, 1L))
+.returns(Types.TUPLE(Types.STRING, Types.LONG));
+```
+
+```java
+.map(word -> Tuple2.of(word, 1L))
+.returns(new TypeHint<Tuple2<Integer, SomeType>>(){})
 ```
 
