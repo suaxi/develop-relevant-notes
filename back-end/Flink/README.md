@@ -306,3 +306,370 @@ slot 共享可以保持完整的作业管道，当某个 TaskManager 出故障�
 （3）Yarn应用模式作业提交流程
 
 ![3.2.5.3Yarn应用模式作业提交流程](static/3.运行时架构/3.2.5.3Yarn应用模式作业提交流程.png)
+
+
+
+### 四、DataStream API
+
+![4.1DataStream API](static/4.DataStream API/4.1DataStream API.png)
+
+
+
+#### 1. 执行环境（Execution Environment）
+
+Flink 程序可以在各种上下文环境中运行，在提交作业执行计算时，须先获取当前 Flink 的运行环境，从而建立起与 Flink 框架的联系，构建不同环境对应的运行过程
+
+
+
+##### 1.1 创建执行环境
+
+（1）getExecutionEnvironment
+
+```java
+// 如：程序独立运行，则返回本地执行环境
+StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+```
+
+
+
+（2）createLocalEnvironment
+
+```java
+// 该方式可以显示传入并行度参数，默认值为当前host的cpu核心对应的线程数
+StreamExecutionEnvironment localEnv = StreamExecutionEnvironment.createLocalEnvironment();
+```
+
+
+
+（3）createRemoteEnvironment
+
+```java
+StreamExecutionEnvironment remoteEnv = StreamExecutionEnvironment
+  		.createRemoteEnvironment(
+    		"host",                   // JobManager主机名
+    		8088,                     // JobManager进程端口号
+   			"xxx/xxx/jarFile.jar"     // 提交给 JobManager 的 jar 包
+		);
+```
+
+
+
+##### 1.2 执行模式（Execution Mode）
+
+Flink 官方从 1.12 版本开始，推荐使用 DataStream API，在提交任务时将执行模式设置为 BATCH 进行批处理
+
+DataStream API 执行模式：
+
+- 流执行模式（Streaming）
+- 批执行模式（Batch）
+- 自动模式（AutoMatic）：该模式根据数据数据源是否有界自动选择执行模式
+
+
+
+设置方式：
+
+- 命令行
+
+  ```bash
+  bin/flink run -Dexecution.runtime-mode=BATCH ...
+  ```
+
+  
+
+- 代码
+
+  ```java
+  // 实际业务场景中不推荐在代码里设置
+  StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+  env.setRuntimeMode(RuntimeExecutionMode.BATCH);
+  ```
+
+  
+
+##### 1.3 触发执行程序
+
+Flink 是由事件驱动的，只有当数据真正输入时，才会触发计算，即延迟执行或懒执行
+
+在算子后须显示调用 `execute()` 方法，该方法会一直同步等待作业完成，返回 JobExecutionResult 执行结果
+
+```java
+env.execute();
+```
+
+
+
+#### 2. 源算子（Source）
+
+Flink 执行过程中，数据来源称为数据源（data source），读取数据的算子称为源算子（source operator），1.12之前的版本添加 source 的方式为：
+
+```java
+DataStream<String> stream = env.addSource(xxx);
+```
+
+入参称为源函数，需实现 SourceFunction 接口，1.12开始使用流批统一的 source 架构：
+
+```java
+DataStreamSource<String> stream = env.fromSource(xxx);
+```
+
+
+
+##### 2.1 准备环境
+
+```java
+package com.sw.flinkwordcountdemo.pojo;
+
+import java.io.Serializable;
+import java.util.Objects;
+
+/**
+ * @author：suaxi
+ * @date：2026/11/7 21:05
+ */
+public class User implements Serializable {
+
+    public String id;
+    public String username;
+    public String classNo;
+
+    public User(String id, String username, String classNo) {
+        this.id = id;
+        this.username = username;
+        this.classNo = classNo;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public String getClassNo() {
+        return classNo;
+    }
+
+    public void setClassNo(String classNo) {
+        this.classNo = classNo;
+    }
+
+    @Override
+    public String toString() {
+        return "User{" +
+                "id='" + id + '\'' +
+                ", username='" + username + '\'' +
+                ", classNo='" + classNo + '\'' +
+                '}';
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == null || getClass() != o.getClass()) return false;
+        User user = (User) o;
+        return Objects.equals(id, user.id) && Objects.equals(username, user.username) && Objects.equals(classNo, user.classNo);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, username, classNo);
+    }
+}
+
+```
+
+Flink 会把这样的类作为一种特殊的 POJO 数据类型来对待，方便数据的解析和序列化
+
+
+
+##### 2.2 从集合中读取数据
+
+```java
+package com.sw.flinkwordcountdemo.source;
+
+import org.apache.flink.streaming.api.datastream.DataStreamSource;
+import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+
+import java.util.Arrays;
+import java.util.List;
+
+/**
+ * @author：suaxi
+ * @date：2026/11/7 21:50
+ */
+public class FromCollection {
+    public static void main(String[] args) throws Exception {
+        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+        List<Integer> data = List.of(1, 2, 3, 4, 5);
+        DataStreamSource<Integer> ds = env.fromCollection(data);
+        ds.print();
+        env.execute();
+
+        // 8> 3
+        // 9> 4
+        // 6> 1
+        // 7> 2
+        // 10> 5
+
+    }
+}
+
+```
+
+
+
+##### 2.3 从文件读取数据
+
+pom 依赖
+
+```xml
+<dependency>
+    <groupId>org.apache.flink</groupId>
+    <artifactId>flink-connector-files</artifactId>
+    <version>${flink.version}</version>
+</dependency>
+```
+
+```java
+package com.sw.flinkwordcountdemo.source;
+
+import org.apache.flink.api.common.eventtime.WatermarkStrategy;
+import org.apache.flink.connector.file.src.FileSource;
+import org.apache.flink.connector.file.src.reader.TextLineInputFormat;
+import org.apache.flink.core.fs.Path;
+import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+
+/**
+ * @author：suaxi
+ * @date：2026/11/7 21:56
+ */
+public class FromFile {
+    public static void main(String[] args) throws Exception {
+        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+        FileSource<String> data = FileSource.forRecordStreamFormat(new TextLineInputFormat(), new Path("input/wordCount.txt")).build();
+        env.fromSource(data, WatermarkStrategy.noWatermarks(), "file").print();
+        env.execute();
+
+        // 5> sun xiao chuan
+        // 5> yao shui ge
+        // 5> liu bo
+        // 5> Giao ge
+    }
+}
+
+```
+
+
+
+##### 2.4 从 Socket 读取数据
+
+```java
+DataStream<String> stream = env.socketTextStream("localhost", 8088);
+```
+
+该方式吞吐量较小，稳定性较差，一般常用于测试场景
+
+
+
+##### 2.5 消息队列读取数据
+
+以 RabbitMQ 为例
+
+pom 依赖
+
+```xml
+<dependency>
+    <groupId>org.apache.flink</groupId>
+    <artifactId>flink-connector-rabbitmq</artifactId>
+    <version>${flink.version}</version>
+</dependency>
+```
+
+```java
+package com.sw.flinkwordcountdemo.source;
+
+import org.apache.flink.api.common.serialization.SimpleStringSchema;
+import org.apache.flink.streaming.api.datastream.DataStreamSource;
+import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.streaming.connectors.rabbitmq.RMQSource;
+import org.apache.flink.streaming.connectors.rabbitmq.common.RMQConnectionConfig;
+
+/**
+ * @author：suaxi
+ * @date：2026/11/7 22:03
+ */
+public class FromRabbitMQ {
+    public static void main(String[] args) throws Exception {
+        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+        RMQConnectionConfig rmqConnectionConfig = new RMQConnectionConfig.Builder()
+                .setHost("localhost")
+                .setPort(5672)
+                .build();
+        DataStreamSource<?> ds = env.addSource(
+                new RMQSource<>(
+                        rmqConnectionConfig,
+                        "FROM-QMQP-DEMO",
+                        true,
+                        new SimpleStringSchema()
+                )).setParallelism(1);
+        ds.print();
+        env.execute();
+    }
+}
+
+```
+
+
+
+##### 2.6 从数据生成器读取数据
+
+主要用于流任务、性能测试等场景
+
+pom 依赖
+
+```xml
+<dependency>
+    <groupId>org.apache.flink</groupId>
+    <artifactId>flink-connector-datagen</artifactId>
+    <version>${flink.version}</version>
+</dependency>
+```
+
+```java
+package com.sw.flinkwordcountdemo.source;
+
+import org.apache.flink.api.common.eventtime.WatermarkStrategy;
+import org.apache.flink.api.common.typeinfo.Types;
+import org.apache.flink.api.connector.source.util.ratelimit.RateLimiterStrategy;
+import org.apache.flink.connector.datagen.source.DataGeneratorSource;
+import org.apache.flink.connector.datagen.source.GeneratorFunction;
+import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+
+/**
+ * @author：suaxi
+ * @date：2026/11/7 22:54
+ */
+public class FromDataGenerator {
+    public static void main(String[] args) throws Exception {
+        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+        DataGeneratorSource<String> data = new DataGeneratorSource<>(
+                (GeneratorFunction<Long, String>) value -> "index-" + value,
+                Long.MAX_VALUE,
+                RateLimiterStrategy.perSecond(2),
+                Types.STRING
+        );
+        env.fromSource(data, WatermarkStrategy.noWatermarks(), "data-generator");
+        env.execute();
+    }
+}
+
+```
+
