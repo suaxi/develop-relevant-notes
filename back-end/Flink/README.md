@@ -432,6 +432,9 @@ public class User implements Serializable {
     public String username;
     public String classNo;
 
+    public User() {
+    }
+
     public User(String id, String username, String classNo) {
         this.id = id;
         this.username = username;
@@ -713,3 +716,359 @@ Flink 拥有类型提取系统，可以分析函数的输入、返回类型，�
 .returns(new TypeHint<Tuple2<Integer, SomeType>>(){})
 ```
 
+
+
+#### 3. 转换算子（Transformation）
+
+##### 3.1 基本转换算子（map/filter/flatMap）
+
+（1）map 映射
+
+主要用于将数据流中的数据进行转换，形成新的数据流
+
+```java
+package com.sw.flinkwordcountdemo.transform;
+
+import com.sw.flinkwordcountdemo.pojo.User;
+import org.apache.flink.api.common.functions.MapFunction;
+import org.apache.flink.streaming.api.datastream.DataStreamSource;
+import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+
+/**
+ * @author：suaxi
+ * @date：2026/11/8 22:33
+ */
+public class MapTransformation {
+    public static void main(String[] args) throws Exception {
+        // 以提取 User 中的 username 为例
+        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+        DataStreamSource<User> data = env.fromElements(
+                new User("1001", "孙笑川", "001"),
+                new User("1002", "刘波", "001"),
+                new User("2001", "药水哥", "003"),
+                new User("3001", "乌萨奇", "004"),
+                new User("3002", "小八", "004")
+        );
+
+        // 方式一：匿名内部类（实现MapFunction）
+        // data.map(User::getUsername).print();
+
+        // 方式二：传入 MapFunction 的实现类
+        data.map(new UserMapImpl()).print();
+
+        // 7> 孙笑川
+        // 10> 乌萨奇
+        // 11> 小八
+        // 8> 刘波
+        // 9> 药水哥
+        env.execute();
+    }
+
+    public static class UserMapImpl implements MapFunction<User, String> {
+
+        @Override
+        public String map(User value) throws Exception {
+            return value.getUsername();
+        }
+    }
+}
+
+```
+
+
+
+（2）filter 过滤
+
+对数据流执行过滤操作，返回包含符合条件元素的数据流
+
+```java
+package com.sw.flinkwordcountdemo.transform;
+
+import com.sw.flinkwordcountdemo.pojo.User;
+import org.apache.flink.api.common.functions.FilterFunction;
+import org.apache.flink.streaming.api.datastream.DataStreamSource;
+import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+
+/**
+ * @author：suaxi
+ * @date：2026/11/8 22:43
+ */
+public class FilterTransformation {
+    public static void main(String[] args) throws Exception {
+        // 过滤 classNo 等于 004 的数据
+        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+        DataStreamSource<User> data = env.fromElements(
+                new User("1001", "孙笑川", "001"),
+                new User("1002", "刘波", "001"),
+                new User("2001", "药水哥", "003"),
+                new User("3001", "乌萨奇", "004"),
+                new User("3002", "小八", "004")
+        );
+
+        // 方式一：匿名内部类
+        // data.filter(item -> "004".equals(item.getClassNo())).print();
+
+        // 方式二：传入 FilterFunction 的实现类
+        data.filter(new UserFilterImpl()).print();
+        env.execute();
+
+        // 2> User{id='3002', username='小八', classNo='004'}
+        // 1> User{id='3001', username='乌萨奇', classNo='004'}
+    }
+
+    public static class UserFilterImpl implements FilterFunction<User> {
+
+        @Override
+        public boolean filter(User value) throws Exception {
+            return "004".equals(value.getClassNo());
+        }
+    }
+}
+
+```
+
+
+
+（3）flatMap 扁平映射
+
+主要用于将数据流打散拆分，再对拆分后的元素做转换处理，消费一个元素，可以产生零个或多个元素
+
+```java
+package com.sw.flinkwordcountdemo.transform;
+
+import com.sw.flinkwordcountdemo.pojo.User;
+import org.apache.flink.api.common.functions.FlatMapFunction;
+import org.apache.flink.api.common.typeinfo.Types;
+import org.apache.flink.streaming.api.datastream.DataStreamSource;
+import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.util.Collector;
+
+/**
+ * @author：suaxi
+ * @date：2026/11/8 22:49
+ */
+public class FlatMapTransformation {
+    public static void main(String[] args) throws Exception {
+        // classNo 等于 001 时输出 username，classNo 等于 004 时输出 id 和 username
+        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+        env.setParallelism(1);
+        DataStreamSource<User> data = env.fromElements(
+                new User("1001", "孙笑川", "001"),
+                new User("1002", "刘波", "001"),
+                new User("2001", "药水哥", "003"),
+                new User("3001", "乌萨奇", "004"),
+                new User("3002", "小八", "004")
+        );
+
+        // 方式一：匿名内部类
+        // data.flatMap((User value, Collector<String> out) -> {
+        //     if ("001".equals(value.getClassNo())) {
+        //         out.collect(value.getUsername());
+        //     }
+        //
+        //     if ("004".equals(value.getClassNo())) {
+        //         out.collect(value.getId());
+        //         out.collect(value.getUsername());
+        //     }
+        // }).returns(Types.STRING).print();
+
+        // 方式二：传入 FilterFunction 的实现类
+        data.flatMap(new FlatMapImpl()).print();
+        env.execute();
+
+        // 孙笑川
+        // 刘波
+        // 3001
+        // 乌萨奇
+        // 3002
+        // 小八
+    }
+
+    public static class FlatMapImpl implements FlatMapFunction<User, String> {
+
+        @Override
+        public void flatMap(User value, Collector<String> out) throws Exception {
+            if ("001".equals(value.getClassNo())) {
+                out.collect(value.getUsername());
+            }
+
+            if ("004".equals(value.getClassNo())) {
+                out.collect(value.getId());
+                out.collect(value.getUsername());
+            }
+        }
+    }
+}
+
+```
+
+
+
+##### 3.2 聚合算子（Aggregation）
+
+计算结果根据当前数据和之前的数据聚在一起进行汇总合并
+
+
+
+（1）keyBy 按键区分
+
+在 Flink DataStream 中没有直接提供聚合的 API，在对数据做聚合处理时，可以使用 `keyBy()` 分区来完成，即通过指定键（key），将数据从逻辑上划分为不同的分区（partitions），也就是将具有相同 key 的数据发送到对应的算子进行处理
+
+Flink 内部实现通过计算 key 的 hash code 和模运算进行分区操作，所以如果 key 的类型为 Flink POJO 时，必须重写 hasCode() 方法
+
+```java
+package com.sw.flinkwordcountdemo.aggregation;
+
+import com.sw.flinkwordcountdemo.pojo.User;
+import org.apache.flink.api.java.functions.KeySelector;
+import org.apache.flink.streaming.api.datastream.DataStreamSource;
+import org.apache.flink.streaming.api.datastream.KeyedStream;
+import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+
+/**
+ * @author：suaxi
+ * @date：2026/11/8 23:14
+ */
+public class KeyByAggregation {
+    public static void main(String[] args) {
+        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+        DataStreamSource<User> data = env.fromElements(
+                new User("1001", "孙笑川", "001"),
+                new User("1002", "刘波", "001"),
+                new User("2001", "药水哥", "003"),
+                new User("3001", "乌萨奇", "004"),
+                new User("3002", "小八", "004")
+        );
+
+        // 方式一：使用 lambda
+        // KeyedStream<User, String> keyedStream = data.keyBy(User::getId);
+
+        // 方式二： 匿名内部类实现 KeySelector
+        KeyedStream<User, String> keyedStream = data.keyBy(new KeySelector<User, String>() {
+            @Override
+            public String getKey(User value) throws Exception {
+                return value.id;
+            }
+        });
+    }
+}
+
+```
+
+需注意：
+
+- keyBy 会将 DataStream 转为 KeyedStream（分区流、键控流），泛型中需指定当前元素类型和 key 的类型
+- 先进行 keyBy 分区，才能进行后续的 sum、reduce 等聚合操作
+
+
+
+（2）sum/min/max/minBy/maxBy 简单聚合
+
+Flink 进行简单聚合的 API 主要有：
+
+- sum()：对输入数据流的指定字段求和
+- min()：对输入数据流的指定字段取最小值
+- max()：对输入数据流的指定字段取最大值
+- minBy()：同理 min() 操作，但 minBy() 会返回包含指定字段最小值的整条数据，而 min() 除指定字段外，其他字段返回的是输入流的第一条数据的
+- maxBy()：同理 minBy()
+
+```java
+package com.sw.flinkwordcountdemo.aggregation;
+
+import com.sw.flinkwordcountdemo.pojo.User;
+import org.apache.flink.streaming.api.datastream.DataStreamSource;
+import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
+import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+
+/**
+ * @author：suaxi
+ * @date：2026/11/8 23:24
+ */
+public class SimpleAggregation {
+    public static void main(String[] args) throws Exception {
+        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+        env.setParallelism(1);
+        DataStreamSource<User> data = env.fromElements(
+                new User("1001", "孙笑川", "001"),
+                new User("1002", "刘波", "001"),
+                new User("2001", "药水哥", "003"),
+                new User("3001", "乌萨奇", "004"),
+                new User("3002", "小八", "004")
+        );
+
+        /**
+         * 参数说明：
+         * positionToMax 元素类型为 Tuple 时可以使用位置指定聚合字段
+         * field 当数据流元素类型为 POJO 时，只能使用 file 指定聚合字段
+         */
+        SingleOutputStreamOperator<User> streamOperator = data.keyBy(User::getClassNo).max("id");
+        streamOperator.print();
+        env.execute();
+
+        // User{id='1001', username='孙笑川', classNo='001'}
+        // User{id='1002', username='孙笑川', classNo='001'}
+        // User{id='2001', username='药水哥', classNo='003'}
+        // User{id='3001', username='乌萨奇', classNo='004'}
+        // User{id='3002', username='乌萨奇', classNo='004'}
+    }
+}
+
+```
+
+补充：
+
+- 简单聚合算子的返回值是 `SingleOutputStreamOperator<T>` ，也就是将 KeyedStream 又转回了 DataStream（keyBy和聚合成对出现，聚合后的数据流元素类型不变）
+- 聚合算子会为每一个 key 保存一个聚合的值，称为“状态”（state），当有新的数据输入时，算子会更新已保存的聚合值，并发送带有已更新聚合值的事件到下游算子，对于无界流来收，状态会一直保存，所以使用聚合算子时应尽量应用在包含有限个 key 的数据流上
+
+
+
+（3）reduce 归约聚合
+
+```java
+package com.sw.flinkwordcountdemo.aggregation;
+
+import com.sw.flinkwordcountdemo.pojo.User;
+import org.apache.flink.streaming.api.datastream.DataStreamSource;
+import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+
+/**
+ * @author：suaxi
+ * @date：2026/11/8 23:39
+ */
+public class ReduceAggregation {
+    public static void main(String[] args) throws Exception {
+        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+        env.setParallelism(1);
+        DataStreamSource<User> data = env.fromElements(
+                new User("1001", "孙笑川", "001", 10),
+                new User("1002", "刘波", "001", 15),
+                new User("2001", "药水哥", "003", 20),
+                new User("3001", "乌萨奇", "004", 5),
+                new User("3002", "小八", "004", 3)
+        );
+
+        data
+                .keyBy(User::getClassNo)
+                .reduce(((value1, value2) -> {
+                    int money = value1.getMoney() + value1.getMoney();
+                    System.out.println(value1.getClassNo() + "班的学生共有" + money + "块零花钱");
+                    return value1;
+                })).print();
+        env.execute();
+
+        // User{id='1001', username='孙笑川', classNo='001', money=10}
+        // 001班的学生共有20块零花钱
+        // User{id='1001', username='孙笑川', classNo='001', money=10}
+        // User{id='2001', username='药水哥', classNo='003', money=20}
+        // User{id='3001', username='乌萨奇', classNo='004', money=5}
+        // 004班的学生共有10块零花钱
+        // User{id='3001', username='乌萨奇', classNo='004', money=5}
+    }
+}
+
+```
+
+补充：
+
+- reduce 参数支持 lambda 或实现了ReduceFunction接口的实现类等形式
+- 同理简单聚合，reduce底层实现也保存了中间状态，在新数据流输入时做对应的更新并返回
