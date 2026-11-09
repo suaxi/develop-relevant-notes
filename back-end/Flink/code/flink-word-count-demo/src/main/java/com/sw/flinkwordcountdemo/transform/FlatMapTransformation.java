@@ -24,7 +24,7 @@ public class FlatMapTransformation {
                 new User("3002", "小八", "004")
         );
 
-        // 方式一：匿名内部类
+        // 方式一：lambda
         // data.flatMap((User value, Collector<String> out) -> {
         //     if ("001".equals(value.getClassNo())) {
         //         out.collect(value.getUsername());
@@ -35,6 +35,21 @@ public class FlatMapTransformation {
         //         out.collect(value.getUsername());
         //     }
         // }).returns(Types.STRING).print();
+
+        // 方式二：匿名内部类
+        // data.flatMap(new FlatMapFunction<User, String>() {
+        //     @Override
+        //     public void flatMap(User value, Collector<String> out) throws Exception {
+        //         if ("001".equals(value.getClassNo())) {
+        //             out.collect(value.getUsername());
+        //         }
+        //
+        //         if ("004".equals(value.getClassNo())) {
+        //             out.collect(value.getId());
+        //             out.collect(value.getUsername());
+        //         }
+        //     }
+        // });
 
         // 方式二：传入 FilterFunction 的实现类
         data.flatMap(new FlatMapImpl()).print();

@@ -21,10 +21,18 @@ public class MapTransformation {
                 new User("3002", "小八", "004")
         );
 
-        // 方式一：匿名内部类（实现MapFunction）
+        // 方式一：lambda
         // data.map(User::getUsername).print();
 
-        // 方式二：传入 MapFunction 的实现类
+        // 方式二：匿名内部类（实现MapFunction）
+        // data.map(new MapFunction<User, String>() {
+        //     @Override
+        //     public String map(User value) throws Exception {
+        //         return value.getUsername();
+        //     }
+        // });
+
+        // 方式三：传入 MapFunction 的实现类
         data.map(new UserMapImpl()).print();
 
         // 7> 孙笑川
