@@ -21,8 +21,16 @@ public class FilterTransformation {
                 new User("3002", "小八", "004")
         );
 
-        // 方式一：匿名内部类
+        // 方式一：lambda
         // data.filter(item -> "004".equals(item.getClassNo())).print();
+
+        // 方式二：匿名内部类
+        // data.filter(new FilterFunction<User>() {
+        //     @Override
+        //     public boolean filter(User value) throws Exception {
+        //         return "004".equals(value.getClassNo());
+        //     }
+        // }).print();
 
         // 方式二：传入 FilterFunction 的实现类
         data.filter(new UserFilterImpl()).print();

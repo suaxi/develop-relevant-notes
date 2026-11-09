@@ -1072,3 +1072,293 @@ public class ReduceAggregation {
 
 - reduce 参数支持 lambda 或实现了ReduceFunction接口的实现类等形式
 - 同理简单聚合，reduce底层实现也保存了中间状态，在新数据流输入时做对应的更新并返回
+
+
+
+##### 3.3 用户自定义函数（UFD）
+
+用户自定义函数（user-defined function，UFD），即用户根据业务场景自定义处理逻辑的算子
+
+
+
+（1）基础函数类（以 `FilterFunction<T>` 为例）：
+
+- 实现 Flink 提供的函数式接口
+
+  ```java
+  package com.sw.flinkwordcountdemo.transform;
+  
+  import com.sw.flinkwordcountdemo.pojo.User;
+  import org.apache.flink.api.common.functions.FilterFunction;
+  import org.apache.flink.streaming.api.datastream.DataStreamSource;
+  import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+  
+  /**
+   * @author：suaxi
+   * @date：2026/11/8 22:43
+   */
+  public class FilterTransformation {
+      public static void main(String[] args) throws Exception {
+          // 过滤 classNo 等于 004 的数据
+          StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+          DataStreamSource<User> data = env.fromElements(
+                  new User("1001", "孙笑川", "001"),
+                  new User("1002", "刘波", "001"),
+                  new User("2001", "药水哥", "003"),
+                  new User("3001", "乌萨奇", "004"),
+                  new User("3002", "小八", "004")
+          );
+          
+          data.filter(new UserFilterImpl()).print();
+          env.execute();
+      }
+  
+      public static class UserFilterImpl implements FilterFunction<User> {
+  
+          @Override
+          public boolean filter(User value) throws Exception {
+              return "004".equals(value.getClassNo());
+          }
+      }
+  }
+  
+  ```
+
+- 通过匿名内部类
+
+  ```java
+  package com.sw.flinkwordcountdemo.transform;
+  
+  import com.sw.flinkwordcountdemo.pojo.User;
+  import org.apache.flink.api.common.functions.FilterFunction;
+  import org.apache.flink.streaming.api.datastream.DataStreamSource;
+  import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+  
+  /**
+   * @author：suaxi
+   * @date：2026/11/8 22:43
+   */
+  public class FilterTransformation {
+      public static void main(String[] args) throws Exception {
+          // 过滤 classNo 等于 004 的数据
+          StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+          DataStreamSource<User> data = env.fromElements(
+                  new User("1001", "孙笑川", "001"),
+                  new User("1002", "刘波", "001"),
+                  new User("2001", "药水哥", "003"),
+                  new User("3001", "乌萨奇", "004"),
+                  new User("3002", "小八", "004")
+          );
+  
+          data.filter(new FilterFunction<User>() {
+              @Override
+              public boolean filter(User value) throws Exception {
+                  return "004".equals(value.getClassNo());
+              }
+          }).print();
+          env.execute();
+      }
+  
+      public static class UserFilterImpl implements FilterFunction<User> {
+  
+          @Override
+          public boolean filter(User value) throws Exception {
+              return "004".equals(value.getClassNo());
+          }
+      }
+  }
+  
+  ```
+
+- lambda
+
+  ```java
+  package com.sw.flinkwordcountdemo.transform;
+  
+  import com.sw.flinkwordcountdemo.pojo.User;
+  import org.apache.flink.api.common.functions.FilterFunction;
+  import org.apache.flink.streaming.api.datastream.DataStreamSource;
+  import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+  
+  /**
+   * @author：suaxi
+   * @date：2026/11/8 22:43
+   */
+  public class FilterTransformation {
+      public static void main(String[] args) throws Exception {
+          // 过滤 classNo 等于 004 的数据
+          StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+          DataStreamSource<User> data = env.fromElements(
+                  new User("1001", "孙笑川", "001"),
+                  new User("1002", "刘波", "001"),
+                  new User("2001", "药水哥", "003"),
+                  new User("3001", "乌萨奇", "004"),
+                  new User("3002", "小八", "004")
+          );
+  
+          data.filter(item -> "004".equals(item.getClassNo())).print();
+          env.execute();
+      }
+  }
+  
+  ```
+
+
+
+（2）富函数类（Rich Function Classes）
+
+Flink 提供的基础函数类都有对应的 Rich 版本，富函数额外提供获取运行环境上下文、生命周期钩子函数等功能
+
+典型的声明周期函数有：
+
+- open()：是 Rich Function 的初始化方法，在基础算子之前被调用
+- close()：在生命周期末尾调用
+
+```java
+package com.sw.flinkwordcountdemo.transform;
+
+import org.apache.flink.api.common.functions.RichMapFunction;
+import org.apache.flink.configuration.Configuration;
+import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+
+/**
+ * @author：suaxi
+ * @date：2026/11/9 22:59
+ */
+public class RichFunctionDemo {
+    public static void main(String[] args) throws Exception {
+        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+        env
+                .setParallelism(1)
+                .fromElements(1, 2, 3, 4, 5)
+                .map(new RichMapFunction<Integer, String>() {
+                    @Override
+                    public void open(Configuration parameters) throws Exception {
+                        super.open(parameters);
+                        System.out.println("作业[" + getRuntimeContext().getJobId() + "]初始化，调用open()方法");
+                    }
+
+                    @Override
+                    public void close() throws Exception {
+                        super.close();
+
+                        System.out.println("作业[" + getRuntimeContext().getJobId() + "]执行完成，调用close()方法");
+                    }
+
+                    @Override
+                    public String map(Integer value) throws Exception {
+                        return "处理输入数据：" + value;
+                    }
+                })
+                .print();
+        env.execute();
+
+        // 作业[8aeb80df701cada21206486ca97584c7]初始化，调用open()方法
+        // 处理输入数据：1
+        // 处理输入数据：2
+        // 处理输入数据：3
+        // 处理输入数据：4
+        // 处理输入数据：5
+        // 作业[8aeb80df701cada21206486ca97584c7]执行完成，调用close()方法
+    }
+}
+
+```
+
+
+
+##### 3.4 物理分区算子（Physical Partitioning）
+
+常见的物理分区策略：随机分配（Random）、轮询（Round-Robin）、重缩放（Rescale）、广播（Broadcast）
+
+```java
+package com.sw.flinkwordcountdemo.partitioning;
+
+import org.apache.flink.api.common.functions.Partitioner;
+import org.apache.flink.streaming.api.datastream.DataStreamSource;
+import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+
+/**
+ * @author：suaxi
+ * @date：2026/11/9 23:08
+ */
+public class ShufflePartition {
+    public static void main(String[] args) throws Exception {
+        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+        env.setParallelism(2);
+        DataStreamSource<Integer> data = env.fromElements(1, 2, 3, 4, 5);
+
+        // 随机分区：将流中的数据随机打乱，再传递到下游任务分区
+        // data.shuffle().print();
+
+        // 2> 1
+        // 1> 3
+        // 2> 2
+        // 1> 5
+        // 2> 4
+
+        // 轮询：按顺序依次分发数据
+        // data.rebalance().print();
+
+        // 2> 1
+        // 1> 2
+        // 2> 3
+        // 1> 4
+        // 2> 5
+
+        // 重缩放：与轮询类似，但 rescale 方法只给与自己对应的下游算子依次分发数据
+        // data.rescale().print();
+
+        // 1> 1
+        // 2> 2
+        // 1> 3
+        // 2> 4
+        // 1> 5
+
+        // 广播：将流中的数据复制并发送给下游算子的所有并行任务中（每个分区都会收到相同的数据）
+        // data.broadcast().print();
+
+        // 1> 1
+        // 2> 1
+        // 1> 2
+        // 2> 2
+        // 1> 3
+        // 2> 3
+        // 1> 4
+        // 2> 4
+        // 1> 5
+        // 2> 5
+
+        // 全局分区：将流中的所有数据都发送到下游算子的第一个并行子任务中
+        // data.global().print();
+
+        // 1> 1
+        // 1> 2
+        // 1> 3
+        // 1> 4
+        // 1> 5
+
+        // 自定义分区
+        data.partitionCustom(new MyPartitioner(), key -> key).print();
+
+        // 2> 1
+        // 1> 2
+        // 2> 3
+        // 1> 4
+        // 2> 5
+
+        env.execute();
+    }
+
+    public static class MyPartitioner implements Partitioner<Integer> {
+
+        @Override
+        public int partition(Integer key, int numPartitions) {
+            return key % numPartitions;
+        }
+    }
+}
+
+```
+
+Flink 提供了 7 种分区方法（keyBy、one-to-one、shuffle、Round-Robin、rescale、broadcast、global）和 1 种自定义分区方法（partitioner）
