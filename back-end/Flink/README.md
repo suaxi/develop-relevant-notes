@@ -1362,3 +1362,250 @@ public class ShufflePartition {
 ```
 
 Flink 提供了 7 种分区方法（keyBy、one-to-one、shuffle、Round-Robin、rescale、broadcast、global）和 1 种自定义分区方法（partitioner）
+
+
+
+##### 3.5 分流
+
+```java
+package com.sw.flinkwordcountdemo.split;
+
+import com.sw.flinkwordcountdemo.pojo.User;
+import org.apache.flink.api.common.typeinfo.Types;
+import org.apache.flink.streaming.api.datastream.DataStreamSource;
+import org.apache.flink.streaming.api.datastream.SideOutputDataStream;
+import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
+import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.streaming.api.functions.ProcessFunction;
+import org.apache.flink.util.Collector;
+import org.apache.flink.util.OutputTag;
+
+/**
+ * @author：suaxi
+ * @date：2026/11/14 21:25
+ */
+public class SplitDemo {
+    public static void main(String[] args) throws Exception {
+        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+        env.setParallelism(1);
+        DataStreamSource<User> data = env.fromElements(
+                new User("1001", "孙笑川", "001"),
+                new User("1002", "刘波", "001"),
+                new User("2001", "药水哥", "003"),
+                new User("3001", "乌萨奇", "004"),
+                new User("3002", "小八", "004")
+        );
+
+        // 以侧输出流（侧流）为例
+        OutputTag<User> split1 = new OutputTag<>("split-1", Types.POJO(User.class)) {
+        };
+        OutputTag<User> split2 = new OutputTag<>("split-2", Types.POJO(User.class)) {
+        };
+        OutputTag<User> split3 = new OutputTag<>("split-3", Types.POJO(User.class)) {
+        };
+
+        SingleOutputStreamOperator<User> process = data.process(new ProcessFunction<>() {
+            @Override
+            public void processElement(User value, ProcessFunction<User, User>.Context ctx, Collector<User> out) throws Exception {
+                if ("001".equals(value.getClassNo())) {
+                    ctx.output(split1, value);
+                } else if ("003".equals(value.getClassNo())) {
+                    ctx.output(split2, value);
+                } else {
+                    out.collect(value);
+                }
+            }
+        });
+
+        process.print("主流");
+        SideOutputDataStream<User> sideOutput1 = process.getSideOutput(split1);
+        SideOutputDataStream<User> sideOutput2 = process.getSideOutput(split2);
+        SideOutputDataStream<User> sideOutput3 = process.getSideOutput(split3);
+        sideOutput1.print("侧流1");
+        sideOutput2.print("侧流2");
+        sideOutput3.print("侧流3");
+        env.execute();
+
+        // 侧流1> User{id='1001', username='孙笑川', classNo='001', money=null}
+        // 侧流1> User{id='1002', username='刘波', classNo='001', money=null}
+        // 侧流2> User{id='2001', username='药水哥', classNo='003', money=null}
+        // 主流> User{id='3001', username='乌萨奇', classNo='004', money=null}
+        // 主流> User{id='3002', username='小八', classNo='004', money=null}
+    }
+}
+
+```
+
+
+
+##### 3.6 合流
+
+（1）联合（Union）
+
+联合操作要求不同流中的**数据类型必须相同**，合并后的新流包括所有流中的元素
+
+```java
+package com.sw.flinkwordcountdemo.combine;
+
+import org.apache.flink.streaming.api.datastream.DataStreamSource;
+import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+
+/**
+ * @author：suaxi
+ * @date：2026/11/14 21:34
+ */
+public class UnionDemo {
+    public static void main(String[] args) throws Exception {
+        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+        env.setParallelism(1);
+        DataStreamSource<String> data1 = env.fromElements("a", "b", "c");
+        DataStreamSource<Integer> data2 = env.fromElements(1, 2, 3);
+        data1.union(data2.map(String::valueOf)).print();
+        env.execute();
+    }
+}
+
+```
+
+
+
+（2）连接（Connect）
+
+Connect 可以连接2条不同类型元素的流，连接后依然可以调用 Flink API 提供的算子处理各自流中的元素
+
+```java
+package com.sw.flinkwordcountdemo.combine;
+
+import org.apache.flink.streaming.api.datastream.ConnectedStreams;
+import org.apache.flink.streaming.api.datastream.DataStreamSource;
+import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
+import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.streaming.api.functions.co.CoMapFunction;
+
+/**
+ * @author：suaxi
+ * @date：2026/11/14 21:43
+ */
+public class ConnectDemo {
+    public static void main(String[] args) throws Exception {
+        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+        env.setParallelism(1);
+        DataStreamSource<String> data1 = env.fromElements("a", "b", "c");
+        DataStreamSource<Integer> data2 = env.fromElements(1, 2, 3);
+
+        ConnectedStreams<String, Integer> connect = data1.connect(data2);
+        SingleOutputStreamOperator<Object> map = connect.map(new CoMapFunction<String, Integer, Object>() {
+            @Override
+            public Object map1(String value) throws Exception {
+                // 只处理流1
+                return "stream-1: " + value;
+            }
+
+            @Override
+            public Object map2(Integer value) throws Exception {
+                // 只处理流2
+                return "stream-2: " + value;
+            }
+        });
+        map.print();
+        env.execute();
+
+        // stream-1: a
+        // stream-2: 1
+        // stream-1: b
+        // stream-2: 2
+        // stream-1: c
+        // stream-2: 3
+    }
+}
+
+```
+
+
+
+（3）CoProcessFunction
+
+CoProcessFunction 可以将不同流中 key 相同的数据分区后进行各自处理（通过 `keyBy()` 方法实现分区）
+
+```java
+package com.sw.flinkwordcountdemo.combine;
+
+import org.apache.flink.api.java.tuple.Tuple;
+import org.apache.flink.api.java.tuple.Tuple2;
+import org.apache.flink.api.java.tuple.Tuple3;
+import org.apache.flink.streaming.api.datastream.ConnectedStreams;
+import org.apache.flink.streaming.api.datastream.DataStreamSource;
+import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
+import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.streaming.api.functions.co.CoProcessFunction;
+import org.apache.flink.util.Collector;
+
+import java.util.HashMap;
+import java.util.Map;
+
+/**
+ * @author：suaxi
+ * @date：2026/11/14 21:50
+ */
+public class CoProcessFunctionDemo {
+    public static void main(String[] args) throws Exception {
+        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+        env.setParallelism(2);
+        DataStreamSource<Tuple2<Integer, String>> data1 = env.fromElements(
+                Tuple2.of(1, "乌萨奇"),
+                Tuple2.of(2, "孙笑川"),
+                Tuple2.of(1, "小八"),
+                Tuple2.of(2, "药水哥")
+        );
+        DataStreamSource<Tuple3<Integer, String, String>> data2 = env.fromElements(
+                Tuple3.of(1, "乌萨奇", "吉伊卡哇"),
+                Tuple3.of(2, "孙笑川", "6324"),
+                Tuple3.of(1, "小八", "吉伊卡哇"),
+                Tuple3.of(2, "药水哥", "金色维也纳")
+        );
+
+        ConnectedStreams<Tuple2<Integer, String>, Tuple3<Integer, String, String>> connect = data1.connect(data2);
+
+        // keyBy 分区
+        ConnectedStreams<Tuple2<Integer, String>, Tuple3<Integer, String, String>> connectKeyBy = connect.keyBy(o1 -> o1.f0, o2 -> o2.f0);
+        SingleOutputStreamOperator<Object> process = connectKeyBy.process(new CoProcessFunction<Tuple2<Integer, String>, Tuple3<Integer, String, String>, Object>() {
+            final Map<String, Tuple2<Integer, String>> streamElement1 = new HashMap<>();
+            final Map<String, Tuple3<Integer, String, String>> streamElement2 = new HashMap<>();
+
+            @Override
+            public void processElement1(Tuple2<Integer, String> value, CoProcessFunction<Tuple2<Integer, String>, Tuple3<Integer, String, String>, Object>.Context ctx, Collector<Object> out) throws Exception {
+                String key = value.f0 + value.f1;
+                if (!streamElement1.containsKey(key)) {
+                    streamElement1.put(key, value);
+                }
+
+                if (streamElement2.containsKey(key)) {
+                    Tuple3<Integer, String, String> currentElement = streamElement2.get(key);
+                    out.collect(String.format("\"%s\"来自%s", value.f1, currentElement.f2));
+                }
+            }
+
+            @Override
+            public void processElement2(Tuple3<Integer, String, String> value, CoProcessFunction<Tuple2<Integer, String>, Tuple3<Integer, String, String>, Object>.Context ctx, Collector<Object> out) throws Exception {
+                String key = value.f0 + value.f1;
+                if (!streamElement2.containsKey(key)) {
+                    streamElement2.put(key, value);
+                }
+
+                if (streamElement1.containsKey(key)) {
+                    out.collect(String.format("\"%s\"来自%s", value.f1, value.f2));
+                }
+            }
+        });
+        process.print();
+        env.execute();
+
+        // 2> "乌萨奇"来自吉伊卡哇
+        // 2> "孙笑川"来自6324
+        // 2> "小八"来自吉伊卡哇
+        // 2> "药水哥"来自金色维也纳
+    }
+}
+
+```
+
