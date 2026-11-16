@@ -1609,3 +1609,211 @@ public class CoProcessFunctionDemo {
 
 ```
 
+
+
+#### 4. 输出算子（Sink）
+
+##### 4.1 输出到文件
+
+Flink 提供了行编码（Row-encoded）和批处理编码（Bulk-encoded）API
+
+```java
+package com.sw.flinkwordcountdemo.sink;
+
+import org.apache.flink.api.common.eventtime.WatermarkStrategy;
+import org.apache.flink.api.common.serialization.SimpleStringEncoder;
+import org.apache.flink.api.common.typeinfo.Types;
+import org.apache.flink.api.connector.source.util.ratelimit.RateLimiterStrategy;
+import org.apache.flink.configuration.MemorySize;
+import org.apache.flink.connector.datagen.source.DataGeneratorSource;
+import org.apache.flink.connector.datagen.source.GeneratorFunction;
+import org.apache.flink.connector.file.sink.FileSink;
+import org.apache.flink.core.fs.Path;
+import org.apache.flink.streaming.api.CheckpointingMode;
+import org.apache.flink.streaming.api.datastream.DataStreamSource;
+import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.streaming.api.functions.sink.filesystem.OutputFileConfig;
+import org.apache.flink.streaming.api.functions.sink.filesystem.bucketassigners.DateTimeBucketAssigner;
+import org.apache.flink.streaming.api.functions.sink.filesystem.rollingpolicies.DefaultRollingPolicy;
+
+import java.nio.charset.StandardCharsets;
+import java.time.Duration;
+import java.time.ZoneId;
+
+/**
+ * @author：suaxi
+ * @date：2026/11/16 21:49
+ */
+public class FileSinkDemo {
+    public static void main(String[] args) throws Exception {
+        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+        env.setParallelism(2);
+        // 开启checkpoint
+        env.enableCheckpointing(300, CheckpointingMode.EXACTLY_ONCE);
+
+        DataGeneratorSource<String> data = new DataGeneratorSource<>(
+                (GeneratorFunction<Long, String>) value -> "index-" + value,
+                1000,
+                RateLimiterStrategy.perSecond(1),
+                Types.STRING
+        );
+
+        DataStreamSource<String> ds = env.fromSource(data, WatermarkStrategy.noWatermarks(), "data-generator");
+
+        FileSink<String> fileSink = FileSink
+                .<String>forRowFormat(new Path("D:/sandbox"), new SimpleStringEncoder<>(StandardCharsets.UTF_8.name()))
+                .withOutputFileConfig(OutputFileConfig.builder()
+                        .withPartSuffix(".log")
+                        .build())
+                // 按目录分桶
+                .withBucketAssigner(new DateTimeBucketAssigner<>("yyyyMMddHH", ZoneId.systemDefault()))
+                // 文件滚动策略
+                .withRollingPolicy(DefaultRollingPolicy.builder()
+                        .withInactivityInterval(Duration.ofHours(1))
+                        .withMaxPartSize(new MemorySize(1024))
+                        .build())
+                .build();
+
+        ds.sinkTo(fileSink);
+        env.execute();
+    }
+}
+
+```
+
+
+
+##### 4.2 输出到消息队列
+
+以 RabbitMQ 为例
+
+```java
+package com.sw.flinkwordcountdemo.sink;
+
+import org.apache.flink.api.common.eventtime.WatermarkStrategy;
+import org.apache.flink.api.common.serialization.SimpleStringSchema;
+import org.apache.flink.api.common.typeinfo.Types;
+import org.apache.flink.api.connector.source.util.ratelimit.RateLimiterStrategy;
+import org.apache.flink.connector.datagen.source.DataGeneratorSource;
+import org.apache.flink.connector.datagen.source.GeneratorFunction;
+import org.apache.flink.streaming.api.CheckpointingMode;
+import org.apache.flink.streaming.api.datastream.DataStreamSource;
+import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.streaming.connectors.rabbitmq.RMQSink;
+import org.apache.flink.streaming.connectors.rabbitmq.common.RMQConnectionConfig;
+
+/**
+ * @author：suaxi
+ * @date：2026/11/16 22:44
+ */
+public class SinkMQDemo {
+    public static void main(String[] args) throws Exception {
+        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+        env.setParallelism(2);
+        // 开启checkpoint
+        env.enableCheckpointing(300, CheckpointingMode.EXACTLY_ONCE);
+
+        DataGeneratorSource<String> data = new DataGeneratorSource<>(
+                (GeneratorFunction<Long, String>) value -> "index-" + value,
+                10,
+                RateLimiterStrategy.perSecond(1),
+                Types.STRING
+        );
+
+        DataStreamSource<String> ds = env.fromSource(data, WatermarkStrategy.noWatermarks(), "data-generator");
+        RMQConnectionConfig rmqConnectionConfig = new RMQConnectionConfig.Builder()
+                .setHost("192.168.123.88")
+                .setPort(5672)
+                .setUserName("admin")
+                .setPassword("123456")
+                .setVirtualHost("/")
+                .build();
+        ds.addSink(new RMQSink<>(rmqConnectionConfig, "FINK_TO_MQ", new SimpleStringSchema()));
+        env.execute();
+    }
+}
+
+```
+
+
+
+##### 4.3 输出到 MySQL
+
+```xml
+<!-- flink-connector-jdbc -->
+<dependency>
+    <groupId>org.apache.flink</groupId>
+    <artifactId>flink-connector-jdbc</artifactId>
+    <version>3.4.0-1.20</version>
+</dependency>
+
+<!-- mysql -->
+<dependency>
+    <groupId>mysql</groupId>
+    <artifactId>mysql-connector-java</artifactId>
+    <version>8.0.13</version>
+</dependency>
+```
+
+```java
+package com.sw.flinkwordcountdemo.sink;
+
+import com.sw.flinkwordcountdemo.pojo.User;
+import org.apache.flink.connector.jdbc.JdbcConnectionOptions;
+import org.apache.flink.connector.jdbc.JdbcExecutionOptions;
+import org.apache.flink.connector.jdbc.JdbcSink;
+import org.apache.flink.streaming.api.datastream.DataStreamSource;
+import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.streaming.api.functions.sink.SinkFunction;
+
+/**
+ * @author：suaxi
+ * @date：2026/11/16 23:06
+ */
+public class SinkMySQLDemo {
+    public static void main(String[] args) throws Exception {
+        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+        env.setParallelism(1);
+        DataStreamSource<User> data = env.fromElements(
+                new User("1001", "孙笑川", "001"),
+                new User("1002", "刘波", "001"),
+                new User("2001", "药水哥", "003"),
+                new User("3001", "乌萨奇", "004"),
+                new User("3002", "小八", "004")
+        );
+
+        SinkFunction<User> jdbcSink = JdbcSink.<User>sink(
+                // sql
+                "insert into t_user (id, name, class_no) values (?, ?, ?)",
+                (statement, user) -> {
+                    statement.setString(1, user.getId());
+                    statement.setString(2, user.getUsername());
+                    statement.setString(3, user.getClassNo());
+                },
+                // 执行参数
+                JdbcExecutionOptions.builder()
+                        .withBatchSize(500)
+                        .withBatchIntervalMs(200)
+                        .withMaxRetries(3)
+                        .build(),
+                new JdbcConnectionOptions
+                        .JdbcConnectionOptionsBuilder()
+                        .withUrl("jdbc:mysql://192.168.123.88:3306/flink-demo?useSSL=false&serverTimezone=Asia/Shanghai&useUnicode=true&characterEncoding=utf8")
+                        .withDriverName("com.mysql.cj.jdbc.Driver")
+                        .withUsername("root")
+                        .withPassword("123456")
+                        .build()
+        );
+
+        data.addSink(jdbcSink);
+        env.execute();
+    }
+}
+
+```
+
+
+
+##### 4.4 自定义 Sink
+
+如果 Flink 官方提供的 Sink API 不满足当前业务场景和需求，可通过实现 SinkFunction 接口或继承 RichSinkFunction 抽象类自定义输出算子，再通过 `xxxStream.addSink(new CustomizeSink<String>())` 调用
