@@ -1904,3 +1904,87 @@ dataStream.keyBy(xxx)
           .aggregate([window function])  // 窗口函数，定义处理逻辑
 ```
 
+
+
+（3）全局窗口
+
+```java
+// 全局窗口（一般用于自定义窗口的业务场景，需通过 trigger 触发器触发）
+dataStream.keyBy(...)
+       .window(GlobalWindows.create());
+```
+
+
+
+##### 1.4 窗口分配器
+
+窗口分配器（Window Assigners）：定义数据该被“分配”到哪个窗口
+
+（1）时间窗口
+
+```java
+// 滚动窗口
+// .of() 方法可以指定窗口大小
+dataStream.keyBy(...)
+       .window(TumblingProcessingTimeWindows.of(Time.seconds(10)))
+       .aggregate(...)
+```
+
+```java
+// 滑动窗口
+// .of() 方法指定窗口大小、滑动步长
+dataStream.keyBy(...)
+       .window(SlidingProcessingTimeWindows.of(Time.seconds(10)，Time.seconds(5)))
+       .aggregate(...)
+```
+
+```java
+// 会话窗口
+// .withGap() 方法指定会话超时时间
+dataStream.keyBy(...)
+       .window(ProcessingTimeSessionWindows.withGap(Time.seconds(10)))
+       .aggregate(...)
+```
+
+```java
+// 滚动事件时间窗帘
+dataStream.keyBy(...)
+       .window(TumblingEventTimeWindows.of(Time.seconds(5)))
+       .aggregate(...)
+```
+
+```java
+// 滑动事件时间窗口
+dataStream.keyBy(...)
+       .window(SlidingEventTimeWindows.of(Time.seconds(10)，Time.seconds(5)))
+       .aggregate(...)
+```
+
+```java
+// 事件时间会话窗口
+dataStream.keyBy(...)
+       .window(EventTimeSessionWindows.withGap(Time.seconds(10)))
+       .aggregate(...)
+```
+
+
+
+（2）计数窗口
+
+计数窗口底层基于全局窗口（Global Window）实现
+
+```java
+// 滚动计数窗口
+// 当窗口中的元素数量达到5时，就会触发计算并关闭窗口
+dataStream.keyBy(...)
+       .countWindow(5)
+```
+
+```java
+// 滑动计数窗口
+// 第一个参数表示窗口大小，第二个参数表示步长，即每个窗口统计10个数据，每隔3个就触发一次计算
+dataStream.keyBy(...)
+       .countWindow(10，3)
+
+```
+
