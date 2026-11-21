@@ -1988,3 +1988,319 @@ dataStream.keyBy(...)
 
 ```
 
+
+
+##### 1.5 窗口函数
+
+窗口函数（Window Functions）：对窗口中收集的数据进行什么样的计算操作，根据处理方式分为：增量聚合函数、全局窗口函数
+
+![1.5.1窗口函数](static/5.时间和窗口/1.5.1窗口函数.png)
+
+（1）增量聚合函数
+
+规约函数（ReduceFunction）
+
+聚合状态的结果、输出类型必须和输入数据类型一致
+
+```java
+package com.sw.flinkwordcountdemo.window;
+
+import com.sw.flinkwordcountdemo.pojo.User;
+import org.apache.flink.api.common.functions.ReduceFunction;
+import org.apache.flink.streaming.api.datastream.DataStreamSource;
+import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.streaming.api.windowing.assigners.TumblingProcessingTimeWindows;
+import org.apache.flink.streaming.api.windowing.time.Time;
+
+/**
+ * @author：suaxi
+ * @date：2026/11/20 23:59
+ */
+public class ReduceFunctionDemo {
+    public static void main(String[] args) throws Exception {
+        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+        env.setParallelism(1);
+        DataStreamSource<User> data = env.fromElements(
+                new User("1001", "孙笑川", "001", 100),
+                new User("1002", "刘波", "001", 50),
+                new User("2001", "药水哥", "003", 30),
+                new User("3001", "乌萨奇", "004", 200),
+                new User("3002", "小八", "004", 20)
+        );
+
+        data.keyBy(User::getClassNo)
+                // 设置滚动事件事件窗口
+                .window(TumblingProcessingTimeWindows.of(Time.seconds(2)))
+                .reduce(new ReduceFunction<User>() {
+                    @Override
+                    public User reduce(User value1, User value2) throws Exception {
+                        System.out.printf("共有零花钱%d元%n", value1.getMoney() + value1.getMoney());
+                        return new User(null, null, value1.getClassNo(), value1.getMoney() + value2.getMoney());
+                    }
+                })
+                .print();
+        env.execute();
+
+        // 共有零花钱200元
+        // 共有零花钱400元
+    }
+}
+
+```
+
+
+
+聚合函数（AggregateFunction）
+
+聚合函数不受规约函数类型必须一致的限制，包含输入类型（IN）、累加器类型（ACC）、输出类型（OUT），包含四个方法：
+
+- createAccumulator()：创建累加器，每个聚合任务只调用一次
+- add()：将输入元素添加到累加器中
+- getResult()：从累加器中提取聚合后的结果
+- merge()：合并两个累加器，并将合并后的状态作为一个累加器返回
+
+```java
+package com.sw.flinkwordcountdemo.window;
+
+import com.sw.flinkwordcountdemo.pojo.User;
+import org.apache.flink.api.common.eventtime.WatermarkStrategy;
+import org.apache.flink.api.common.functions.AggregateFunction;
+import org.apache.flink.streaming.api.datastream.DataStreamSource;
+import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.streaming.api.windowing.assigners.TumblingEventTimeWindows;
+import org.apache.flink.streaming.api.windowing.time.Time;
+
+/**
+ * @author：suaxi
+ * @date：2026/11/21 15:11
+ */
+public class AggregateWindowFunctionDemo {
+    public static void main(String[] args) throws Exception {
+        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+        env.setParallelism(1);
+        DataStreamSource<User> data = env.fromElements(
+                new User("1001", "孙笑川", "001", 100),
+                new User("1002", "刘波", "001", 50),
+                new User("2001", "药水哥", "003", 30),
+                new User("3001", "乌萨奇", "004", 200),
+                new User("3002", "小八", "004", 20)
+        );
+        data.assignTimestampsAndWatermarks(WatermarkStrategy.<User>forMonotonousTimestamps().withTimestampAssigner((user, timestamp) -> System.currentTimeMillis()))
+                .keyBy(User::getClassNo)
+                .window(TumblingEventTimeWindows.of(Time.seconds(2)))
+                .aggregate(new AggregateFunction<User, Integer, String>() {
+                    @Override
+                    public Integer createAccumulator() {
+                        System.out.println("创建累加器");
+                        return 0;
+                    }
+
+                    @Override
+                    public Integer add(User value, Integer accumulator) {
+                        System.out.println("调用add()方法");
+                        return accumulator + value.getMoney();
+                    }
+
+                    @Override
+                    public String getResult(Integer accumulator) {
+                        System.out.println("调用getResult()方法");
+                        System.out.printf("共有零花钱%d元%n", accumulator);
+                        return accumulator.toString();
+                    }
+
+                    @Override
+                    public Integer merge(Integer a, Integer b) {
+                        return null;
+                    }
+                })
+                .print();
+        env.execute();
+
+        // 创建累加器
+        // 调用add()方法
+        // 调用add()方法
+        // 创建累加器
+        // 调用add()方法
+        // 创建累加器
+        // 调用add()方法
+        // 调用add()方法
+        // 调用getResult()方法
+        // 共有零花钱150元
+        // 150
+        // 调用getResult()方法
+        // 共有零花钱220元
+        // 220
+        // 调用getResult()方法
+        // 共有零花钱30元
+        // 30
+    }
+}
+
+```
+
+
+
+全窗口函数（Full Window Function）
+
+```java
+// 窗口函数 WindowFunction
+dataStream
+    .keyBy([key selector])
+    .window([window assigner])
+    .apply(new MyCustomizeWindowFunction());
+```
+
+```java
+package com.sw.flinkwordcountdemo.window;
+
+import com.sw.flinkwordcountdemo.pojo.User;
+import org.apache.commons.lang3.time.DateFormatUtils;
+import org.apache.flink.streaming.api.datastream.DataStreamSource;
+import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.streaming.api.functions.windowing.ProcessWindowFunction;
+import org.apache.flink.streaming.api.windowing.assigners.TumblingProcessingTimeWindows;
+import org.apache.flink.streaming.api.windowing.time.Time;
+import org.apache.flink.streaming.api.windowing.windows.TimeWindow;
+import org.apache.flink.util.Collector;
+
+/**
+ * 处理窗口函数
+ *
+ * @author：suaxi
+ * @date：2026/11/21 15:24
+ */
+public class ProcessWindowFunctionDemo {
+    public static void main(String[] args) throws Exception {
+        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+        env.setParallelism(1);
+        DataStreamSource<User> data = env.fromElements(
+                new User("1001", "孙笑川", "001", 100),
+                new User("1002", "刘波", "001", 50),
+                new User("2001", "药水哥", "003", 30),
+                new User("3001", "乌萨奇", "004", 200),
+                new User("3002", "小八", "004", 20)
+        );
+        data.keyBy(User::getClassNo)
+                .window(TumblingProcessingTimeWindows.of(Time.milliseconds(50)))
+                .process(new ProcessWindowFunction<User, String, String, TimeWindow>() {
+                    @Override
+                    public void process(String s, ProcessWindowFunction<User, String, String, TimeWindow>.Context context, Iterable<User> elements, Collector<String> out) throws Exception {
+                        long count = elements.spliterator().estimateSize();
+                        String start = DateFormatUtils.format(context.window().getStart(), "yyyy-MM-dd HH:mm:ss.SSS");
+                        String end = DateFormatUtils.format(context.window().getEnd(), "yyyy-MM-dd HH:mm:ss.SSS");
+                        out.collect(String.format("%s窗口[%s - %s]包含%d条数据", s, start, end, count));
+                    }
+                })
+                .print();
+        env.execute();
+
+        // 001窗口[2026-11-21 15:35:39.700 - 2026-11-21 15:35:39.750]包含1条数据
+        // 004窗口[2026-11-21 15:35:39.750 - 2026-11-21 15:35:39.800]包含2条数据
+        // 003窗口[2026-11-21 15:35:39.750 - 2026-11-21 15:35:39.800]包含1条数据
+        // 001窗口[2026-11-21 15:35:39.750 - 2026-11-21 15:35:39.800]包含1条数据
+    }
+}
+
+```
+
+```java
+package com.sw.flinkwordcountdemo.window;
+
+import com.sw.flinkwordcountdemo.pojo.User;
+import org.apache.commons.lang3.time.DateFormatUtils;
+import org.apache.flink.api.common.eventtime.WatermarkStrategy;
+import org.apache.flink.api.common.functions.AggregateFunction;
+import org.apache.flink.streaming.api.datastream.DataStreamSource;
+import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.streaming.api.functions.windowing.ProcessWindowFunction;
+import org.apache.flink.streaming.api.windowing.assigners.TumblingEventTimeWindows;
+import org.apache.flink.streaming.api.windowing.time.Time;
+import org.apache.flink.streaming.api.windowing.windows.TimeWindow;
+import org.apache.flink.util.Collector;
+
+/**
+ * 增量集合函数、全窗口函数结合使用
+ * 1. 增量聚合函数处理窗口数据（来一条处理一条）
+ * 2. 全窗口函数触发计算时（增量聚合的结果传递给全窗口函数），处理逻辑输出结果
+ *
+ * @author：suaxi
+ * @date：2026/11/21 15:39
+ */
+public class AggregateAndProcessWindowFunctionDemo {
+    public static void main(String[] args) throws Exception {
+        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+        env.setParallelism(1);
+        DataStreamSource<User> data = env.fromElements(
+                new User("1001", "孙笑川", "001", 100),
+                new User("1002", "刘波", "001", 50),
+                new User("2001", "药水哥", "003", 30),
+                new User("3001", "乌萨奇", "004", 200),
+                new User("3002", "小八", "004", 20)
+        );
+        data.assignTimestampsAndWatermarks(WatermarkStrategy.<User>forMonotonousTimestamps().withTimestampAssigner((user, timestamp) -> System.currentTimeMillis()))
+                .keyBy(User::getClassNo)
+                .window(TumblingEventTimeWindows.of(Time.seconds(2)))
+                .aggregate(new MyAggregateFunction(), new MyProcessFunction())
+                .print();
+        env.execute();
+
+        // 创建累加器
+        // 调用add()方法
+        // 调用add()方法
+        // 创建累加器
+        // 调用add()方法
+        // 创建累加器
+        // 调用add()方法
+        // 调用add()方法
+        // 调用getResult()方法
+        // 共有零花钱150元
+        // 001窗口[2026-11-21 15:50:04.000 - 2026-11-21 15:50:06.000]包含1条数据
+        // 调用getResult()方法
+        // 共有零花钱220元
+        // 004窗口[2026-11-21 15:50:04.000 - 2026-11-21 15:50:06.000]包含1条数据
+        // 调用getResult()方法
+        // 共有零花钱30元
+        // 003窗口[2026-11-21 15:50:04.000 - 2026-11-21 15:50:06.000]包含1条数据
+    }
+
+    public static class MyAggregateFunction implements AggregateFunction<User, Integer, String> {
+
+        @Override
+        public Integer createAccumulator() {
+            System.out.println("创建累加器");
+            return 0;
+        }
+
+        @Override
+        public Integer add(User value, Integer accumulator) {
+            System.out.println("调用add()方法");
+            return accumulator + value.getMoney();
+        }
+
+        @Override
+        public String getResult(Integer accumulator) {
+            System.out.println("调用getResult()方法");
+            System.out.printf("共有零花钱%d元%n", accumulator);
+            return accumulator.toString();
+        }
+
+        @Override
+        public Integer merge(Integer a, Integer b) {
+            return null;
+        }
+    }
+
+    public static class MyProcessFunction extends ProcessWindowFunction<String, String, String, TimeWindow> {
+
+        @Override
+        public void process(String s, ProcessWindowFunction<String, String, String, TimeWindow>.Context context, Iterable<String> elements, Collector<String> out) throws Exception {
+            long count = elements.spliterator().estimateSize();
+            String start = DateFormatUtils.format(context.window().getStart(), "yyyy-MM-dd HH:mm:ss.SSS");
+            String end = DateFormatUtils.format(context.window().getEnd(), "yyyy-MM-dd HH:mm:ss.SSS");
+            out.collect(String.format("%s窗口[%s - %s]包含%d条数据", s, start, end, count));
+        }
+    }
+}
+
+```
+
