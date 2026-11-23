@@ -2304,3 +2304,29 @@ public class AggregateAndProcessWindowFunctionDemo {
 
 ```
 
+
+
+##### 1.6 其他 API
+
+（1）触发器 Trigger
+
+触发器可以看作执行窗口函数，即计算得到结果并输出的过程，不同窗口有各自对应的触发器实现
+
+```java
+dataStream.keyBy(...)
+    .window(xxx)
+    .trigger(new MyCustomizeTrigger())
+```
+
+
+
+（2）移除器 Evictor
+
+主要用来定义移除某些数据的逻辑，不同窗口有各自对应的移除器实现
+
+```java
+dataStream.keyBy(...)
+    .window(xxx)
+    .evictor(new MyCustomizeEvictor())
+```
+
