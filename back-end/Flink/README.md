@@ -2219,7 +2219,7 @@ import org.apache.flink.streaming.api.windowing.windows.TimeWindow;
 import org.apache.flink.util.Collector;
 
 /**
- * 增量集合函数、全窗口函数结合使用
+ * 增量聚合函数、全窗口函数结合使用
  * 1. 增量聚合函数处理窗口数据（来一条处理一条）
  * 2. 全窗口函数触发计算时（增量聚合的结果传递给全窗口函数），处理逻辑输出结果
  *
@@ -2330,3 +2330,10 @@ dataStream.keyBy(...)
     .evictor(new MyCustomizeEvictor())
 ```
 
+
+
+#### 2. 时间语义
+
+事件时间：数据产生的时间（Timestamp）
+
+处理时间：数据被真正处理的时刻

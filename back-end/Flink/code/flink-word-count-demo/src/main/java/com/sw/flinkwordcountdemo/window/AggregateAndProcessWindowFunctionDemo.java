@@ -13,7 +13,7 @@ import org.apache.flink.streaming.api.windowing.windows.TimeWindow;
 import org.apache.flink.util.Collector;
 
 /**
- * 增量集合函数、全窗口函数结合使用
+ * 增量聚合函数、全窗口函数结合使用
  * 1. 增量聚合函数处理窗口数据（来一条处理一条）
  * 2. 全窗口函数触发计算时（增量聚合的结果传递给全窗口函数），处理逻辑输出结果
  *
